@@ -26,6 +26,11 @@ describe("titleAcronyms", () => {
     expect(titleAcronyms("The Elder Scrolls V: Skyrim Special Edition")).toEqual(expect.arrayContaining(["tes", "tes5", "es5"]));
   });
 
+  it("finds the number even when it is not the last word", () => {
+    expect(titleAcronyms("Grand Theft Auto V Enhanced")).toEqual(expect.arrayContaining(["gta", "gta5", "gtav"]));
+    expect(titleAcronyms("Grand Theft Auto IV: The Complete Edition")).toEqual(expect.arrayContaining(["gta4", "gtaiv"]));
+  });
+
   it("keeps hyphenated names together", () => {
     expect(titleAcronyms("Counter-Strike 2")).toEqual(expect.arrayContaining(["cs", "cs2"]));
     expect(titleAcronyms("Half-Life 2")).toEqual(expect.arrayContaining(["hl2"]));

@@ -26,9 +26,12 @@ export function titleAcronyms(title: string): string[] {
   const main = title.split(/:|\s[-–—]\s|\(/)[0];
   const words = normalizeTitle(main).split(" ").filter(Boolean);
   if (!words.length) return [];
-  const last = words.at(-1)!;
-  const number = /^\d+$/.test(last) ? last : ROMAN[last];
-  const base = number ? words.slice(0, -1) : words;
+  // o número nem sempre é a última palavra: "Grand Theft Auto V Enhanced"
+  const isNumber = (w: string) => /^\d+$/.test(w) || w in ROMAN;
+  const numberAt = words.findLastIndex((w, i) => i > 0 && isNumber(w));
+  const numberWord = numberAt >= 0 ? words[numberAt] : null;
+  const number = numberWord ? (ROMAN[numberWord] ?? numberWord) : null;
+  const base = numberAt >= 0 ? words.slice(0, numberAt) : words;
   if (base.length < 2) return [];
 
   const result = new Set<string>();
@@ -38,7 +41,7 @@ export function titleAcronyms(title: string): string[] {
     result.add(initials);
     if (number) {
       result.add(initials + number);
-      if (ROMAN[last]) result.add(initials + last); // gtav
+      if (numberWord !== number) result.add(initials + numberWord); // gtav
     }
   }
   return [...result];
