@@ -1,11 +1,10 @@
 import { after, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { feedback } from "@/db/schema";
+import { discordFeedbackPayload, isFeedbackKind } from "@/lib/feedback-discord";
 import { RateLimiter } from "@/lib/rate-limit";
 
 const perVisitor = new RateLimiter(5, 10 * 60_000);
-const KINDS = { bug: "🐞 Bug", sugestao: "💡 Sugestão", elogio: "💚 Elogio", outro: "💬 Outro" } as const;
-type Kind = keyof typeof KINDS;
 
 const bad = (error: string, status = 400) => Response.json({ error }, { status });
 
@@ -20,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   const kind = body?.kind;
   const message = typeof body?.message === "string" ? body.message.trim() : "";
-  if (typeof kind !== "string" || !(kind in KINDS)) return bad("Escolha o tipo do feedback.");
+  if (!isFeedbackKind(kind)) return bad("Escolha o tipo do feedback.");
   if (message.length < 5) return bad("Escreva um pouco mais para a gente entender.");
   if (message.length > 1500) return bad("Mensagem muito longa (máximo de 1500 caracteres).");
 
@@ -28,18 +27,13 @@ export async function POST(request: NextRequest) {
   const page = typeof body?.page === "string" ? body.page.slice(0, 300) : null;
   const userAgent = request.headers.get("user-agent")?.slice(0, 300) ?? null;
 
-  await db.insert(feedback).values({ kind: kind as Kind, message, contact, page, userAgent });
+  await db.insert(feedback).values({ kind, message, contact, page, userAgent });
 
   const webhook = process.env.FEEDBACK_WEBHOOK_URL;
   if (webhook?.startsWith("https://")) {
+    const payload = discordFeedbackPayload({ kind, message, contact, page, createdAt: new Date() });
     after(async () => {
-      const lines = [`**${KINDS[kind as Kind]}** — ${page ?? "?"}`, message.slice(0, 1500), contact ? `↩️ ${contact}` : ""].filter(Boolean);
-      await fetch(webhook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // allowed_mentions vazio: ninguém consegue marcar @everyone pelo formulário
-        body: JSON.stringify({ content: lines.join("\n").slice(0, 1900), allowed_mentions: { parse: [] } }),
-      }).catch(() => {});
+      await fetch(webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).catch(() => {});
     });
   }
   return Response.json({ ok: true });
