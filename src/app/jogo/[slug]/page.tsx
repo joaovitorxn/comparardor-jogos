@@ -122,8 +122,8 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
     <div className="overflow-hidden rounded-card border border-line bg-surface">
       <div className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Melhor oferta</span>
-          {atLow && <Tag tone="accent">Menor preço histórico</Tag>}
+          <span className="font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Melhor drop</span>
+          {atLow && <Tag tone="accent">Preço lendário</Tag>}
         </div>
         <div className="flex items-center justify-between gap-2">
           <StoreName store={best.listing.store} size={32} />
@@ -156,7 +156,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
       <dl className="divide-y divide-line border-t border-line text-sm">
         {low && (
           <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
-            <dt className="text-muted">Menor preço já visto</dt>
+            <dt className="text-muted">Piso histórico</dt>
             <dd className="text-right">
               <PriceText cents={low.cents} className="font-semibold" />
               {low.date && (
@@ -334,7 +334,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
           {data.similar.length > 0 && (
             <section>
-              <SectionHeader title="Jogos parecidos" aside="Sugestões do IGDB" />
+              <SectionHeader title="Quem joga isso também joga" aside="Sugestões do IGDB" />
               <SimilarGames games={data.similar} />
             </section>
           )}

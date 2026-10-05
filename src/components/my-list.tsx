@@ -93,16 +93,16 @@ export function MyList() {
   // enquanto busca uma lista nova, continua mostrando a anterior (sem piscar ao remover itens)
   const games = !key ? [] : (fetched?.games ?? null)?.filter((g) => ids.includes(g.id)) ?? null;
   if (games == null) {
-    return <p className="text-sm text-text-2">Carregando sua lista…</p>;
+    return <p className="text-sm text-text-2">Carregando sua wishlist…</p>;
   }
 
   if (!games.length) {
     return (
       <div className="rounded-card border border-dashed border-line p-10 text-center">
-        <p className="font-display text-2xl font-bold uppercase">Sua lista está vazia</p>
+        <p className="font-display text-2xl font-bold uppercase">Sua wishlist está vazia</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-text-2">
-          Na página de um jogo, toque em <strong className="text-text">Salvar na lista</strong> ou em{" "}
-          <strong className="text-text">Avisar quando baixar</strong> para acompanhar o preço. A lista fica salva neste aparelho.
+          Na página de um jogo, toque em <strong className="text-text">Salvar na wishlist</strong> ou em{" "}
+          <strong className="text-text">Me avisa quando dropar</strong> para acompanhar o preço. A wishlist fica salva neste aparelho.
         </p>
         <Link href="/ofertas" className={`${buttonStyles.primarySm} mt-6`}>
           Ver ofertas
@@ -167,7 +167,7 @@ export function MyList() {
                   </Link>
                 )}
                 <button type="button" onClick={() => removeGame(g.id)} className={`${buttonStyles.secondary} flex-1 sm:flex-none`}>
-                  Tirar da lista
+                  Tirar da wishlist
                 </button>
               </div>
             </li>

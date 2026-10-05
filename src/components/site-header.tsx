@@ -36,13 +36,13 @@ export function SiteHeader() {
         <SearchForm className="ml-auto w-full max-w-sm" />
         <Link
           href="/minha-lista"
-          aria-label="Minha lista"
+          aria-label="Wishlist"
           className="flex shrink-0 items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
         >
           <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
             <path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9Z" />
           </svg>
-          <span className="hidden lg:inline">Minha lista</span>
+          <span className="hidden lg:inline">Wishlist</span>
         </Link>
       </div>
     </header>

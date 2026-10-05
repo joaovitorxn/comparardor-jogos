@@ -37,7 +37,7 @@ function Featured({ deal }: { deal: GameSummary }) {
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/10 lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
 
       <div className="relative mt-auto flex max-w-lg flex-col gap-4 p-6 lg:my-auto lg:p-10">
-        <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-accent">Destaque em oferta</span>
+        <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-accent">Drop em destaque</span>
         <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight lg:text-5xl">{game.title}</h1>
         {deal.bestPriceCents != null && (
           <div className="flex flex-wrap items-center gap-3">
@@ -66,7 +66,7 @@ function TopDeals({ deals }: { deals: GameSummary[] }) {
   return (
     <div className="flex flex-col rounded-card border border-line bg-surface">
       <h2 className="border-b border-line px-4 py-3 font-display text-base font-semibold uppercase tracking-wider text-text-2">
-        Também em promoção
+        Mais drops
       </h2>
       <ol className="flex flex-1 flex-col">
         {deals.map((d, i) => (
@@ -119,14 +119,14 @@ export default async function Home() {
 
       {deals.length > 0 && (
         <section>
-          <SectionHeader id="ofertas" title="Em oferta e vale a pena" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
+          <SectionHeader id="ofertas" title="Promos imperdíveis" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
           <GameGrid games={deals} />
         </section>
       )}
 
       {cheapest.length > 0 && (
         <section>
-          <SectionHeader id="menores-precos" title="Menores preços" aside={<SeeAll href="/ofertas" label="Ver todas as ofertas" />} />
+          <SectionHeader id="menores-precos" title="Quase de graça" aside={<SeeAll href="/ofertas" label="Ver todas as ofertas" />} />
           <GameGrid games={cheapest} />
         </section>
       )}

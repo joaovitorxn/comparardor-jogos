@@ -158,7 +158,7 @@ export function AlertButton({ gameId, gameTitle, prices, lows }: Props) {
         <BellIcon className={existing ? "size-4 text-accent" : "size-4"} />
         {existing
           ? `Alerta ativo${existing.platformFamily ? ` (${FAMILY_LABEL[existing.platformFamily]})` : ""}: ${existing.kind === "sale" ? "qualquer queda" : formatCents(existing.thresholdCents)}`
-          : "Avisar quando baixar"}
+          : "Me avisa quando dropar"}
       </button>
 
       <dialog
@@ -184,10 +184,10 @@ export function AlertButton({ gameId, gameTitle, prices, lows }: Props) {
             <p className="text-sm">
               <span className="font-semibold text-accent">Alerta criado.</span> Você vai receber uma notificação neste aparelho {describe(status.alert)}.
             </p>
-            <p className="text-xs text-muted">O jogo também foi salvo na sua lista. Os preços são verificados de hora em hora.</p>
+            <p className="text-xs text-muted">O jogo também foi salvo na sua wishlist. Os preços são verificados de hora em hora.</p>
             <div className="flex gap-2">
               <Link href="/minha-lista" className={`${buttonStyles.secondary} flex-1 py-2`}>
-                Ver minha lista
+                Ver wishlist
               </Link>
               <button type="button" onClick={() => dialogRef.current?.close()} className={`${buttonStyles.primarySm} flex-1 py-2`}>
                 Pronto
