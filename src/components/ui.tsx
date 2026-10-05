@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Rarity } from "@/lib/rarity";
 import { formatCents } from "@/lib/format";
 
 export function SectionHeader({ title, aside, id }: { title: string; aside?: ReactNode; id?: string }) {
@@ -18,6 +19,19 @@ export function DiscountBadge({ percent, size = "md", className = "" }: { percen
   return (
     <span className={`tabular inline-block rounded-[3px] bg-accent font-display font-bold leading-tight text-accent-ink ${sizes[size]} ${className}`}>
       -{percent}%
+    </span>
+  );
+}
+
+/** Selo de raridade do preço (raro, épico, lendário, mítico), pela cor do tier. */
+export function RarityTag({ rarity }: { rarity: Rarity }) {
+  const color = `var(--rarity-${rarity.id})`;
+  return (
+    <span
+      className="inline-flex items-center rounded-[3px] border px-1.5 py-px text-[11px] font-semibold uppercase leading-4 tracking-wider"
+      style={{ color, borderColor: `color-mix(in srgb, ${color} 45%, transparent)`, background: `color-mix(in srgb, ${color} 14%, transparent)` }}
+    >
+      {rarity.label}
     </span>
   );
 }

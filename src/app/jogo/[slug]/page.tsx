@@ -14,9 +14,10 @@ import { PlatformFilter } from "@/components/platform-filter";
 import { StoreLogo, StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
 import { WishlistButton } from "@/components/wishlist-button";
-import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
+import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, RarityTag, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
+import { priceRarity } from "@/lib/rarity";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
@@ -114,9 +115,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
       <div className="rounded-card border border-line bg-surface p-5 text-sm text-text-2">Ainda não encontramos este jogo à venda.</div>
     );
   }
-  const shelfPrices = data.offers.flatMap((o) => (o.snapshot ? [o.snapshot.priceCents] : []));
-  // o histórico guarda preços de vitrine, então comparamos sem cupom
-  const atLow = low != null && Math.min(...shelfPrices) <= low.cents;
+  const rarity = priceRarity(best.snapshot.discountPercent);
   const storeName = getStore(best.listing.store)?.name ?? best.listing.store;
 
   return (
@@ -124,7 +123,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
       <div className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-2">
           <span className="font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Melhor drop</span>
-          {atLow && <Tag tone="accent">Preço lendário</Tag>}
+          {rarity && <RarityTag rarity={rarity} />}
         </div>
         <div className="flex items-center justify-between gap-2">
           <StoreName store={best.listing.store} size={32} />
