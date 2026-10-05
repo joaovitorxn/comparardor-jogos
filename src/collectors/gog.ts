@@ -57,16 +57,32 @@ export const gogCollector: StoreCollector = {
   store: "gog",
 
   async findByTitle(title) {
-    const params = new URLSearchParams({
-      limit: "10",
-      query: `like:${title}`,
-      order: "desc:score",
-      productType: "in:game,pack",
-      countryCode: "BR",
-      locale: "en-US",
-      currencyCode: "BRL",
-    });
-    const res = await fetchJson<{ products: GogCatalogProduct[] }>(`${CATALOG}?${params}`);
+    const search = (query: string) =>
+      fetchJson<{ products: GogCatalogProduct[] }>(
+        `${CATALOG}?${new URLSearchParams({
+          limit: "10",
+          query: `like:${query}`,
+          order: "desc:score",
+          productType: "in:game,pack",
+          countryCode: "BR",
+          locale: "en-US",
+          currencyCode: "BRL",
+        })}`,
+      );
+    let res: { products: GogCatalogProduct[] };
+    try {
+      res = await search(title);
+    } catch (err) {
+      if (!(err instanceof HttpError && err.status === 400)) throw err;
+      // a busca da GOG rejeita algumas combinações com hífen (ex.: "Half-Life Deathmatch");
+      // sem os hífens ela aceita. Se ainda assim falhar, o jogo só fica sem GOG.
+      try {
+        res = await search(title.replace(/-/g, " "));
+      } catch (retryErr) {
+        if (retryErr instanceof HttpError && retryErr.status === 400) return [];
+        throw retryErr;
+      }
+    }
     return res.products.map(
       (p): StoreOffer => ({
         store: "gog",
