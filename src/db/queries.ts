@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, like, sql } from "drizzle-orm";
+import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
 import { normalizeTitle } from "@/lib/text";
 import { db } from ".";
@@ -80,30 +81,30 @@ export async function getGameSummaries({
   return summarize(rows);
 }
 
-export interface BestPrice {
-  cents: number;
-  regularCents: number;
-  discountPercent: number;
-  store: string;
-}
-
-/** Menor preço de vitrine atual de cada jogo, entre as lojas que ainda vendem. */
-export async function getBestPrices(gameIds: number[]): Promise<Map<number, BestPrice>> {
-  const result = new Map<number, BestPrice>();
+/** Menor preço de vitrine atual de cada jogo, por família de plataforma ("all" = qualquer uma). */
+export async function getBestPricesByFamily(gameIds: number[]): Promise<Map<number, Map<FamilyKey, BestPrice>>> {
+  const offersByGame = new Map<number, PricedOffer[]>();
   for (let i = 0; i < gameIds.length; i += 500) {
     for (const { listing, snapshot } of await latestPrices(gameIds.slice(i, i + 500))) {
-      const current = result.get(listing.gameId);
-      if (!current || snapshot.priceCents < current.cents) {
-        result.set(listing.gameId, {
-          cents: snapshot.priceCents,
-          regularCents: snapshot.regularPriceCents,
-          discountPercent: snapshot.discountPercent,
-          store: listing.store,
-        });
-      }
+      const list = offersByGame.get(listing.gameId) ?? [];
+      list.push({
+        store: listing.store,
+        platform: listing.platform,
+        edition: listing.edition,
+        cents: snapshot.priceCents,
+        regularCents: snapshot.regularPriceCents,
+        discountPercent: snapshot.discountPercent,
+      });
+      offersByGame.set(listing.gameId, list);
     }
   }
-  return result;
+  return new Map([...offersByGame].map(([gameId, offers]) => [gameId, bestByFamily(offers)]));
+}
+
+/** Menor preço de vitrine atual de cada jogo, entre todas as plataformas. */
+export async function getBestPrices(gameIds: number[]): Promise<Map<number, BestPrice>> {
+  const byFamily = await getBestPricesByFamily(gameIds);
+  return new Map([...byFamily].flatMap(([id, m]) => (m.has("all") ? [[id, m.get("all")!] as const] : [])));
 }
 
 export interface Paged<T> {

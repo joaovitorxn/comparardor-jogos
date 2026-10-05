@@ -216,6 +216,8 @@ export const priceAlerts = sqliteTable(
       .references(() => games.id, { onDelete: "cascade" }),
     /** "target": preço escolhido pela pessoa; "sale": qualquer preço abaixo do de quando o alerta foi criado. */
     kind: text("kind", { enum: ["target", "sale"] }).notNull(),
+    /** Plataforma acompanhada ("pc", "playstation", "xbox", "nintendo"); null = qualquer uma. */
+    platformFamily: text("platform_family", { enum: ["pc", "playstation", "xbox", "nintendo"] }),
     /** Avisa quando o menor preço ficar igual ou abaixo deste valor. */
     thresholdCents: integer("threshold_cents").notNull(),
     /** Menor preço quando o alerta foi criado (para mostrar a economia). */

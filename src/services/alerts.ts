@@ -1,11 +1,13 @@
 import { and, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { getBestPrices } from "@/db/queries";
+import { getBestPricesByFamily } from "@/db/queries";
 import { games, priceAlerts, pushSubscriptions, type PriceAlert } from "@/db/schema";
 import { decideAlert, saleThreshold } from "@/lib/alerts";
 import { formatCents } from "@/lib/format";
 import { isPushConfigured, sendPush, type PushTarget } from "@/lib/push";
-import { getStore } from "@/lib/stores";
+import { getStore, PLATFORM_FAMILIES, PLATFORM_LABELS, type PlatformFamilyId } from "@/lib/stores";
+
+const familyLabel = (id: PlatformFamilyId) => PLATFORM_FAMILIES.find((f) => f.id === id)!.label;
 
 export const MAX_ALERTS_PER_DEVICE = 50;
 
@@ -31,16 +33,20 @@ export async function saveAlert({
   gameId,
   kind,
   targetCents,
+  platformFamily = null,
 }: {
   subscription: PushTarget;
   gameId: number;
   kind: PriceAlert["kind"];
   targetCents?: number;
+  platformFamily?: PlatformFamilyId | null;
 }) {
   const [game] = await db.select({ id: games.id }).from(games).where(eq(games.id, gameId));
   if (!game) throw new AlertError("Jogo não encontrado.");
-  const best = (await getBestPrices([gameId])).get(gameId);
-  if (!best) throw new AlertError("Este jogo ainda não tem preço para acompanhar.");
+  const best = (await getBestPricesByFamily([gameId])).get(gameId)?.get(platformFamily ?? "all");
+  if (!best) {
+    throw new AlertError(platformFamily ? `Este jogo não está à venda em ${familyLabel(platformFamily)} nas lojas que comparamos.` : "Este jogo ainda não tem preço para acompanhar.");
+  }
 
   let thresholdCents: number;
   if (kind === "sale") {
@@ -59,7 +65,7 @@ export async function saveAlert({
     .where(and(eq(priceAlerts.subscriptionId, sub.id), eq(priceAlerts.gameId, gameId)));
   if (!existing && total >= MAX_ALERTS_PER_DEVICE) throw new AlertError(`Limite de ${MAX_ALERTS_PER_DEVICE} alertas por aparelho.`);
 
-  const values = { kind, thresholdCents, baselineCents: best.cents, lastNotifiedCents: null, lastNotifiedAt: null };
+  const values = { kind, platformFamily, thresholdCents, baselineCents: best.cents, lastNotifiedCents: null, lastNotifiedAt: null };
   const [alert] = await db
     .insert(priceAlerts)
     .values({ subscriptionId: sub.id, gameId, ...values })
@@ -71,6 +77,7 @@ export async function saveAlert({
 export interface AlertView {
   id: number;
   kind: PriceAlert["kind"];
+  platformFamily: PriceAlert["platformFamily"];
   thresholdCents: number;
   baselineCents: number;
   lastNotifiedAt: Date | null;
@@ -89,17 +96,21 @@ export async function listAlerts(endpoint: string): Promise<AlertView[]> {
     .innerJoin(games, eq(games.id, priceAlerts.gameId))
     .where(eq(priceAlerts.subscriptionId, sub.id))
     .orderBy(priceAlerts.createdAt);
-  const best = await getBestPrices(rows.map((r) => r.game.id));
-  return rows.map(({ alert, game }) => ({
-    id: alert.id,
-    kind: alert.kind,
-    thresholdCents: alert.thresholdCents,
-    baselineCents: alert.baselineCents,
-    lastNotifiedAt: alert.lastNotifiedAt,
-    game,
-    bestCents: best.get(game.id)?.cents ?? null,
-    bestStore: best.get(game.id)?.store ?? null,
-  }));
+  const best = await getBestPricesByFamily(rows.map((r) => r.game.id));
+  return rows.map(({ alert, game }) => {
+    const price = best.get(game.id)?.get(alert.platformFamily ?? "all");
+    return {
+      id: alert.id,
+      kind: alert.kind,
+      platformFamily: alert.platformFamily,
+      thresholdCents: alert.thresholdCents,
+      baselineCents: alert.baselineCents,
+      lastNotifiedAt: alert.lastNotifiedAt,
+      game,
+      bestCents: price?.cents ?? null,
+      bestStore: price?.store ?? null,
+    };
+  });
 }
 
 export async function deleteAlert(endpoint: string, gameId: number) {
@@ -127,14 +138,14 @@ export async function checkPriceAlerts() {
     .innerJoin(games, eq(games.id, priceAlerts.gameId));
   if (!rows.length) return summary;
 
-  const best = await getBestPrices([...new Set(rows.map((r) => r.game.id))]);
+  const best = await getBestPricesByFamily([...new Set(rows.map((r) => r.game.id))]);
   const gone = new Set<number>();
   const siteUrl = process.env.VAPID_SUBJECT?.startsWith("https://") ? process.env.VAPID_SUBJECT : "";
 
   for (const { alert, sub, game } of rows) {
     if (gone.has(sub.id)) continue;
     summary.checked++;
-    const price = best.get(game.id) ?? null;
+    const price = best.get(game.id)?.get(alert.platformFamily ?? "all") ?? null;
     const decision = decideAlert(alert, price?.cents ?? null);
 
     if (decision.action === "rearm") {
@@ -151,7 +162,7 @@ export async function checkPriceAlerts() {
         : `Antes ${formatCents(alert.baselineCents)}`;
     try {
       const result = await sendPush(sub, {
-        title: `${game.title}: ${price.cents === 0 ? "grátis" : formatCents(price.cents)} na ${storeName}`,
+        title: `${game.title}: ${price.cents === 0 ? "grátis" : formatCents(price.cents)} na ${storeName} (${PLATFORM_LABELS[price.platform]})`,
         body: `${reason}${price.discountPercent > 0 ? ` · -${price.discountPercent}%` : ""}. Toque para comparar.`,
         url: `${siteUrl}/jogo/${game.slug}`,
         image: game.headerUrl ?? undefined,

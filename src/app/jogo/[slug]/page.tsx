@@ -15,6 +15,7 @@ import { TimeToBeatCard } from "@/components/time-to-beat";
 import { WishlistButton } from "@/components/wishlist-button";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
+import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
@@ -41,6 +42,30 @@ export async function generateMetadata(props: PageProps<"/jogo/[slug]">): Promis
 }
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+
+/** Lojas do histórico por família (o histórico da ITAD não diz a plataforma, só a loja). */
+const STORE_FAMILY: Record<string, PlatformFamilyId> = { psstore: "playstation", nintendo: "nintendo", xbox: "xbox" };
+
+/** Preço de vitrine atual e menor já registrado, por plataforma — para o diálogo de alerta. */
+function alertPrices(data: GamePageData) {
+  const best = bestByFamily(
+    data.offers.flatMap((o) =>
+      o.snapshot
+        ? [{ store: o.listing.store, platform: o.listing.platform, edition: o.listing.edition, cents: o.snapshot.priceCents, regularCents: o.snapshot.regularPriceCents, discountPercent: o.snapshot.discountPercent }]
+        : [],
+    ),
+  );
+  const prices: Partial<Record<FamilyKey, number>> = Object.fromEntries([...best].map(([k, v]) => [k, v.cents]));
+
+  // brindes (R$ 0 numa promoção) não contam como menor preço
+  const lows: Partial<Record<FamilyKey, number>> = {};
+  for (const s of data.series) {
+    const family = STORE_FAMILY[s.store] ?? "pc";
+    for (const [, cents] of s.points) if (cents > 0 && (lows[family] == null || cents < lows[family]!)) lows[family] = cents;
+  }
+  if (data.historicLow) lows.all = data.historicLow.cents;
+  return { prices, lows };
+}
 
 function familyCounts(offers: GamePageData["offers"]) {
   const counts: Partial<Record<PlatformFamilyId, number>> = {};
@@ -124,7 +149,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
             Comprar na {storeName} <span aria-hidden>↗</span>
           </a>
           {/* alertas comparam preço de vitrine (sem cupom), igual ao histórico */}
-          <AlertButton gameId={data.game.id} gameTitle={data.game.title} currentCents={Math.min(...shelfPrices)} historicLowCents={low?.cents ?? null} />
+          <AlertButton gameId={data.game.id} gameTitle={data.game.title} {...alertPrices(data)} />
         </div>
       </div>
       <PlatformBests offers={data.offers} />

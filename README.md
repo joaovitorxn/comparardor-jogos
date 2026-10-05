@@ -33,7 +33,7 @@ A busca do site também encontra jogos fora do catálogo (pela Steam). Ao abrir 
 
 ## Alertas de preço
 
-Sem cadastro: a pessoa ativa as notificações do navegador e o alerta fica ligado àquele aparelho (Web Push com chaves VAPID). Há dois tipos: **chegar a um preço-alvo** ou **qualquer queda de preço**. Depois de cada atualização de preços, `checkPriceAlerts` compara o menor preço de vitrine de cada jogo com os alertas. Ele avisa uma vez por preço, avisa de novo só se cair mais e rearma quando o preço volta a subir. Aparelhos que revogaram a permissão são removidos sozinhos.
+Sem cadastro: a pessoa ativa as notificações do navegador e o alerta fica ligado àquele aparelho (Web Push com chaves VAPID). Há dois tipos: **chegar a um preço-alvo** ou **qualquer queda de preço**, e cada alerta pode valer para **uma plataforma** (PC, PlayStation, Xbox, Switch) ou para qualquer uma. O diálogo abre na plataforma escolhida no filtro da tabela. Ofertas Xbox Play Anywhere contam também para PC. Depois de cada atualização de preços, `checkPriceAlerts` compara o menor preço de vitrine de cada jogo com os alertas. Ele avisa uma vez por preço, avisa de novo só se cair mais e rearma quando o preço volta a subir. Aparelhos que revogaram a permissão são removidos sozinhos.
 
 A lista de desejos fica no `localStorage` do aparelho (página **Minha lista**). No iPhone, notificações só funcionam com o site instalado na tela de início (iOS 16.4+), e o site explica isso na hora de criar o alerta.
 
@@ -84,7 +84,7 @@ scripts/          CLIs de importação, atualização e seed
 - Os links das lojas via ITAD passam pelo redirecionador `itad.link`. Para monetizar, troque por links de afiliado próprios.
 - Trailers da Steam são HLS: tocam nativamente onde há suporte (Safari, Chrome recente) e via hls.js nos demais, sempre começando em 30% de volume.
 - **PS Store:** não tem API, e o site dela tem proteção contra robôs. Se ela bloquear o servidor (403/429), a rodada para e os últimos preços conhecidos continuam valendo. O resumo do agendador (`/api/cron/refresh`, visível nos logs do GitHub Actions) mostra o erro.
-- **Plataformas:** a tabela de preços tem filtro por plataforma, lembrado no aparelho. O menor preço geral, os alertas e o gráfico ainda consideram todas as plataformas juntas.
+- **Plataformas:** a tabela tem filtro por plataforma, lembrado no aparelho, e os alertas podem ser por plataforma. O menor preço geral (cards e painel) e o gráfico ainda consideram todas juntas.
 - O catálogo nasce da Steam, então exclusivos de console (ex.: Zelda, God of War antes do PC) ainda não entram.
 - O limite de importações pela busca (`src/app/steam/[appid]/route.ts`) fica em memória: vale para um servidor só. Com várias instâncias, troque por um armazenamento compartilhado (ex.: Upstash Redis).
 - A busca de jogos fora do catálogo usa a Steam; jogos exclusivos de outras lojas (ex.: exclusivos da Epic) só entram quando houver uma busca pela ITAD.

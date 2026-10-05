@@ -1,9 +1,11 @@
 import type { NextRequest } from "next/server";
 import { isValidPushEndpoint } from "@/lib/push";
 import { RateLimiter } from "@/lib/rate-limit";
+import { PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { AlertError, deleteAlert, saveAlert } from "@/services/alerts";
 
 const perVisitor = new RateLimiter(30, 10 * 60_000);
+const FAMILY_IDS = new Set<string>(PLATFORM_FAMILIES.map((f) => f.id));
 
 interface SubscriptionJson {
   endpoint?: unknown;
@@ -29,11 +31,14 @@ export async function POST(request: NextRequest) {
     gameId?: unknown;
     kind?: unknown;
     targetCents?: unknown;
+    platformFamily?: unknown;
   } | null;
   const subscription = parseSubscription(body?.subscription);
   if (!subscription) return bad("Inscrição de notificações inválida.");
   if (!Number.isInteger(body?.gameId)) return bad("Jogo inválido.");
   if (body?.kind !== "target" && body?.kind !== "sale") return bad("Tipo de alerta inválido.");
+  const platformFamily = body.platformFamily ?? null;
+  if (platformFamily !== null && !FAMILY_IDS.has(platformFamily as string)) return bad("Plataforma inválida.");
 
   try {
     const alert = await saveAlert({
@@ -41,8 +46,9 @@ export async function POST(request: NextRequest) {
       gameId: body.gameId as number,
       kind: body.kind,
       targetCents: typeof body.targetCents === "number" ? Math.round(body.targetCents) : undefined,
+      platformFamily: platformFamily as PlatformFamilyId | null,
     });
-    return Response.json({ ok: true, thresholdCents: alert.thresholdCents, kind: alert.kind });
+    return Response.json({ ok: true, thresholdCents: alert.thresholdCents, kind: alert.kind, platformFamily: alert.platformFamily });
   } catch (err) {
     if (err instanceof AlertError) return bad(err.message);
     throw err;

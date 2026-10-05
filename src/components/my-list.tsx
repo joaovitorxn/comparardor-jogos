@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatCents } from "@/lib/format";
 import { getExistingSubscription, getPushSupport } from "@/lib/push-client";
-import { getStore } from "@/lib/stores";
+import { getStore, PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { useWishlist } from "@/lib/wishlist";
 import { buttonStyles, DiscountBadge } from "./ui";
 
@@ -23,9 +23,14 @@ interface GameRow {
 interface AlertRow {
   kind: "target" | "sale";
   thresholdCents: number;
+  platformFamily: PlatformFamilyId | null;
+  /** Menor preço atual na plataforma do alerta. */
+  bestCents: number | null;
   lastNotifiedAt: string | null;
   game: { id: number };
 }
+
+const familyLabel = (id: PlatformFamilyId) => PLATFORM_FAMILIES.find((f) => f.id === id)?.label ?? id;
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
 
@@ -139,7 +144,11 @@ export function MyList() {
                 <p className="mt-1 text-xs">
                   {alert ? (
                     <span className="text-accent">
-                      Alerta: {alert.kind === "sale" ? "qualquer queda de preço" : `até ${formatCents(alert.thresholdCents)}`}
+                      Alerta{alert.platformFamily && ` no ${familyLabel(alert.platformFamily)}`}:{" "}
+                      {alert.kind === "sale" ? "qualquer queda de preço" : `até ${formatCents(alert.thresholdCents)}`}
+                      {alert.platformFamily && alert.bestCents != null && (
+                        <span className="text-muted"> · agora {formatCents(alert.bestCents)}</span>
+                      )}
                       {alert.lastNotifiedAt && <span className="text-muted"> · avisado em {dateFmt.format(new Date(alert.lastNotifiedAt))}</span>}
                     </span>
                   ) : (

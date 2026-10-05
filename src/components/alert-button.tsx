@@ -3,21 +3,32 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatCents } from "@/lib/format";
+import type { FamilyKey } from "@/lib/best-by-family";
+import { usePlatformPref } from "@/lib/platform-pref";
 import { getExistingSubscription, getPushSupport, parseBrl, PushPermissionError, subscribeToPush } from "@/lib/push-client";
+import { PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { useWishlist } from "@/lib/wishlist";
 import { buttonStyles } from "./ui";
 
 interface Props {
   gameId: number;
   gameTitle: string;
-  currentCents: number;
-  historicLowCents: number | null;
+  /** Menor preço atual por plataforma ("all" = qualquer uma). */
+  prices: Partial<Record<FamilyKey, number>>;
+  /** Menor preço já registrado por plataforma. */
+  lows: Partial<Record<FamilyKey, number>>;
 }
 
 interface ExistingAlert {
   kind: "target" | "sale";
   thresholdCents: number;
+  platformFamily: PlatformFamilyId | null;
 }
+
+const FAMILY_LABEL: Record<FamilyKey, string> = {
+  all: "Qualquer plataforma",
+  ...(Object.fromEntries(PLATFORM_FAMILIES.map((f) => [f.id, f.label])) as Record<PlatformFamilyId, string>),
+};
 
 type Status =
   | { type: "idle" }
@@ -44,13 +55,28 @@ function suggestTarget(current: number, low: number | null) {
   return Math.max(1, Math.floor((current * 0.75) / 100) * 100 - 1); // ex.: R$ 34,99
 }
 
-export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents }: Props) {
+export function AlertButton({ gameId, gameTitle, prices, lows }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const wishlist = useWishlist();
+  const [pref] = usePlatformPref();
   const [existing, setExisting] = useState<ExistingAlert | null>(null);
   const [kind, setKind] = useState<"target" | "sale">("target");
-  const [target, setTarget] = useState(() => formatCents(suggestTarget(currentCents, historicLowCents)));
+  // plataforma escolhida no diálogo; até a pessoa escolher, segue a do filtro da tabela
+  const [chosenFamily, setChosenFamily] = useState<FamilyKey | null>(null);
+  const [target, setTarget] = useState("");
   const [status, setStatus] = useState<Status>({ type: "idle" });
+
+  const families = (["all", ...PLATFORM_FAMILIES.map((f) => f.id)] as FamilyKey[]).filter((k) => prices[k] != null);
+  const family: FamilyKey = chosenFamily ?? (pref !== "todas" && prices[pref] != null ? pref : "all");
+  const currentCents = prices[family] ?? prices.all ?? 0;
+  const historicLowCents = lows[family] ?? null;
+  const suggestionFor = (k: FamilyKey) => formatCents(suggestTarget(prices[k] ?? currentCents, lows[k] ?? null));
+
+  function chooseFamily(k: FamilyKey) {
+    setChosenFamily(k);
+    setTarget(suggestionFor(k));
+    if (status.type === "error") setStatus({ type: "idle" });
+  }
 
   // se este aparelho já tem alerta para o jogo, o botão mostra isso
   useEffect(() => {
@@ -62,7 +88,7 @@ export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents 
       if (!res.ok || cancelled) return;
       const { alerts } = (await res.json()) as { alerts: ({ game: { id: number } } & ExistingAlert)[] };
       const mine = alerts.find((a) => a.game.id === gameId);
-      if (mine) setExisting({ kind: mine.kind, thresholdCents: mine.thresholdCents });
+      if (mine) setExisting({ kind: mine.kind, thresholdCents: mine.thresholdCents, platformFamily: mine.platformFamily });
     })();
     return () => {
       cancelled = true;
@@ -73,8 +99,12 @@ export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents 
     const support = getPushSupport();
     setStatus(support === "ios-needs-install" ? { type: "ios" } : support === "unsupported" ? { type: "unsupported" } : { type: "idle" });
     if (existing) {
+      const k = existing.platformFamily ?? "all";
       setKind(existing.kind);
-      if (existing.kind === "target") setTarget(formatCents(existing.thresholdCents));
+      setChosenFamily(k);
+      setTarget(existing.kind === "target" ? formatCents(existing.thresholdCents) : suggestionFor(k));
+    } else {
+      setTarget(suggestionFor(family));
     }
     dialogRef.current?.showModal();
   }
@@ -92,11 +122,11 @@ export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents 
       const res = await fetch("/api/alertas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription: subscription.toJSON(), gameId, kind, targetCents }),
+        body: JSON.stringify({ subscription: subscription.toJSON(), gameId, kind, targetCents, platformFamily: family === "all" ? null : family }),
       });
-      const data = (await res.json()) as { error?: string; thresholdCents?: number; kind?: ExistingAlert["kind"] };
+      const data = (await res.json()) as Partial<ExistingAlert> & { error?: string };
       if (!res.ok) return setStatus({ type: "error", message: data.error ?? "Não foi possível criar o alerta." });
-      const alert = { kind: data.kind!, thresholdCents: data.thresholdCents! };
+      const alert = { kind: data.kind!, thresholdCents: data.thresholdCents!, platformFamily: data.platformFamily ?? null };
       setExisting(alert);
       wishlist.add(gameId);
       setStatus({ type: "saved", alert });
@@ -113,7 +143,9 @@ export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents 
     setStatus({ type: "removed" });
   }
 
-  const describe = (a: ExistingAlert) => (a.kind === "sale" ? "em qualquer queda de preço" : `quando chegar a ${formatCents(a.thresholdCents)}`);
+  const where = (a: ExistingAlert) => (a.platformFamily ? ` no ${FAMILY_LABEL[a.platformFamily]}` : "");
+  const describe = (a: ExistingAlert) =>
+    a.kind === "sale" ? `em qualquer queda de preço${where(a)}` : `quando chegar a ${formatCents(a.thresholdCents)}${where(a)}`;
   const quick = [
     historicLowCents != null && historicLowCents > 0 && historicLowCents < currentCents ? { label: "Menor histórico", cents: historicLowCents } : null,
     { label: "-25%", cents: Math.round(currentCents * 0.75) },
@@ -124,7 +156,9 @@ export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents 
     <>
       <button type="button" onClick={open} className={`${buttonStyles.secondary} w-full py-2.5 text-sm`}>
         <BellIcon className={existing ? "size-4 text-accent" : "size-4"} />
-        {existing ? `Alerta ativo: ${existing.kind === "sale" ? "qualquer queda" : formatCents(existing.thresholdCents)}` : "Avisar quando baixar"}
+        {existing
+          ? `Alerta ativo${existing.platformFamily ? ` (${FAMILY_LABEL[existing.platformFamily]})` : ""}: ${existing.kind === "sale" ? "qualquer queda" : formatCents(existing.thresholdCents)}`
+          : "Avisar quando baixar"}
       </button>
 
       <dialog
@@ -177,8 +211,31 @@ export function AlertButton({ gameId, gameTitle, currentCents, historicLowCents 
           <p className="px-5 py-5 text-sm text-text-2">Este navegador não aceita notificações. Tente pelo Chrome, Edge, Firefox ou Safari atualizados.</p>
         ) : (
           <form onSubmit={save} className="space-y-4 px-5 py-5">
+            {families.length > 2 && (
+              <fieldset>
+                <legend className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Plataforma</legend>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  {families.map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      aria-pressed={family === k}
+                      onClick={() => chooseFamily(k)}
+                      className={`rounded-[4px] border px-2.5 py-1.5 text-left transition ${
+                        family === k ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong"
+                      }`}
+                    >
+                      <span className="block text-xs text-text-2">{k === "all" ? "Qualquer uma" : FAMILY_LABEL[k]}</span>
+                      <span className="tabular block text-sm font-semibold">{formatCents(prices[k]!)}</span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
             <p className="text-sm text-text-2">
-              Menor preço agora: <span className="tabular font-semibold text-text">{formatCents(currentCents)}</span>
+              Menor preço agora{family !== "all" && ` no ${FAMILY_LABEL[family]}`}:{" "}
+              <span className="tabular font-semibold text-text">{formatCents(currentCents)}</span>
             </p>
 
             <fieldset className="space-y-3">
