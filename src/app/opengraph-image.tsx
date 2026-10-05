@@ -24,7 +24,7 @@ export default async function OpengraphImage() {
           </div>
           <div style={{ fontFamily: "Barlow", fontSize: 176, lineHeight: 1, letterSpacing: 4, textTransform: "uppercase" }}>{BRAND.name}</div>
         </div>
-        <div style={{ marginTop: 56, fontFamily: "Barlow", fontSize: 64, color: "#b6f03c" }}>{BRAND.tagline}.</div>
+        <div style={{ marginTop: 56, fontFamily: "Barlow", fontSize: 64, color: "#b6f03c" }}>{`${BRAND.tagline}.`}</div>
         <div style={{ marginTop: 20, fontSize: 28, color: "#8a93a3" }}>{STORES}</div>
       </div>
     ),
