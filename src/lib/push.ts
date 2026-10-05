@@ -52,12 +52,18 @@ export async function sendPush(target: PushTarget, payload: PushPayload): Promis
   }
 }
 
-/** Só aceita endpoints https de serviços de push (evita usar o servidor para chamar URLs arbitrárias). */
+/** Serviços de push dos navegadores (Chrome/Edge/Opera via FCM, Firefox, Edge/Windows, Safari). */
+const PUSH_HOSTS = [/(^|\.)fcm\.googleapis\.com$/, /(^|\.)push\.services\.mozilla\.com$/, /(^|\.)notify\.windows\.com$/, /(^|\.)push\.apple\.com$/];
+
+/**
+ * Só aceita endpoints https dos serviços de push conhecidos: o servidor envia notificações para
+ * esse endereço, então uma lista aberta permitiria usá-lo para chamar URLs arbitrárias (SSRF).
+ */
 export function isValidPushEndpoint(endpoint: unknown): endpoint is string {
   if (typeof endpoint !== "string" || endpoint.length > 1000) return false;
   try {
     const url = new URL(endpoint);
-    return url.protocol === "https:" && !/^(localhost|127\.|10\.|192\.168\.|\[)/.test(url.hostname);
+    return url.protocol === "https:" && !url.port && !url.username && PUSH_HOSTS.some((re) => re.test(url.hostname));
   } catch {
     return false;
   }

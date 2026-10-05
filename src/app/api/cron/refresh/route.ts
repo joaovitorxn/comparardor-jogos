@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { checkPriceAlerts } from "@/services/alerts";
@@ -11,9 +12,15 @@ export const maxDuration = 300;
  * agendador (Vercel Cron, GitHub Actions, cron do servidor) com `Authorization: Bearer <CRON_SECRET>`.
  * A Vercel envia esse cabeçalho sozinha quando a variável CRON_SECRET está configurada.
  */
+function authorized(header: string | null, secret: string | undefined) {
+  if (!secret || !header) return false;
+  const a = Buffer.from(header);
+  const b = Buffer.from(`Bearer ${secret}`);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!authorized(request.headers.get("authorization"), process.env.CRON_SECRET)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
