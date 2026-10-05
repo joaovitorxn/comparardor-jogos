@@ -23,21 +23,24 @@ function Featured({ deal }: { deal: GameSummary }) {
   return (
     <Link
       href={`/jogo/${game.slug}`}
-      className="group relative flex min-h-80 overflow-hidden rounded-card border border-line bg-surface lg:min-h-[26rem]"
+      className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-surface lg:min-h-[26rem] lg:flex-row"
     >
-      {(game.backgroundUrl ?? game.headerUrl) && (
-        <Image
-          src={(game.backgroundUrl ?? game.headerUrl)!}
-          alt=""
-          fill
-          priority
-          sizes="(min-width: 1024px) 66vw, 100vw"
-          className="object-cover transition duration-700 group-hover:scale-[1.02]"
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/10 lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
+      {/* celular: a arte em cima, inteira, e o texto embaixo; no desktop, o texto por cima da arte */}
+      <div className="relative aspect-[16/9] overflow-hidden lg:absolute lg:inset-0 lg:aspect-auto">
+        {(game.backgroundUrl ?? game.headerUrl) && (
+          <Image
+            src={(game.backgroundUrl ?? game.headerUrl)!}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1024px) 66vw, 100vw"
+            className="object-cover transition duration-700 group-hover:scale-[1.02]"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
+      </div>
 
-      <div className="relative mt-auto flex max-w-lg flex-col gap-4 p-6 lg:my-auto lg:p-10">
+      <div className="relative -mt-8 flex max-w-lg flex-col gap-4 p-5 pt-0 sm:p-6 sm:pt-0 lg:my-auto lg:mt-0 lg:p-10">
         <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-accent">Drop em destaque</span>
         <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight lg:text-5xl">{game.title}</h1>
         {deal.bestPriceCents != null && (

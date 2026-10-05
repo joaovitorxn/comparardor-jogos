@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND, LOGO } from "@/lib/brand";
+import { MobileSearch } from "./mobile-search";
 import { SearchForm } from "./search-form";
 
 export function LogoMark({ className = "size-7" }: { className?: string }) {
@@ -24,7 +25,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 lg:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={`${BRAND.name} — início`}>
           <LogoMark />
-          <span className="hidden font-display text-2xl font-bold uppercase leading-none tracking-wide sm:inline">{BRAND.name}</span>
+          <span className="font-display text-2xl font-bold uppercase leading-none tracking-wide">{BRAND.name}</span>
         </Link>
         <nav className="hidden items-center gap-5 md:flex">
           {NAV.map((item) => (
@@ -33,7 +34,8 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <SearchForm className="ml-auto w-full max-w-sm" />
+        <SearchForm className="ml-auto hidden w-full max-w-sm sm:block" />
+        <MobileSearch />
         <Link
           href="/minha-lista"
           aria-label="Wishlist"

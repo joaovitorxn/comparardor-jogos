@@ -18,7 +18,7 @@ interface Suggestion {
  * Barra de busca com autocompletar: enquanto a pessoa digita, mostra até 3 jogos do catálogo
  * (com tolerância a erros de digitação). Enter sem escolher uma sugestão vai para /busca.
  */
-export function SearchForm({ defaultValue, className = "", size = "md" }: { defaultValue?: string; className?: string; size?: "md" | "lg" }) {
+export function SearchForm({ defaultValue, className = "", size = "md", autoFocus = false }: { defaultValue?: string; className?: string; size?: "md" | "lg"; autoFocus?: boolean }) {
   const lg = size === "lg";
   const router = useRouter();
   const listId = useId();
@@ -96,6 +96,7 @@ export function SearchForm({ defaultValue, className = "", size = "md" }: { defa
       <input
         name="q"
         type="search"
+        autoFocus={autoFocus}
         value={value}
         onChange={(e) => {
           setValue(e.target.value);
