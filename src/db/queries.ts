@@ -112,8 +112,13 @@ export interface Paged<T> {
   total: number;
 }
 
-/** Jogos com desconto em alguma loja, do maior desconto para o menor — sobre o catálogo inteiro. */
-export async function getDeals({ limit, offset = 0 }: { limit: number; offset?: number }): Promise<Paged<GameSummary>> {
+export type DealSort = "desconto" | "preco";
+
+/**
+ * Jogos com desconto em alguma loja — sobre o catálogo inteiro. Por padrão do maior desconto para o
+ * menor; "preco" ordena pelo menor preço (sem os grátis, que não são promoção).
+ */
+export async function getDeals({ limit, offset = 0, sort = "desconto" }: { limit: number; offset?: number; sort?: DealSort }): Promise<Paged<GameSummary>> {
   const perGame = db
     .select({
       gameId: listings.gameId,
@@ -126,21 +131,56 @@ export async function getDeals({ limit, offset = 0 }: { limit: number; offset?: 
     .groupBy(listings.gameId)
     .as("per_game");
 
+  const onSale = sort === "preco" ? sql`${perGame.maxDiscount} > 0 and ${perGame.bestPrice} > 0` : sql`${perGame.maxDiscount} > 0`;
   const [ranked, [{ total }]] = await Promise.all([
     db
       .select({ gameId: perGame.gameId })
       .from(perGame)
-      .where(sql`${perGame.maxDiscount} > 0`)
-      .orderBy(desc(perGame.maxDiscount), asc(perGame.bestPrice))
+      .where(onSale)
+      .orderBy(...(sort === "preco" ? [asc(perGame.bestPrice), desc(perGame.maxDiscount)] : [desc(perGame.maxDiscount), asc(perGame.bestPrice)]))
       .limit(limit)
       .offset(offset),
-    db.select({ total: sql<number>`count(*)` }).from(perGame).where(sql`${perGame.maxDiscount} > 0`),
+    db.select({ total: sql<number>`count(*)` }).from(perGame).where(onSale),
   ]);
   if (!ranked.length) return { items: [], total };
 
   const rows = await db.select().from(games).where(inArray(games.id, ranked.map((r) => r.gameId)));
   const byId = new Map(rows.map((g) => [g.id, g]));
   return { items: await summarize(ranked.flatMap((r) => byId.get(r.gameId) ?? [])), total };
+}
+
+/** Ano do campo de texto de lançamento da Steam ("13/dez./2022", "Q2 2025"…). */
+function releaseYear(text: string | null): number | null {
+  const m = text?.match(/\b(?:19|20)\d{2}\b/);
+  return m ? Number(m[0]) : null;
+}
+
+/**
+ * Pontuação de destaque: jogos recentes e bem avaliados com desconto de verdade. O desconto só
+ * desempata — o objetivo é mostrar o que vale a pena, não só o que está mais barato.
+ */
+function featuredScore(s: GameSummary, year: number): number {
+  const { game } = s;
+  const rating = game.criticRating ?? game.metacritic;
+  // nota com pouca crítica pesa menos; sem nota, fica abaixo da média
+  const trust = Math.min(1, (game.criticRatingCount ?? (game.metacritic ? 5 : 0)) / 5);
+  const quality = rating != null ? 60 + (rating - 60) * trust : 55;
+  const released = releaseYear(game.releaseDate);
+  const age = released == null ? 8 : Math.max(0, year - released);
+  const recency = age <= 1 ? 45 : age <= 2 ? 32 : age <= 4 ? 16 : age <= 7 ? 6 : 0;
+  return quality + recency + Math.min(s.maxDiscount, 80) / 10;
+}
+
+/** Jogos recentes e relevantes com desconto (a partir de 20%), do mais ao menos "vale a pena". */
+export async function getFeaturedDeals({ limit }: { limit: number }): Promise<GameSummary[]> {
+  const { items } = await getDeals({ limit: 500 });
+  const year = new Date().getFullYear();
+  return items
+    .filter((s) => s.maxDiscount >= 20 && s.bestPriceCents !== 0)
+    .map((s) => ({ s, score: featuredScore(s, year) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((x) => x.s);
 }
 
 export type CatalogSort = "recentes" | "az";

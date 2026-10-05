@@ -3,7 +3,7 @@ import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
 import { StoreLogo } from "@/components/store-logo";
 import { buttonStyles, DiscountBadge, PriceText, SectionHeader } from "@/components/ui";
-import { getCatalog, getDeals, type GameSummary } from "@/db/queries";
+import { getCatalog, getDeals, getFeaturedDeals, type GameSummary } from "@/db/queries";
 import { formatCents } from "@/lib/format";
 import { getStore, STORES } from "@/lib/stores";
 
@@ -37,7 +37,7 @@ function Featured({ deal }: { deal: GameSummary }) {
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/10 lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
 
       <div className="relative mt-auto flex max-w-lg flex-col gap-4 p-6 lg:my-auto lg:p-10">
-        <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-accent">Maior desconto agora</span>
+        <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-accent">Destaque em oferta</span>
         <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight lg:text-5xl">{game.title}</h1>
         {deal.bestPriceCents != null && (
           <div className="flex flex-wrap items-center gap-3">
@@ -92,11 +92,16 @@ function TopDeals({ deals }: { deals: GameSummary[] }) {
 }
 
 export default async function Home() {
-  const [{ items: deals, total: dealCount }, { items: recent, total: catalogCount }] = await Promise.all([
-    getDeals({ limit: 12 }),
+  const [featuredDeals, { items: cheap, total: dealCount }, { items: recent, total: catalogCount }] = await Promise.all([
+    getFeaturedDeals({ limit: 18 }),
+    getDeals({ limit: 24, sort: "preco" }),
     getCatalog({ limit: 12 }),
   ]);
-  const [featured, ...rest] = deals;
+  const [featured, ...rest] = featuredDeals;
+  const deals = featuredDeals.slice(1 + 5); // o destaque e a lista lateral já usam os primeiros
+  // os mais baratos não repetem o que já apareceu acima
+  const shown = new Set(featuredDeals.map((d) => d.game.id));
+  const cheapest = cheap.filter((d) => !shown.has(d.game.id)).slice(0, 12);
   const stores = Object.values(STORES);
 
   return (
@@ -115,8 +120,15 @@ export default async function Home() {
 
       {deals.length > 0 && (
         <section>
-          <SectionHeader id="ofertas" title="Ofertas" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
+          <SectionHeader id="ofertas" title="Em oferta e vale a pena" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
           <GameGrid games={deals} />
+        </section>
+      )}
+
+      {cheapest.length > 0 && (
+        <section>
+          <SectionHeader id="menores-precos" title="Menores preços" aside={<SeeAll href="/ofertas" label="Ver todas as ofertas" />} />
+          <GameGrid games={cheapest} />
         </section>
       )}
 
