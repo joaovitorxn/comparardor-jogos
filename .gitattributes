@@ -1,0 +1,3 @@
+# Quebras de linha LF no repositório e na cópia local (evita avisos e diffs falsos no Windows)
+* text=auto eol=lf
+*.ico binary
