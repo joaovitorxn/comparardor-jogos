@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
 import { Icon } from "@/components/icon";
+import { JsonLd } from "@/components/json-ld";
 import { BackToTop } from "@/components/back-to-top";
 import { RarityInfo } from "@/components/rarity-info";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
@@ -20,6 +21,7 @@ import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader,
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { priceRarity } from "@/lib/rarity";
+import { SITE_URL } from "@/lib/site";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
@@ -41,6 +43,7 @@ export async function generateMetadata(props: PageProps<"/jogo/[slug]">): Promis
       best != null
         ? `${data.game.title} a partir de ${formatCents(best)}. Compare preços em ${data.offers.length} lojas.`
         : (data.game.shortDescription ?? undefined),
+    alternates: { canonical: `/jogo/${data.game.slug}` },
     openGraph: { images: data.game.headerUrl ? [data.game.headerUrl] : undefined },
   };
 }
@@ -259,6 +262,43 @@ function DetailsPanel({ data }: { data: GamePageData }) {
   );
 }
 
+/** Dados estruturados do jogo (schema.org/Product) para o Google mostrar preço e disponibilidade. */
+function productJsonLd({ game, offers }: GamePageData) {
+  const url = `${SITE_URL}/jogo/${game.slug}`;
+  const priced = offers.flatMap((o) => (o.finalCents != null && o.snapshot ? [{ ...o, cents: o.finalCents }] : []));
+  const price = (cents: number) => (cents / 100).toFixed(2);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: game.title,
+    url,
+    image: [game.coverUrl, game.headerUrl].filter(Boolean),
+    description: game.shortDescription ?? `${game.title}: compare preços em várias lojas.`,
+    sku: `dropou-${game.id}`,
+    category: "Jogos",
+    ...(game.publishers[0] ? { brand: { "@type": "Brand", name: game.publishers[0] } } : {}),
+    ...(priced.length
+      ? {
+          offers: {
+            "@type": "AggregateOffer",
+            priceCurrency: "BRL",
+            lowPrice: price(Math.min(...priced.map((o) => o.cents))),
+            highPrice: price(Math.max(...priced.map((o) => o.cents))),
+            offerCount: priced.length,
+            offers: priced.map((o) => ({
+              "@type": "Offer",
+              price: price(o.cents),
+              priceCurrency: "BRL",
+              availability: "https://schema.org/InStock",
+              url: o.listing.url,
+              seller: { "@type": "Organization", name: getStore(o.listing.store)?.name ?? o.listing.store },
+            })),
+          },
+        }
+      : {}),
+  };
+}
+
 export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
   const { slug } = await props.params;
   const data = await getGamePage(slug);
@@ -277,6 +317,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
   return (
     <article>
+      <JsonLd data={productJsonLd(data)} />
       <header className="relative overflow-hidden border-b border-line">
         {game.backgroundUrl && (
           <Image src={game.backgroundUrl} alt="" fill priority sizes="100vw" className="object-cover object-center opacity-80" />

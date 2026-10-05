@@ -6,6 +6,7 @@ import { FeedbackButton } from "@/components/feedback-button";
 import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
 import { BRAND } from "@/lib/brand";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,7 +23,7 @@ const barlow = Barlow_Condensed({
 
 export const metadata: Metadata = {
   // na Vercel, o domínio de produção (dropou.com.br) — base das URLs da imagem de compartilhamento
-  metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${BRAND.name} — ${BRAND.tagline}`,
     template: `%s — ${BRAND.name}`,

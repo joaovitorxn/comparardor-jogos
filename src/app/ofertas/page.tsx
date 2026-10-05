@@ -10,6 +10,7 @@ const PAGE_SIZE = 30;
 
 export const metadata: Metadata = {
   title: "Ofertas",
+  alternates: { canonical: "/ofertas" },
   description: "Promoções de jogos que valem a pena agora, comparando Steam, GOG, Epic, Nuuvem, Green Man Gaming, Microsoft Store e consoles.",
 };
 

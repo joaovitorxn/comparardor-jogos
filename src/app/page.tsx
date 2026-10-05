@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { StoreLogo } from "@/components/store-logo";
 import { SectionHeader } from "@/components/ui";
 import { getDeals, getDealPool, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
 import { BRAND } from "@/lib/brand";
+import { SITE_URL } from "@/lib/site";
 import { STORES } from "@/lib/stores";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 function SeeAll({ href, label }: { href: string; label: string }) {
   return (
@@ -41,6 +46,17 @@ export default async function Home() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-14 px-4 py-8 lg:px-6">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: BRAND.name,
+          url: SITE_URL,
+          description: BRAND.description,
+          inLanguage: "pt-BR",
+          potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/busca?q={search_term_string}`, "query-input": "required name=search_term_string" },
+        }}
+      />
       {showcase.length ? (
         <FeaturedShowcase items={showcase} />
       ) : (
