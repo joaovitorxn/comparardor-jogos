@@ -118,7 +118,7 @@ export default async function Home() {
   return (
     <div className="mx-auto max-w-7xl space-y-14 px-4 py-8 lg:px-6">
       {featured ? (
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Featured deal={featured} />
           {rest.length > 0 && <TopDeals deals={rest.slice(0, 5)} />}
         </section>

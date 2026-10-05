@@ -25,7 +25,7 @@ function Column({ title, items }: { title: string; items: RequirementItem[] }) {
 export function Requirements({ requirements }: { requirements: PcRequirements }) {
   const { minimum, recommended } = requirements;
   return (
-    <div className={`grid gap-3 ${minimum.length && recommended.length ? "md:grid-cols-2" : ""}`}>
+    <div className={`grid grid-cols-[minmax(0,1fr)] gap-3 ${minimum.length && recommended.length ? "md:grid-cols-2" : ""}`}>
       {minimum.length > 0 && <Column title="Mínimos" items={minimum} />}
       {recommended.length > 0 && <Column title="Recomendados" items={recommended} />}
     </div>

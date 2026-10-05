@@ -273,7 +273,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
         <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:self-start">
           <BestOfferPanel data={data} />
           {/* no celular, preço vem primeiro: tempo e detalhes descem para depois do conteúdo principal */}
