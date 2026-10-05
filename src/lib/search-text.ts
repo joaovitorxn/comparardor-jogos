@@ -22,7 +22,9 @@ const SMALL_WORDS = new Set(["the", "of", "a", "an", "and", "o", "de", "do", "da
  * Só para títulos de 2+ palavras (antes do número).
  */
 export function titleAcronyms(title: string): string[] {
-  const words = normalizeTitle(title.split(/[:\-–—(]/)[0]).split(" ").filter(Boolean);
+  // corta subtítulos ("Título: Sub", "Título - Sub", "Título (2020)"), mas não hífens dentro do nome ("Counter-Strike")
+  const main = title.split(/:|\s[-–—]\s|\(/)[0];
+  const words = normalizeTitle(main).split(" ").filter(Boolean);
   if (!words.length) return [];
   const last = words.at(-1)!;
   const number = /^\d+$/.test(last) ? last : ROMAN[last];

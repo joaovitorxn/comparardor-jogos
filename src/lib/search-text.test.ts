@@ -26,6 +26,12 @@ describe("titleAcronyms", () => {
     expect(titleAcronyms("The Elder Scrolls V: Skyrim Special Edition")).toEqual(expect.arrayContaining(["tes", "tes5", "es5"]));
   });
 
+  it("keeps hyphenated names together", () => {
+    expect(titleAcronyms("Counter-Strike 2")).toEqual(expect.arrayContaining(["cs", "cs2"]));
+    expect(titleAcronyms("Half-Life 2")).toEqual(expect.arrayContaining(["hl2"]));
+    expect(titleAcronyms("Disco Elysium - The Final Cut")).toEqual(expect.arrayContaining(["de"]));
+  });
+
   it("skips single-word titles", () => {
     expect(titleAcronyms("Hades")).toEqual([]);
     expect(titleAcronyms("Hades II")).toEqual([]);
