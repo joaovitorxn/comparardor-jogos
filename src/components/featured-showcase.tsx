@@ -30,22 +30,14 @@ function subscribeReducedMotion(onChange: () => void) {
 }
 
 /**
- * Banner grande que troca de jogo sozinho, com a lista "Drops em destaque" ao lado. Pausa quando o
+ * Banner grande que troca de jogo sozinho (a barra de progresso embaixo dele marca o tempo e,
+ * ao terminar, chama o próximo), com a lista "Drops em destaque" ao lado. Pausa quando o
  * mouse ou o foco está em cima, e passar o mouse em um item da lista mostra aquele jogo.
  */
 export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const reduceMotion = useSyncExternalStore(subscribeReducedMotion, () => window.matchMedia(REDUCED_MOTION).matches, () => false);
-
-  // troca sozinho, a menos que esteja pausado, a aba esteja em segundo plano ou o movimento reduzido
-  useEffect(() => {
-    if (paused || reduceMotion || items.length < 2) return;
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") setActive((i) => (i + 1) % items.length);
-    }, ROTATE_MS);
-    return () => clearInterval(timer);
-  }, [paused, reduceMotion, items.length]);
 
   // carrega a arte do próximo jogo antes da troca, para o banner não aparecer vazio
   useEffect(() => {
@@ -104,6 +96,18 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
             </div>
           </div>
         </Link>
+
+        {items.length > 1 && !reduceMotion && (
+          // a animação é o relógio: quando a barra enche, passa para o próximo jogo; pausar congela a barra
+          <div className="pointer-events-none absolute inset-x-px bottom-px h-1 overflow-hidden rounded-b-card">
+            <div
+              key={active}
+              className="h-full origin-left bg-accent"
+              style={{ animation: `showcase-progress ${ROTATE_MS}ms linear forwards`, animationPlayState: paused ? "paused" : "running" }}
+              onAnimationEnd={() => setActive((i) => (i + 1) % items.length)}
+            />
+          </div>
+        )}
 
         {items.length > 1 && (
           <div className="absolute right-3 top-3 flex gap-1.5 rounded-full bg-bg/70 px-2 py-1.5 backdrop-blur-sm" role="group" aria-label="Escolher destaque">

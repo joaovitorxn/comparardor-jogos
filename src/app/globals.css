@@ -47,6 +47,15 @@
   --series-nintendo: #e66767;
 }
 
+@keyframes showcase-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @keyframes showcase-in {
   from {
     opacity: 0;

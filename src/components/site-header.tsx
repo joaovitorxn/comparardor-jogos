@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BRAND, LOGO } from "@/lib/brand";
-import { Icon } from "./icon";
+import { Icon, type IconName } from "./icon";
 import { MobileSearch } from "./mobile-search";
 import { SearchForm } from "./search-form";
 
@@ -14,10 +14,10 @@ export function LogoMark({ className = "size-7" }: { className?: string }) {
   );
 }
 
-const NAV = [
-  { href: "/ofertas", label: "Ofertas" },
-  { href: "/busca", label: "Explorar" },
-  { href: "/#lojas", label: "Lojas" },
+const NAV: { href: string; label: string; icon: IconName }[] = [
+  { href: "/ofertas", label: "Ofertas", icon: "tag" },
+  { href: "/busca", label: "Explorar", icon: "compass" },
+  { href: "/#lojas", label: "Lojas", icon: "store" },
 ];
 
 export function SiteHeader() {
@@ -30,7 +30,8 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-5 md:flex">
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-text">
+            <Link key={item.href} href={item.href} className="flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-text">
+              <Icon name={item.icon} className="size-4" />
               {item.label}
             </Link>
           ))}
