@@ -44,7 +44,7 @@ export default async function DealsPage(props: PageProps<"/ofertas">) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
-      <SectionHeader title="Ofertas" aside={`${total} jogos com desconto · ${SORTS.find((s) => s.id === sort)!.hint}`} />
+      <SectionHeader title="Ofertas" icon="tag" aside={`${total} jogos com desconto · ${SORTS.find((s) => s.id === sort)!.hint}`} />
       <nav aria-label="Ordenar ofertas" className="mb-5 flex flex-wrap gap-2">
         {SORTS.map((s) => (
           <Link

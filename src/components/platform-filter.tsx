@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { PlatformIcon } from "./store-logo";
 import { usePlatformPref, type PlatformPref } from "@/lib/platform-pref";
 import { PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 
@@ -41,7 +42,11 @@ export function PlatformFilter({
                 active === o.id ? "border-accent bg-accent text-accent-ink" : "border-line text-text-2 hover:border-accent hover:text-accent"
               }`}
             >
-              {o.label} <span className={`tabular ${active === o.id ? "" : "text-muted"}`}>{o.count}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <PlatformIcon family={o.id} />
+                {o.label}
+              </span>{" "}
+              <span className={`tabular ${active === o.id ? "" : "text-muted"}`}>{o.count}</span>
             </button>
           ))}
           {active !== "todas" && <span className="ml-1 text-xs text-muted">Lembramos a sua escolha neste aparelho.</span>}

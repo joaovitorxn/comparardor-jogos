@@ -304,7 +304,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           <BackToTop />
 
           <section>
-            <SectionHeader title="Onde comprar" aside="Preços em R$, ordenados pelo valor final" />
+            <SectionHeader title="Onde comprar" icon="cart" aside="Preços em R$, ordenados pelo valor final" />
             {offers.length ? (
               <PlatformFilter counts={familyCounts(offers)} total={offers.length}>
                 <PriceTable offers={offers} />
@@ -318,7 +318,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           </section>
 
           <section>
-            <SectionHeader title="Histórico de preços" aside="Ative as lojas na legenda para comparar" />
+            <SectionHeader title="Histórico de preços" icon="chart" aside="Ative as lojas na legenda para comparar" />
             <PriceHistoryChart series={series} now={data.generatedAt} />
           </section>
 
@@ -330,28 +330,28 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
           {(screenshots.length > 0 || videos.length > 0) && (
             <section>
-              <SectionHeader title="Imagens e vídeos" aside={[videos.length && `${videos.length} ${videos.length === 1 ? "trailer" : "trailers"}`, `${screenshots.length} imagens`].filter(Boolean).join(" · ")} />
+              <SectionHeader title="Imagens e vídeos" icon="photo" aside={[videos.length && `${videos.length} ${videos.length === 1 ? "trailer" : "trailers"}`, `${screenshots.length} imagens`].filter(Boolean).join(" · ")} />
               <MediaGallery screenshots={screenshots} videos={videos} title={game.title} storeUrl={steamUrl} />
             </section>
           )}
 
           {game.shortDescription && (
             <section>
-              <SectionHeader title="Sobre o jogo" />
+              <SectionHeader title="Sobre o jogo" icon="book" />
               <p className="max-w-3xl text-base leading-relaxed text-text-2">{game.shortDescription}</p>
             </section>
           )}
 
           {game.requirements && (
             <section>
-              <SectionHeader title="Requisitos para PC" aside="Informados pela Steam" />
+              <SectionHeader title="Requisitos para PC" icon="cpu" aside="Informados pela Steam" />
               <Requirements requirements={game.requirements} />
             </section>
           )}
 
           {data.similar.length > 0 && (
             <section>
-              <SectionHeader title="Quem joga isso também joga" aside="Sugestões do IGDB" />
+              <SectionHeader title="Quem joga isso também joga" icon="users" aside="Sugestões do IGDB" />
               <SimilarGames games={data.similar} />
             </section>
           )}

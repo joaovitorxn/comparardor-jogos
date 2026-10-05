@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
+import { Icon, type IconName } from "./icon";
 import type { Rarity } from "@/lib/rarity";
 import { formatCents } from "@/lib/format";
 
-export function SectionHeader({ title, aside, id }: { title: string; aside?: ReactNode; id?: string }) {
+export function SectionHeader({ title, aside, id, icon }: { title: string; aside?: ReactNode; id?: string; icon?: IconName }) {
   return (
     <div id={id} className="mb-4 flex scroll-mt-24 flex-wrap items-end justify-between gap-x-4 gap-y-1 border-b border-line pb-2.5">
       <h2 className="flex items-center gap-2.5 font-display text-xl font-semibold uppercase tracking-wide">
-        <span aria-hidden className="h-4 w-1 bg-accent" />
+        {icon ? <Icon name={icon} className="size-5 text-accent" /> : <span aria-hidden className="h-4 w-1 bg-accent" />}
         {title}
       </h2>
       {aside && <div className="text-xs text-muted">{aside}</div>}

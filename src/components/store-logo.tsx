@@ -1,5 +1,6 @@
 import { siEpicgames, siGogdotcom, siPlaystation, siSteam } from "simple-icons";
 import { getStore } from "@/lib/stores";
+import { Icon } from "./icon";
 
 /**
  * Logo oficial da Xbox. As versões recentes do simple-icons o removeram a pedido da Microsoft;
@@ -61,6 +62,19 @@ export function StoreLogo({ store, size = 28 }: { store: string; size?: number }
         </span>
       )}
     </span>
+  );
+}
+
+/** Ícone da plataforma (PC, PlayStation, Xbox, Nintendo) para filtros e etiquetas. */
+export function PlatformIcon({ family, className = "size-4" }: { family: string; className?: string }) {
+  if (family === "pc") return <Icon name="monitor" className={className} />;
+  if (family === "todas") return <Icon name="grid" className={className} />;
+  const path = { playstation: siPlaystation.path, xbox: XBOX_PATH, nintendo: NINTENDO_SWITCH_PATH }[family];
+  if (!path) return null;
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className}>
+      <path fill="currentColor" d={path} />
+    </svg>
   );
 }
 

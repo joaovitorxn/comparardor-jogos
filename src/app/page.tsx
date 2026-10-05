@@ -131,27 +131,27 @@ export default async function Home() {
 
       {deals.length > 0 && (
         <section>
-          <SectionHeader id="ofertas" title="Promos imperdíveis" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
+          <SectionHeader id="ofertas" title="Promos imperdíveis" icon="flame" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
           <GameGrid games={deals} />
         </section>
       )}
 
       {cheapest.length > 0 && (
         <section>
-          <SectionHeader id="menores-precos" title="Quase de graça" aside={<SeeAll href="/ofertas" label="Ver todas as ofertas" />} />
+          <SectionHeader id="menores-precos" title="Quase de graça" icon="coin" aside={<SeeAll href="/ofertas" label="Ver todas as ofertas" />} />
           <GameGrid games={cheapest} />
         </section>
       )}
 
       {preorders.length > 0 && (
         <section>
-          <SectionHeader id="pre-venda" title="Pré-venda com desconto" aside="Só jogos que ainda não saíram e já têm desconto" />
+          <SectionHeader id="pre-venda" title="Pré-venda com desconto" icon="clock" aside="Só jogos que ainda não saíram e já têm desconto" />
           <GameGrid games={preorders} releaseLabel={(c) => `Lança em ${preorderDates.get(c.game.id)}`} />
         </section>
       )}
 
       <section>
-        <SectionHeader id="lojas" title="Lojas monitoradas" aside={`${stores.filter((s) => s.status === "active").length} de ${stores.length} ativas`} />
+        <SectionHeader id="lojas" title="Lojas monitoradas" icon="store" aside={`${stores.filter((s) => s.status === "active").length} de ${stores.length} ativas`} />
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stores.map((s) => (
             <li key={s.id} className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
