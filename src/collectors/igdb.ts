@@ -151,7 +151,7 @@ export interface IgdbDetails {
   externalIds: ExternalIds;
 }
 
-export function igdbImageUrl(imageId: string, size: "cover_big" | "cover_big_2x" | "1080p" = "cover_big") {
+export function igdbImageUrl(imageId: string, size: "cover_big" | "cover_big_2x" | "1080p" | "screenshot_med" = "cover_big") {
   return `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
 }
 
@@ -220,4 +220,93 @@ export async function fetchIgdbDetails(igdbIds: number[]): Promise<IgdbDetails[]
     }
   }
   return result;
+}
+
+// ---------- exclusivos de console ----------
+
+/** Plataformas no IGDB: PlayStation 4/5 e Switch/Switch 2 (as que queremos) e as que descartam o "exclusivo". */
+const CONSOLE_PLATFORMS = [48, 167, 130, 508];
+const OTHER_PLATFORMS = [6, 14, 3, 49, 169]; // Windows, Mac, Linux, Xbox One, Xbox Series
+
+const GENRE_PT: Record<string, string> = {
+  Adventure: "Aventura",
+  Indie: "Indie",
+  Shooter: "Tiro",
+  Puzzle: "Quebra-cabeça",
+  "Role-playing (RPG)": "RPG",
+  Platform: "Plataforma",
+  Fighting: "Luta",
+  Racing: "Corrida",
+  Simulator: "Simulação",
+  Sport: "Esportes",
+  Strategy: "Estratégia",
+  "Hack and slash/Beat 'em up": "Hack and slash",
+  "Turn-based strategy (TBS)": "Estratégia por turnos",
+  "Real Time Strategy (RTS)": "Estratégia em tempo real",
+  "Card & Board Game": "Cartas e tabuleiro",
+  "Visual Novel": "Visual novel",
+  Arcade: "Arcade",
+  "Music": "Música",
+  "Point-and-click": "Point-and-click",
+  Tactical: "Tático",
+  Pinball: "Pinball",
+  Quiz: "Quiz",
+  "MOBA": "MOBA",
+};
+
+export interface IgdbExclusive {
+  igdbId: number;
+  title: string;
+  summary: string | null;
+  releaseTimestamp: number | null;
+  coverImageId: string | null;
+  heroImageId: string | null;
+  genres: string[];
+  developers: string[];
+  publishers: string[];
+  screenshotImageIds: string[];
+  ratingCount: number;
+}
+
+interface IgdbExclusiveRow {
+  id: number;
+  name: string;
+  summary?: string;
+  first_release_date?: number;
+  cover?: { image_id: string };
+  artworks?: { image_id: string }[];
+  screenshots?: { image_id: string }[];
+  genres?: { name: string }[];
+  involved_companies?: { developer?: boolean; publisher?: boolean; company?: { name: string } }[];
+  total_rating_count?: number;
+}
+
+/**
+ * Jogos que só saem em PlayStation e/ou Nintendo (sem versão de PC, Mac, Linux ou Xbox), do mais
+ * avaliado para o menos. `offset` permite continuar de onde parou.
+ */
+export async function fetchConsoleExclusives({ limit, offset = 0, minRatings = 15 }: { limit: number; offset?: number; minRatings?: number }): Promise<IgdbExclusive[]> {
+  const rows = await query<IgdbExclusiveRow[]>(
+    "games",
+    `fields name,summary,first_release_date,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,
+       involved_companies.developer,involved_companies.publisher,involved_companies.company.name,total_rating_count;
+     where platforms = (${CONSOLE_PLATFORMS.join(",")}) & platforms != (${OTHER_PLATFORMS.join(",")})
+       & game_type = 0 & total_rating_count >= ${minRatings} & cover != null;
+     sort total_rating_count desc; limit ${limit}; offset ${offset};`,
+  );
+  const names = (list: IgdbExclusiveRow["involved_companies"], role: "developer" | "publisher") =>
+    [...new Set((list ?? []).filter((c) => c[role] && c.company).map((c) => c.company!.name))];
+  return rows.map((g) => ({
+    igdbId: g.id,
+    title: g.name,
+    summary: g.summary ?? null,
+    releaseTimestamp: g.first_release_date ?? null,
+    coverImageId: g.cover?.image_id ?? null,
+    heroImageId: g.artworks?.[0]?.image_id ?? g.screenshots?.[0]?.image_id ?? null,
+    genres: (g.genres ?? []).map((x) => GENRE_PT[x.name] ?? x.name),
+    developers: names(g.involved_companies, "developer"),
+    publishers: names(g.involved_companies, "publisher"),
+    screenshotImageIds: (g.screenshots ?? []).slice(0, 8).map((s) => s.image_id),
+    ratingCount: g.total_rating_count ?? 0,
+  }));
 }

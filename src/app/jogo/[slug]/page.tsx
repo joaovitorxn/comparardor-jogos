@@ -77,6 +77,17 @@ function familyCounts(offers: GamePageData["offers"]) {
 }
 
 /** Menor preço em cada plataforma — comparar uma chave de PC com um jogo de PS5 não ajuda quem tem PS5. */
+/** Rótulos de plataforma do IGDB (guardados em game.platforms) → plataformas das nossas lojas. */
+const IGDB_PLATFORM_IDS: Record<string, string[]> = {
+  PC: ["pc"],
+  PS5: ["ps5"],
+  PS4: ["ps4"],
+  "Xbox Series X|S": ["xbox"],
+  "Xbox One": ["xbox"],
+  Switch: ["switch"],
+  "Switch 2": ["switch2"],
+};
+
 function PlatformBests({ offers }: { offers: GamePageData["offers"] }) {
   const bests = PLATFORM_FAMILIES.flatMap((family) => {
     const cheapest = offers.find((o) => o.finalCents != null && offerFamilies(o.listing).includes(family.id));
@@ -241,7 +252,11 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
   const { game, offers, screenshots, videos, series } = data;
   const coveredStores = new Set(offers.map((o) => o.listing.store));
-  const missingStores = Object.values(STORES).filter((s) => !coveredStores.has(s.id));
+  // só lista lojas das plataformas em que o jogo existe (um exclusivo de PlayStation não "falta" na Steam)
+  const gamePlatforms = new Set(game.platforms.flatMap((p) => IGDB_PLATFORM_IDS[p] ?? []));
+  const missingStores = Object.values(STORES).filter(
+    (s) => !coveredStores.has(s.id) && (gamePlatforms.size === 0 || s.platforms.some((p) => gamePlatforms.has(p))),
+  );
   const steamUrl = offers.find((o) => o.listing.store === "steam")?.listing.url ?? null;
   // recém-importado pela busca: as outras lojas ainda estão sendo consultadas em segundo plano
   const enriching = game.enrichedAt == null && data.generatedAt - game.createdAt.getTime() < 10 * 60_000;

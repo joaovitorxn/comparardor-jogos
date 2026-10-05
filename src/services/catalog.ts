@@ -1,15 +1,15 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, like, lt, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, like, lt, notInArray, or, sql } from "drizzle-orm";
 import { collectors, getCollector } from "@/collectors";
 import { getGogOfferById } from "@/collectors/gog";
 import { HttpError } from "@/collectors/http";
 import { fetchPsConcept, psOffer } from "@/collectors/psstore";
 import { fetchXboxProducts } from "@/collectors/xbox";
-import { fetchIgdbDetails, isIgdbConfigured, lookupIgdbIds } from "@/collectors/igdb";
+import { fetchConsoleExclusives, fetchIgdbDetails, igdbImageUrl, isIgdbConfigured, lookupIgdbIds, type IgdbExclusive } from "@/collectors/igdb";
 import { fetchItadHistory, fetchItadPrices, isItadConfigured, ITAD_STORES, lookupItadIds } from "@/collectors/itad";
 import { fetchPreorderDealAppIds, getSteamGameDetails } from "@/collectors/steam";
 import type { OfferPrice, StoreOffer } from "@/collectors/types";
 import { db } from "@/db";
-import { gameMedia, games, listings, priceHistory, priceSnapshots, type Game } from "@/db/schema";
+import { gameMedia, games, listings, priceHistory, priceSnapshots, skippedGames, type Game } from "@/db/schema";
 import { normalizeTitle, slugify } from "@/lib/text";
 
 /** Grava um snapshot só se o preço mudou desde o último — mantém o histórico enxuto. */
@@ -230,6 +230,107 @@ export async function importSteamGame(appId: number) {
   const game = await importSteamGameBasic(appId);
   const matched = await enrichGame(game);
   return { game, matched };
+}
+
+const MONTHS_PT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+/** Data no mesmo formato que a Steam usa ("5/out./2026"). */
+function formatReleaseDate(timestamp: number | null): string | null {
+  if (timestamp == null) return null;
+  const d = new Date(timestamp * 1000);
+  return `${d.getUTCDate()}/${MONTHS_PT[d.getUTCMonth()]}./${d.getUTCFullYear()}`;
+}
+
+async function exclusiveSlug(title: string, igdbId: number) {
+  const base = slugify(title) || `jogo-${igdbId}`;
+  const [taken] = await db.select({ id: games.id }).from(games).where(eq(games.slug, base));
+  return taken ? `${base}-${igdbId}` : base;
+}
+
+/**
+ * Cria um exclusivo de console no catálogo a partir do IGDB e busca os preços (PS Store e
+ * Nintendo eShop). Sem nenhuma oferta com preço, o jogo não fica no catálogo: devolve null e
+ * lembra do descarte para não tentar de novo.
+ */
+export async function importConsoleExclusive(ex: IgdbExclusive): Promise<Game | null> {
+  const data = {
+    title: ex.title,
+    normalizedTitle: normalizeTitle(ex.title),
+    shortDescription: ex.summary,
+    developers: ex.developers,
+    publishers: ex.publishers,
+    genres: ex.genres,
+    releaseDate: formatReleaseDate(ex.releaseTimestamp),
+    coverUrl: ex.coverImageId ? igdbImageUrl(ex.coverImageId, "cover_big_2x") : null,
+    headerUrl: ex.heroImageId ? igdbImageUrl(ex.heroImageId, "1080p") : null,
+    backgroundUrl: ex.heroImageId ? igdbImageUrl(ex.heroImageId, "1080p") : null,
+    igdbId: ex.igdbId,
+  };
+  const [game] = await db
+    .insert(games)
+    .values({ ...data, slug: await exclusiveSlug(ex.title, ex.igdbId) })
+    .returning();
+  if (ex.screenshotImageIds.length) {
+    await db.insert(gameMedia).values(
+      ex.screenshotImageIds.map((id, i) => ({
+        gameId: game.id,
+        type: "screenshot" as const,
+        url: igdbImageUrl(id, "1080p"),
+        thumbUrl: igdbImageUrl(id, "screenshot_med"),
+        position: i,
+      })),
+    );
+  }
+
+  await enrichGame(game);
+
+  const [priced] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(listings)
+    .innerJoin(priceSnapshots, eq(priceSnapshots.listingId, listings.id))
+    .where(and(eq(listings.gameId, game.id), eq(listings.available, true)));
+  if (priced.n > 0) return game;
+
+  await db.delete(games).where(eq(games.id, game.id));
+  await db
+    .insert(skippedGames)
+    .values({ igdbId: ex.igdbId, reason: "sem preço nas lojas" })
+    .onConflictDoUpdate({ target: skippedGames.igdbId, set: { createdAt: new Date() } });
+  return null;
+}
+
+/**
+ * Traz para o catálogo os exclusivos de PlayStation e Nintendo mais avaliados que ainda não
+ * estão nele. Cada chamada processa até `limit` jogos novos (as lojas são lidas uma a uma).
+ */
+export async function syncExclusives({ limit = 8, scan = 150 }: { limit?: number; scan?: number } = {}) {
+  if (!isIgdbConfigured()) return { imported: 0, skipped: 0 };
+  const candidates = await fetchConsoleExclusives({ limit: scan });
+  if (!candidates.length) return { imported: 0, skipped: 0 };
+
+  const ids = candidates.map((c) => c.igdbId);
+  const [inCatalog, ignored] = await Promise.all([
+    db.select({ id: games.igdbId }).from(games).where(inArray(games.igdbId, ids)),
+    // o descarte vale por 14 dias: a falha pode ter sido passageira (loja fora do ar, jogo ainda sem preço)
+    db
+      .select({ id: skippedGames.igdbId })
+      .from(skippedGames)
+      .where(and(inArray(skippedGames.igdbId, ids), gt(skippedGames.createdAt, new Date(Date.now() - 14 * 86_400_000)))),
+  ]);
+  const done = new Set([...inCatalog.map((g) => g.id), ...ignored.map((g) => g.id)]);
+
+  let imported = 0;
+  let skipped = 0;
+  for (const ex of candidates.filter((c) => !done.has(c.igdbId))) {
+    if (imported + skipped >= limit) break;
+    try {
+      if (await importConsoleExclusive(ex)) imported++;
+      else skipped++;
+    } catch (err) {
+      console.warn(`[exclusivos] falha em "${ex.title}":`, err);
+    }
+  }
+  return { imported, skipped };
 }
 
 /**

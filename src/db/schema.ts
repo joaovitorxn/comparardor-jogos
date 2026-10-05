@@ -287,3 +287,15 @@ export const feedback = sqliteTable("feedback", {
     .notNull()
     .default(sql`(unixepoch())`),
 });
+
+/**
+ * Exclusivos de console que já tentamos importar e não tinham preço nas nossas lojas (ou não são
+ * jogos vendáveis hoje): evita repetir a tentativa a cada atualização.
+ */
+export const skippedGames = sqliteTable("skipped_games", {
+  igdbId: integer("igdb_id").primaryKey(),
+  reason: text("reason").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
