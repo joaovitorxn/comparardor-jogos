@@ -3,11 +3,16 @@ export interface Rarity {
   label: string;
 }
 
-/** Raridade do preço pelo desconto (jargão de loot dos jogos): 30% raro, 50% épico, 70% lendário, 90% mítico. */
+/** Do mais raro ao mais comum: o desconto mínimo de cada nível (jargão de loot dos jogos). */
+export const RARITY_TIERS: (Rarity & { minDiscount: number })[] = [
+  { id: "mythic", label: "Preço mítico", minDiscount: 90 },
+  { id: "legendary", label: "Preço lendário", minDiscount: 70 },
+  { id: "epic", label: "Preço épico", minDiscount: 50 },
+  { id: "rare", label: "Preço raro", minDiscount: 30 },
+];
+
+/** Raridade do preço pelo desconto: 30% raro, 50% épico, 70% lendário, 90% mítico. */
 export function priceRarity(discountPercent: number): Rarity | null {
-  if (discountPercent >= 90) return { id: "mythic", label: "Preço mítico" };
-  if (discountPercent >= 70) return { id: "legendary", label: "Preço lendário" };
-  if (discountPercent >= 50) return { id: "epic", label: "Preço épico" };
-  if (discountPercent >= 30) return { id: "rare", label: "Preço raro" };
-  return null;
+  const tier = RARITY_TIERS.find((t) => discountPercent >= t.minDiscount);
+  return tier ? { id: tier.id, label: tier.label } : null;
 }

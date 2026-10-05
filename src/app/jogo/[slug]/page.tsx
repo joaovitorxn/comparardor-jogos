@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
 import { BackToTop } from "@/components/back-to-top";
+import { RarityInfo } from "@/components/rarity-info";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
 import { MediaGallery } from "@/components/media-gallery";
 import { PriceHistoryChart } from "@/components/price-history-chart";
@@ -14,7 +15,7 @@ import { PlatformFilter } from "@/components/platform-filter";
 import { StoreLogo, StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
 import { WishlistButton } from "@/components/wishlist-button";
-import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, RarityTag, SectionHeader, Tag } from "@/components/ui";
+import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { priceRarity } from "@/lib/rarity";
@@ -123,7 +124,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
       <div className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-2">
           <span className="font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Melhor drop</span>
-          {rarity && <RarityTag rarity={rarity} />}
+          {rarity && <RarityInfo rarity={rarity} />}
         </div>
         <div className="flex items-center justify-between gap-2">
           <StoreName store={best.listing.store} size={32} />
