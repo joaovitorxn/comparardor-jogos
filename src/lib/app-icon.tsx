@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og";
+import { LOGO } from "./brand";
 
 /**
- * Ícone do app (mesma marca do cabeçalho): quadrado verde-limão com a linha de preço caindo.
+ * Ícone do app (mesma marca do cabeçalho): quadrado verde-limão com a seta caindo e o "drop".
  * `padding` deixa margem para ícones "maskable" (Android recorta em círculo/squircle).
  */
 export function renderAppIcon(size: number, { rounded = true, padding = 0 } = {}) {
@@ -20,9 +21,9 @@ export function renderAppIcon(size: number, { rounded = true, padding = 0 } = {}
             borderRadius: rounded && !padding ? inner * 0.18 : 0,
           }}
         >
-          <svg width={inner * 0.78} height={inner * 0.78} viewBox="0 0 28 28">
-            <path d="M6 9l6 6 3.5-3.5L22 18" fill="none" stroke="#0b0d12" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M22 12.5V18h-5.5" fill="none" stroke="#0b0d12" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width={inner * 0.84} height={inner * 0.84} viewBox={LOGO.viewBox}>
+            <path d={LOGO.arrow} fill="none" stroke="#0b0d12" strokeWidth={LOGO.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={LOGO.loot} fill="#0b0d12" />
           </svg>
         </div>
       </div>

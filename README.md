@@ -1,6 +1,6 @@
-# comparador.jogos
+# Dropou
 
-Comparador de preços de jogos entre lojas digitais, com cupons aplicados no preço final.
+Comparador de preços de jogos entre lojas digitais e de console, com cupons aplicados no preço final — [dropou.com.br](https://dropou.com.br).
 
 **Stack:** Next.js 16 (App Router) · TypeScript · Tailwind 4 · Drizzle ORM · SQLite/libsql (Turso em produção)
 

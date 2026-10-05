@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
 import { LogoMark, SiteHeader } from "@/components/site-header";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,13 +18,15 @@ const barlow = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
+  // na Vercel, o domínio de produção (dropou.com.br) — base das URLs da imagem de compartilhamento
+  metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"),
   title: {
-    default: "comparador.jogos — o menor preço de cada jogo",
-    template: "%s — comparador.jogos",
+    default: `${BRAND.name} — ${BRAND.tagline}`,
+    template: `%s — ${BRAND.name}`,
   },
   description: "Compare preços de jogos na Steam, GOG, Epic, Nuuvem, Green Man Gaming e Microsoft Store, já com cupons.",
   // instalado na tela inicial do iPhone, abre como app (requisito para notificações no iOS)
-  appleWebApp: { capable: true, title: "comparador", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
@@ -41,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-xs text-muted sm:flex-row sm:items-start sm:justify-between lg:px-6">
             <Link href="/" className="flex items-center gap-2 text-text-2">
               <LogoMark className="size-5" />
-              <span className="font-display text-sm font-bold uppercase tracking-wide">comparador.jogos</span>
+              <span className="font-display text-base font-bold uppercase tracking-wide">{BRAND.name}</span>
             </Link>
             <p className="max-w-xl leading-relaxed sm:text-right">
               Preços coletados das lojas e podem mudar sem aviso. Confira sempre na loja antes de comprar. Parte dos preços e

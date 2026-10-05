@@ -1,6 +1,6 @@
 # Atualiza os preços do site de hora em hora chamando /api/cron/refresh.
 # Configure em Settings → Secrets and variables → Actions:
-#   SITE_URL     ex.: https://comparador-jogos.vercel.app (sem barra no fim)
+#   SITE_URL     ex.: https://dropou.com.br (sem barra no fim)
 #   CRON_SECRET  o mesmo valor configurado na hospedagem
 name: Atualizar preços
 

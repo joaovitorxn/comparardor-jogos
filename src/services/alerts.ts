@@ -162,8 +162,8 @@ export async function checkPriceAlerts() {
         : `Antes ${formatCents(alert.baselineCents)}`;
     try {
       const result = await sendPush(sub, {
-        title: `${game.title}: ${price.cents === 0 ? "grátis" : formatCents(price.cents)} na ${storeName} (${PLATFORM_LABELS[price.platform]})`,
-        body: `${reason}${price.discountPercent > 0 ? ` · -${price.discountPercent}%` : ""}. Toque para comparar.`,
+        title: `Dropou! ${game.title}`,
+        body: `${price.cents === 0 ? "Grátis" : formatCents(price.cents)} na ${storeName} (${PLATFORM_LABELS[price.platform]})${price.discountPercent > 0 ? ` · -${price.discountPercent}%` : ""}. ${reason}.`,
         url: `${siteUrl}/jogo/${game.slug}`,
         image: game.headerUrl ?? undefined,
         tag: `jogo-${game.id}`,

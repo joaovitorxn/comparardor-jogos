@@ -26,7 +26,7 @@ export function isPushConfigured() {
 function configure() {
   if (configured) return;
   webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT ?? "https://comparador-jogos.vercel.app",
+    process.env.VAPID_SUBJECT ?? "https://dropou.com.br",
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!,
   );

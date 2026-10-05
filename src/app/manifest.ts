@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { BRAND } from "@/lib/brand";
 
 // Permite instalar o site na tela inicial — no iPhone, é o que libera as notificações de alerta.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "comparador.jogos — o menor preço de cada jogo",
-    short_name: "comparador",
+    name: `${BRAND.name} — ${BRAND.tagline}`,
+    short_name: BRAND.name,
     description: "Compare preços de jogos entre lojas e receba alertas quando baixarem.",
     lang: "pt-BR",
     start_url: "/",

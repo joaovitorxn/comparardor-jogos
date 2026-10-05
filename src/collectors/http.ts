@@ -1,4 +1,4 @@
-const USER_AGENT = "comparador-jogos/0.1";
+const USER_AGENT = "dropou/0.1 (+https://dropou.com.br)";
 
 export class HttpError extends Error {
   readonly url: string;
