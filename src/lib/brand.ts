@@ -2,6 +2,8 @@
 export const BRAND = {
   name: "Dropou",
   tagline: "Desbloqueie o menor preço",
+  /** Frase das prévias de link e do Google. */
+  description: "Compare preços de jogos em PC, PlayStation, Xbox e Nintendo, veja o histórico e receba alerta quando o jogo dropar.",
   domain: "dropou.com.br",
 } as const;
 

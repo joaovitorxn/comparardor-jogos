@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: `${BRAND.name} — ${BRAND.tagline}`,
     short_name: BRAND.name,
-    description: "Compare preços de jogos entre lojas e receba alertas quando baixarem.",
+    description: BRAND.description,
     lang: "pt-BR",
     start_url: "/",
     display: "standalone",

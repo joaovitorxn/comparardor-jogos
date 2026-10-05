@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     default: `${BRAND.name} — ${BRAND.tagline}`,
     template: `%s — ${BRAND.name}`,
   },
-  description: "Compare preços de jogos na Steam, GOG, Epic, Nuuvem, Green Man Gaming e Microsoft Store, já com cupons.",
+  description: BRAND.description,
   // instalado na tela inicial do iPhone, abre como app (requisito para notificações no iOS)
   appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "black-translucent" },
 };
