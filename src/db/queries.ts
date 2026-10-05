@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
-import { compareOffers } from "@/lib/stores";
+import { compareOffers, offerFamilies, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
 import { db } from ".";
 import {
@@ -190,19 +190,53 @@ function isUnreleased(game: Game, now: Date): boolean {
 }
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
-let poolCache: { at: number; pool: Promise<GameSummary[]> } | null = null;
+const poolCache = new Map<string, { at: number; pool: Promise<GameSummary[]> }>();
 const POOL_TTL_MS = 5 * 60_000;
 
-export function getDealPool(): Promise<GameSummary[]> {
+/**
+ * Todos os jogos em promoção. Com `platforms`, só contam as ofertas das plataformas escolhidas (o
+ * preço, o desconto e a loja de cada jogo vêm só delas) e só entram jogos com desconto nelas.
+ */
+export function getDealPool(platforms: PlatformFamilyId[] = []): Promise<GameSummary[]> {
   // a página de ofertas é dinâmica; sem isso cada acesso refaria o ranking inteiro
-  if (!poolCache || Date.now() - poolCache.at > POOL_TTL_MS) {
-    const pool = getDeals({ limit: 2000 }).then((r) => r.items);
-    poolCache = { at: Date.now(), pool };
-    pool.catch(() => {
-      if (poolCache?.pool === pool) poolCache = null;
-    });
+  const key = platforms.join("-");
+  const cached = poolCache.get(key);
+  if (cached && Date.now() - cached.at < POOL_TTL_MS) return cached.pool;
+  const pool = platforms.length ? getPlatformDeals(platforms) : getDeals({ limit: 2000 }).then((r) => r.items);
+  poolCache.set(key, { at: Date.now(), pool });
+  pool.catch(() => {
+    if (poolCache.get(key)?.pool === pool) poolCache.delete(key);
+  });
+  return pool;
+}
+
+/** Promoções vistas só pelas ofertas das plataformas escolhidas. */
+async function getPlatformDeals(platforms: PlatformFamilyId[]): Promise<GameSummary[]> {
+  const mine = Map.groupBy(
+    (await latestPrices()).filter((p) => offerFamilies(p.listing).some((f) => platforms.includes(f))),
+    (p) => p.listing.gameId,
+  );
+  const onSale = [...mine].filter(([, offers]) => offers.some((o) => o.snapshot.discountPercent > 0));
+  const rows: Game[] = [];
+  for (let i = 0; i < onSale.length; i += 500) {
+    rows.push(...(await db.select().from(games).where(inArray(games.id, onSale.slice(i, i + 500).map(([id]) => id)))));
   }
-  return poolCache.pool;
+  const byId = new Map(rows.map((g) => [g.id, g]));
+  return onSale.flatMap(([id, offers]) => {
+    const game = byId.get(id);
+    if (!game) return [];
+    const best = offers.reduce((acc, o) => (compareOffers({ cents: o.snapshot.priceCents, store: o.listing.store }, { cents: acc.snapshot.priceCents, store: acc.listing.store }) < 0 ? o : acc));
+    return [
+      {
+        game,
+        bestPriceCents: best.snapshot.priceCents,
+        regularPriceCents: best.snapshot.regularPriceCents,
+        maxDiscount: Math.max(...offers.map((o) => o.snapshot.discountPercent)),
+        storeCount: offers.length,
+        bestStore: best.listing.store,
+      },
+    ];
+  });
 }
 
 /** Pré-vendas com desconto, do maior desconto para o menor, as mais próximas do lançamento primeiro no empate. */
@@ -211,6 +245,14 @@ export function pickPreorderDeals(pool: GameSummary[], limit: number): GameSumma
   return pool
     .filter((s) => s.maxDiscount > 0 && isUnreleased(s.game, now))
     .sort((a, b) => b.maxDiscount - a.maxDiscount || (releaseDate(a.game.releaseDate)!.getTime() - releaseDate(b.game.releaseDate)!.getTime()))
+    .slice(0, limit);
+}
+
+/** Os jogos em promoção de menor preço (sem os grátis), do mais barato para o mais caro. */
+export function pickCheapestDeals(pool: GameSummary[], limit: number): GameSummary[] {
+  return pool
+    .filter((s) => s.maxDiscount > 0 && (s.bestPriceCents ?? 0) > 0)
+    .sort((a, b) => a.bestPriceCents! - b.bestPriceCents! || b.maxDiscount - a.maxDiscount)
     .slice(0, limit);
 }
 

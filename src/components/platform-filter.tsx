@@ -1,9 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { PlatformIcon } from "./store-logo";
-import { usePlatformPref, type PlatformPref } from "@/lib/platform-pref";
+import { usePlatforms } from "@/lib/use-platforms";
 import { PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
+
+type PlatformPref = "todas" | PlatformFamilyId;
 
 /**
  * Chips de plataforma acima da tabela de preços. A tabela continua renderizada no servidor:
@@ -19,10 +21,14 @@ export function PlatformFilter({
   total: number;
   children: ReactNode;
 }) {
-  const [pref, setPref] = usePlatformPref();
+  const { platforms } = usePlatforms();
+  // a aba abre na única plataforma escolhida no cabeçalho (com várias, ou nenhuma, abre em "Todas");
+  // trocar de aba aqui vale só para esta página — a escolha do cabeçalho não muda
+  const [picked, setPref] = useState<PlatformPref | null>(null);
   const families = PLATFORM_FAMILIES.filter((f) => counts[f.id]);
-  // preferência salva para uma plataforma que este jogo não tem: mostra todas
-  const active: PlatformPref = pref !== "todas" && counts[pref] ? pref : "todas";
+  const wanted: PlatformPref = picked ?? (platforms.length === 1 ? platforms[0] : "todas");
+  // plataforma que este jogo não tem: mostra todas
+  const active: PlatformPref = wanted !== "todas" && counts[wanted] ? wanted : "todas";
   const options: { id: PlatformPref; label: string; count: number }[] = [
     { id: "todas", label: "Todas", count: total },
     ...families.map((f) => ({ id: f.id, label: f.label, count: counts[f.id]! })),
@@ -49,7 +55,6 @@ export function PlatformFilter({
               <span className={`tabular ${active === o.id ? "" : "text-muted"}`}>{o.count}</span>
             </button>
           ))}
-          {active !== "todas" && <span className="ml-1 text-xs text-muted">Lembramos a sua escolha neste aparelho.</span>}
         </div>
       )}
       {children}

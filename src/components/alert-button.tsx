@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatCents } from "@/lib/format";
 import type { FamilyKey } from "@/lib/best-by-family";
-import { usePlatformPref } from "@/lib/platform-pref";
+import { usePlatforms } from "@/lib/use-platforms";
 import { getExistingSubscription, getPushSupport, parseBrl, PushPermissionError, subscribeToPush } from "@/lib/push-client";
 import { PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { useWishlist } from "@/lib/wishlist";
@@ -58,7 +58,9 @@ function suggestTarget(current: number, low: number | null) {
 export function AlertButton({ gameId, gameTitle, prices, lows }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const wishlist = useWishlist();
-  const [pref] = usePlatformPref();
+  const { platforms } = usePlatforms();
+  // com uma só plataforma escolhida no cabeçalho, o alerta já abre nela
+  const pref = platforms.length === 1 ? platforms[0] : "todas";
   const [existing, setExisting] = useState<ExistingAlert | null>(null);
   const [kind, setKind] = useState<"target" | "sale">("target");
   // plataforma escolhida no diálogo; até a pessoa escolher, segue a do filtro da tabela

@@ -1,7 +1,9 @@
 import { inArray } from "drizzle-orm";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { GameGrid, type CardData } from "@/components/game-card";
+import { PlatformNotice } from "@/components/platform-notice";
 import { Pagination, parsePage } from "@/components/pagination";
 import { SearchFilters } from "@/components/search-filters";
 import { SearchForm } from "@/components/search-form";
@@ -10,9 +12,10 @@ import { SectionHeader } from "@/components/ui";
 import { searchSteamGames, type SteamStoreItem } from "@/collectors/steam";
 import { db } from "@/db";
 import { games } from "@/db/schema";
+import { parsePlatforms, PLATFORMS_COOKIE } from "@/lib/platform-selection";
 import { DISCOUNTS, PRICE_CAPS, SORTS, type FilterValues } from "@/lib/search-options";
 import { getStore, PLATFORM_FAMILIES, STORES, type PlatformFamilyId } from "@/lib/stores";
-import { searchCatalog, type SearchDoc, type SearchSort } from "@/services/search";
+import { bestPriceFor, searchCatalog, type SearchDoc, type SearchSort } from "@/services/search";
 
 const PAGE_SIZE = 30;
 const FAMILY_IDS = new Set<string>(PLATFORM_FAMILIES.map((f) => f.id));
@@ -26,8 +29,8 @@ export async function generateMetadata(props: PageProps<"/busca">): Promise<Meta
 const str = (v: string | string[] | undefined) => (typeof v === "string" ? v.trim() : "");
 
 /** Resultado da busca → dados do card, com o preço da plataforma filtrada. */
-function toCard(doc: SearchDoc, platform?: PlatformFamilyId): CardData {
-  const price = doc.prices[platform ?? "all"];
+function toCard(doc: SearchDoc, platforms: PlatformFamilyId[]): CardData {
+  const price = bestPriceFor(doc, platforms);
   return {
     game: { id: doc.id, slug: doc.slug, title: doc.title, coverUrl: doc.coverUrl },
     bestPriceCents: price?.cents ?? null,
@@ -50,14 +53,16 @@ export default async function SearchPage(props: PageProps<"/busca">) {
     ordem: SORT_IDS.has(str(params.ordem)) ? str(params.ordem) : "relevancia",
   };
   const page = parsePage(params.pagina);
-  const platform = (values.plataforma || undefined) as PlatformFamilyId | undefined;
+  // filtro explícito da página vale mais; senão, valem as plataformas escolhidas no cabeçalho
+  const mine = parsePlatforms((await cookies()).get(PLATFORMS_COOKIE)?.value);
+  const platforms: PlatformFamilyId[] = values.plataforma ? [values.plataforma as PlatformFamilyId] : mine;
   const hasFilters = Boolean(values.plataforma || values.ate || values.desconto || values.loja || values.genero);
 
   const [result, steam] = await Promise.all([
     searchCatalog(
       {
         q: values.q,
-        platform,
+        platforms,
         maxCents: values.ate ? Number(values.ate) * 100 : undefined,
         minDiscount: values.desconto ? Number(values.desconto) : undefined,
         store: values.loja || undefined,
@@ -102,6 +107,7 @@ export default async function SearchPage(props: PageProps<"/busca">) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
       <SearchForm defaultValue={values.q} size="lg" className="mb-8 max-w-2xl" />
+      <PlatformNotice platforms={values.plataforma ? [] : mine} />
 
       <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
         {/* filtros: lateral no computador, recolhível no celular */}
@@ -132,7 +138,7 @@ export default async function SearchPage(props: PageProps<"/busca">) {
           )}
 
           {result.items.length > 0 ? (
-            <GameGrid games={result.items.map((d) => toCard(d, platform))} />
+            <GameGrid games={result.items.map((d) => toCard(d, platforms))} />
           ) : (
             <p className="rounded-card border border-dashed border-line p-6 text-sm text-text-2">
               {hasFilters ? "Nenhum jogo com esses filtros. Tente remover algum." : "Nenhum jogo do catálogo combina com a busca."}

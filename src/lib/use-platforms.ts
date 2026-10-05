@@ -1,0 +1,42 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useSyncExternalStore } from "react";
+import { parsePlatforms, PLATFORMS_COOKIE, serializePlatforms } from "./platform-selection";
+import type { PlatformFamilyId } from "./stores";
+
+const EVENT = "dropou:plataformas";
+
+function readCookie(): string {
+  try {
+    const match = document.cookie.split("; ").find((c) => c.startsWith(`${PLATFORMS_COOKIE}=`));
+    return match ? decodeURIComponent(match.slice(PLATFORMS_COOKIE.length + 1)) : "";
+  } catch {
+    return "";
+  }
+}
+
+function subscribe(onChange: () => void) {
+  window.addEventListener(EVENT, onChange);
+  return () => window.removeEventListener(EVENT, onChange);
+}
+
+/**
+ * Plataformas escolhidas pela pessoa. Vazio = todas. Ao mudar, grava o cookie e recarrega os dados
+ * da página atual (o servidor lê o cookie para filtrar).
+ */
+export function usePlatforms() {
+  const router = useRouter();
+  const raw = useSyncExternalStore(subscribe, readCookie, () => "");
+  const platforms = parsePlatforms(raw);
+
+  function setPlatforms(next: PlatformFamilyId[]) {
+    const value = serializePlatforms(next);
+    const oneYear = 60 * 60 * 24 * 365;
+    document.cookie = `${PLATFORMS_COOKIE}=${value}; path=/; max-age=${value ? oneYear : 0}; samesite=lax`;
+    window.dispatchEvent(new Event(EVENT));
+    router.refresh();
+  }
+
+  return { platforms, setPlatforms };
+}

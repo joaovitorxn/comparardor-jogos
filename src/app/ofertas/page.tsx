@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
+import { PlatformNotice } from "@/components/platform-notice";
 import { Icon, type IconName } from "@/components/icon";
 import { Pagination, parsePage } from "@/components/pagination";
 import { SectionHeader } from "@/components/ui";
-import { getDealPool, getDeals, rankDeals } from "@/db/queries";
+import { getDealPool, pickCheapestDeals, rankDeals } from "@/db/queries";
+import { parsePlatforms, PLATFORMS_COOKIE } from "@/lib/platform-selection";
 
 const PAGE_SIZE = 30;
 
@@ -27,15 +30,17 @@ export default async function DealsPage(props: PageProps<"/ofertas">) {
   const sort: SortId = SORTS.find((s) => s.id === params.ordem)?.id ?? "relevancia";
   const offset = (page - 1) * PAGE_SIZE;
 
-  let items;
-  let total;
-  if (sort === "relevancia") {
-    const ranked = rankDeals(await getDealPool());
-    items = ranked.slice(offset, offset + PAGE_SIZE);
-    total = ranked.length;
-  } else {
-    ({ items, total } = await getDeals({ limit: PAGE_SIZE, offset, sort }));
-  }
+  // só as ofertas das plataformas que a pessoa escolheu no cabeçalho (todas, se não escolheu)
+  const platforms = parsePlatforms((await cookies()).get(PLATFORMS_COOKIE)?.value);
+  const pool = await getDealPool(platforms);
+  const ranked =
+    sort === "relevancia"
+      ? rankDeals(pool)
+      : sort === "preco"
+        ? pickCheapestDeals(pool, Infinity)
+        : [...pool].sort((a, b) => b.maxDiscount - a.maxDiscount || (a.bestPriceCents ?? Infinity) - (b.bestPriceCents ?? Infinity));
+  const items = ranked.slice(offset, offset + PAGE_SIZE);
+  const total = ranked.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (s: SortId, p = 1) => {
     const qs = new URLSearchParams();
@@ -47,6 +52,7 @@ export default async function DealsPage(props: PageProps<"/ofertas">) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
       <SectionHeader title="Ofertas" icon="tag" aside={`${total} jogos com desconto · ${SORTS.find((s) => s.id === sort)!.hint}`} />
+      <PlatformNotice platforms={platforms} />
       <nav aria-label="Ordenar ofertas" className="mb-5 flex flex-wrap gap-2">
         {SORTS.map((s) => (
           <Link

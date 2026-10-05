@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { formatCents } from "@/lib/format";
-import { usePlatformPref } from "@/lib/platform-pref";
+import { usePlatforms } from "@/lib/use-platforms";
 
 interface Suggestion {
   slug: string;
@@ -22,7 +22,8 @@ export function SearchForm({ defaultValue, className = "", size = "md", autoFocu
   const lg = size === "lg";
   const router = useRouter();
   const listId = useId();
-  const [pref] = usePlatformPref();
+  const { platforms } = usePlatforms();
+  const platformsKey = platforms.join(",");
   const [value, setValue] = useState(defaultValue ?? "");
   const [items, setItems] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
@@ -39,7 +40,7 @@ export function SearchForm({ defaultValue, className = "", size = "md", autoFocu
       requestRef.current = controller;
       try {
         const qs = new URLSearchParams({ q });
-        if (pref !== "todas") qs.set("plataforma", pref);
+        if (platformsKey) qs.set("plataformas", platformsKey);
         const res = await fetch(`/api/busca/sugestoes?${qs}`, { signal: controller.signal });
         const data = (await res.json()) as { suggestions: Suggestion[] };
         setItems(data.suggestions);
@@ -49,7 +50,7 @@ export function SearchForm({ defaultValue, className = "", size = "md", autoFocu
       }
     }, 150);
     return () => clearTimeout(timer);
-  }, [value, pref]);
+  }, [value, platformsKey]);
 
   const visible = open && value.trim().length >= 2 && items.length > 0;
   // a última opção é sempre "ver todos os resultados"

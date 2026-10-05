@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BRAND, LOGO } from "@/lib/brand";
 import { Icon, type IconName } from "./icon";
 import { MobileSearch } from "./mobile-search";
+import { PlatformSelector } from "./platform-selector";
 import { SearchForm } from "./search-form";
 
 export function LogoMark({ className = "size-7" }: { className?: string }) {
@@ -23,7 +24,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 lg:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-6 lg:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={`${BRAND.name} — início`}>
           <LogoMark />
           <span className="font-display text-2xl font-bold uppercase leading-none tracking-wide">{BRAND.name}</span>
@@ -38,6 +39,7 @@ export function SiteHeader() {
         </nav>
         <SearchForm className="ml-auto hidden w-full max-w-sm sm:block" />
         <MobileSearch />
+        <PlatformSelector />
         <Link href="/ofertas" aria-label="Ofertas" className="flex shrink-0 text-text-2 transition hover:text-accent md:hidden">
           <Icon name="tag" className="size-5" />
         </Link>

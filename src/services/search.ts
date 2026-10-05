@@ -5,7 +5,7 @@ import { getBestPricesByFamily } from "@/db/queries";
 import { games, listings } from "@/db/schema";
 import type { BestPrice, FamilyKey } from "@/lib/best-by-family";
 import { searchTerm, titleAcronyms } from "@/lib/search-text";
-import type { PlatformFamilyId } from "@/lib/stores";
+import { compareOffers, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
 
 /**
@@ -33,7 +33,8 @@ export type SearchSort = "relevancia" | "menor-preco" | "maior-desconto" | "nota
 
 export interface SearchFilters {
   q?: string;
-  platform?: PlatformFamilyId;
+  /** Plataformas escolhidas (vazio = todas): só jogos à venda nelas, com o preço vindo delas. */
+  platforms?: PlatformFamilyId[];
   minCents?: number;
   maxCents?: number;
   minDiscount?: number;
@@ -141,7 +142,13 @@ function textSearch(index: MiniSearch<SearchDoc>, docs: Map<number, SearchDoc>, 
     .sort((a, b) => Number(normalizeTitle(b.title) === target) - Number(normalizeTitle(a.title) === target));
 }
 
-const priceOf = (doc: SearchDoc, platform?: PlatformFamilyId) => doc.prices[platform ?? "all"];
+/** Melhor preço do jogo entre as plataformas escolhidas (sem escolha, entre todas). */
+export function bestPriceFor(doc: SearchDoc, platforms: PlatformFamilyId[] = []): BestPrice | undefined {
+  if (!platforms.length) return doc.prices.all;
+  return platforms
+    .flatMap((f) => (doc.prices[f] ? [doc.prices[f]!] : []))
+    .sort((a, b) => compareOffers(a, b))[0];
+}
 
 export async function searchCatalog(filters: SearchFilters, { limit = 30, offset = 0 } = {}) {
   const { index, docs } = await getState();
@@ -149,8 +156,8 @@ export async function searchCatalog(filters: SearchFilters, { limit = 30, offset
   let results = q ? textSearch(index, docs, q) : [...docs.values()];
 
   results = results.filter((doc) => {
-    const price = priceOf(doc, filters.platform);
-    if (filters.platform && !price) return false;
+    const price = bestPriceFor(doc, filters.platforms);
+    if (filters.platforms?.length && !price) return false;
     if (filters.store && !doc.stores.includes(filters.store)) return false;
     if (filters.genre && !doc.genres.includes(filters.genre)) return false;
     if (filters.minCents != null && (!price || price.cents < filters.minCents)) return false;
@@ -160,12 +167,12 @@ export async function searchCatalog(filters: SearchFilters, { limit = 30, offset
   });
 
   const sort = filters.sort ?? "relevancia";
-  const cents = (d: SearchDoc) => priceOf(d, filters.platform)?.cents ?? Infinity;
+  const cents = (d: SearchDoc) => bestPriceFor(d, filters.platforms)?.cents ?? Infinity;
   const comparators: Record<SearchSort, ((a: SearchDoc, b: SearchDoc) => number) | null> = {
     // com texto, a ordem do índice já é a relevância; sem texto, jogos em mais lojas (mais populares) primeiro
     relevancia: q ? null : (a, b) => b.stores.length - a.stores.length || (b.rating ?? 0) - (a.rating ?? 0),
     "menor-preco": (a, b) => cents(a) - cents(b),
-    "maior-desconto": (a, b) => (priceOf(b, filters.platform)?.discountPercent ?? 0) - (priceOf(a, filters.platform)?.discountPercent ?? 0),
+    "maior-desconto": (a, b) => (bestPriceFor(b, filters.platforms)?.discountPercent ?? 0) - (bestPriceFor(a, filters.platforms)?.discountPercent ?? 0),
     nota: (a, b) => (b.rating ?? -1) - (a.rating ?? -1),
     az: (a, b) => a.title.localeCompare(b.title, "pt-BR"),
   };
@@ -196,10 +203,10 @@ export interface Suggestion {
 }
 
 /** Até `limit` jogos para o autocompletar da barra de busca. */
-export async function suggest(q: string, { limit = 3, platform }: { limit?: number; platform?: PlatformFamilyId } = {}): Promise<Suggestion[]> {
+export async function suggest(q: string, { limit = 3, platforms }: { limit?: number; platforms?: PlatformFamilyId[] } = {}): Promise<Suggestion[]> {
   if (q.trim().length < 2) return [];
   const { index, docs } = await getState();
   return textSearch(index, docs, q)
     .slice(0, limit)
-    .map((d) => ({ slug: d.slug, title: d.title, coverUrl: d.coverUrl, price: (platform && d.prices[platform]) || d.prices.all || null }));
+    .map((d) => ({ slug: d.slug, title: d.title, coverUrl: d.coverUrl, price: bestPriceFor(d, platforms) ?? d.prices.all ?? null }));
 }
