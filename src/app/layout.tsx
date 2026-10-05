@@ -61,6 +61,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               . Marcas e logos pertencem às respectivas lojas.
             </p>
           </div>
+          <p className="mx-auto flex max-w-7xl items-center justify-center gap-1.5 border-t border-line px-4 py-4 text-xs text-muted lg:px-6">
+            Desenvolvido por Berk
+            <svg viewBox="0 0 24 24" role="img" aria-label="com carinho" className="size-3.5 text-danger" fill="currentColor">
+              <path d="M12 21s-7.5-4.6-9.6-9.3A5.6 5.6 0 0 1 12 5.9a5.6 5.6 0 0 1 9.6 5.8C19.5 16.4 12 21 12 21Z" />
+            </svg>
+          </p>
         </footer>
         <FeedbackButton />
         <Analytics />
