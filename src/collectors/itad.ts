@@ -137,6 +137,9 @@ export async function fetchPopularSteamAppIds(limit: number): Promise<number[]> 
 /** Todas as lojas que comparamos, inclusive as de coletor direto — o histórico usa todas. */
 const HISTORY_SHOPS: Record<number, StoreId> = { ...ITAD_SHOPS, [STEAM_SHOP]: "steam", [GOG_SHOP]: "gog" };
 
+/** Lojas com histórico de anos na ITAD; as outras (consoles) só têm o que registramos nós mesmos. */
+export const ITAD_HISTORY_STORES = new Set<string>(Object.values(HISTORY_SHOPS));
+
 export interface ItadHistoryEntry {
   store: StoreId;
   priceCents: number;

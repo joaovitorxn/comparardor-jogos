@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, like, sql } from "drizzle-orm";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
+import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
 import { compareOffers } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
@@ -249,6 +250,8 @@ export interface HistoricLow {
 export interface PriceSeries {
   store: string;
   points: [number, number][];
+  /** Lojas sem histórico externo (consoles): desde quando nós registramos os preços. */
+  trackedSince: number | null;
 }
 
 export async function getGamePage(slug: string) {
@@ -305,7 +308,7 @@ export async function getGamePage(slug: string) {
     for (const e of sorted) {
       if (points.at(-1)?.[1] !== e.priceCents) points.push([e.at.getTime(), e.priceCents]);
     }
-    return { store, points };
+    return { store, points, trackedSince: ITAD_HISTORY_STORES.has(store) || !sorted.length ? null : sorted[0].at.getTime() };
   });
 
   // Menor preço: o evento mais barato com data; a ITAD pode saber de um mais antigo que os 5 anos importados

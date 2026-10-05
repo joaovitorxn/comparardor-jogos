@@ -124,6 +124,8 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
     return <p className="rounded-card border border-line bg-surface p-6 text-sm text-text-2">Ainda não há histórico de preços para este jogo.</p>;
   }
 
+  // consoles: não há histórico antigo, só o que registramos desde que o jogo entrou no catálogo
+  const tracked = withData.filter((s) => s.trackedSince != null);
   const firstPoint = Math.min(...withData.map((s) => s.points[0][0]));
   const rangeDays = RANGES.find((r) => r.id === range)!.days;
   const start = rangeDays === Infinity ? firstPoint : Math.max(firstPoint, now - rangeDays * DAY);
@@ -348,6 +350,19 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
           </div>
         )}
       </div>
+
+      {tracked.length > 0 && (
+        <p className="mt-3 rounded-[4px] border border-line bg-surface-2 px-3 py-2 text-xs leading-relaxed text-text-2">
+          {tracked.map((s, i) => (
+            <span key={s.store}>
+              {i > 0 && (i === tracked.length - 1 ? " e " : ", ")}
+              <span className="font-medium text-text">{storeName(s.store)}</span>
+            </span>
+          ))}{" "}
+          {tracked.length > 1 ? "não divulgam" : "não divulga"} preços antigos: o histórico {tracked.length > 1 ? "delas" : "dela"} é registrado pelo Dropou
+          {` desde ${dateFmt.format(Math.min(...tracked.map((s) => s.trackedSince!)))}`} e vai ficando mais completo com o tempo.
+        </p>
+      )}
 
       <details className="mt-3 border-t border-line pt-3 text-sm">
         <summary className="cursor-pointer text-xs text-muted hover:text-text">Ver resumo por loja</summary>
