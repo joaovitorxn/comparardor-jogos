@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
+import { BackToTop } from "@/components/back-to-top";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
 import { MediaGallery } from "@/components/media-gallery";
 import { PriceHistoryChart } from "@/components/price-history-chart";
@@ -285,6 +286,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
         <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
           {enriching && <EnrichmentWatcher gameId={game.id} slug={game.slug} />}
+          <BackToTop />
 
           <section>
             <SectionHeader title="Onde comprar" aside="Preços em R$, ordenados pelo valor final" />
