@@ -33,7 +33,7 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
         />
         {maxDiscount > 0 && (
           <span className="absolute left-0 top-3">
-            <DiscountBadge percent={maxDiscount} className="rounded-l-none pl-2" />
+            <DiscountBadge percent={maxDiscount} size="xl" className="rounded-l-none pl-2 shadow-lg shadow-black/60" />
           </span>
         )}
         {releaseLabel && (

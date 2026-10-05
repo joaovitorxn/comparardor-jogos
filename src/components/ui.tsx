@@ -13,8 +13,8 @@ export function SectionHeader({ title, aside, id }: { title: string; aside?: Rea
   );
 }
 
-export function DiscountBadge({ percent, size = "md", className = "" }: { percent: number; size?: "sm" | "md" | "lg"; className?: string }) {
-  const sizes = { sm: "px-1 text-xs", md: "px-1.5 py-0.5 text-sm", lg: "px-2 py-0.5 text-lg" };
+export function DiscountBadge({ percent, size = "md", className = "" }: { percent: number; size?: "sm" | "md" | "lg" | "xl"; className?: string }) {
+  const sizes = { sm: "px-1 text-xs", md: "px-1.5 py-0.5 text-sm", lg: "px-2 py-0.5 text-lg", xl: "px-2.5 py-1 text-2xl" };
   return (
     <span className={`tabular inline-block rounded-[3px] bg-accent font-display font-bold leading-tight text-accent-ink ${sizes[size]} ${className}`}>
       -{percent}%
