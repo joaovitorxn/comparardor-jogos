@@ -111,8 +111,8 @@ export const gogCollector: StoreCollector = {
           discountPercent: regularPriceCents > 0 ? Math.round((1 - priceCents / regularPriceCents) * 100) : 0,
         });
       } catch (err) {
-        // 404 = produto removido ou indisponível no Brasil
-        if (err instanceof HttpError && err.status === 404) result.set(id, null);
+        // 404/400 = produto removido, antigo (ids legados vindos do IGDB) ou indisponível no Brasil
+        if (err instanceof HttpError && (err.status === 404 || err.status === 400)) result.set(id, null);
         else throw err;
       }
     };
