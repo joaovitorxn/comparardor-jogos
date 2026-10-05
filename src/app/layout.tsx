@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
+import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
@@ -39,6 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="pt-BR" className={`${inter.variable} ${barlow.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
         <SiteHeader />
+        <div className="mx-auto flex h-8 w-full max-w-7xl items-center justify-end px-4 lg:px-6">
+          <LiveVisitors />
+        </div>
         <main className="flex-1">{children}</main>
         <footer className="mt-16 border-t border-line bg-surface">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-xs text-muted sm:flex-row sm:items-start sm:justify-between lg:px-6">

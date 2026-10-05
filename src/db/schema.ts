@@ -263,3 +263,13 @@ export type PriceHistoryEntry = typeof priceHistory.$inferSelect;
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 export type PriceAlert = typeof priceAlerts.$inferSelect;
 export type Platform = Listing["platform"];
+
+/** Visitantes com o site aberto: cada aba avisa que está viva de tempos em tempos (sem dados pessoais). */
+export const presence = sqliteTable(
+  "presence",
+  {
+    id: text("id").primaryKey(),
+    seenAt: integer("seen_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("presence_seen_at_idx").on(t.seenAt)],
+);
