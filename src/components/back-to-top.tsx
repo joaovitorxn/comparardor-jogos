@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 /** Distância rolada (em px) a partir da qual o botão aparece. */
 const SHOW_AFTER = 900;
 
-/** Botão flutuante "voltar ao topo", acima do botão de feedback; aparece só depois de rolar bastante. */
+/** Botão flutuante "voltar ao topo", centralizado no rodapé; aparece só depois de rolar bastante. */
 export function BackToTop() {
   const [visible, setVisible] = useState(false);
 
@@ -22,19 +22,22 @@ export function BackToTop() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={toTop}
-      aria-label="Voltar ao topo"
-      title="Voltar ao topo"
-      tabIndex={visible ? 0 : -1}
-      className={`fixed bottom-20 right-4 z-40 flex size-11 items-center justify-center rounded-full border border-line-strong bg-surface text-text-2 shadow-lg shadow-black/40 transition duration-200 hover:border-accent hover:text-accent ${
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
-      }`}
-    >
-      <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />
-      </svg>
-    </button>
+    // faixa fixa no rodapé só para centralizar; o clique passa direto, exceto no botão
+    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center">
+      <button
+        type="button"
+        onClick={toTop}
+        aria-label="Voltar ao topo"
+        tabIndex={visible ? 0 : -1}
+        className={`flex h-11 items-center gap-2 rounded-full border border-accent-line bg-surface px-5 font-display text-sm font-semibold uppercase tracking-wider text-accent shadow-lg shadow-black/50 transition duration-200 hover:bg-accent hover:text-accent-ink ${
+          visible ? "pointer-events-auto translate-y-0 opacity-100" : "translate-y-3 opacity-0"
+        }`}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />
+        </svg>
+        Voltar ao topo
+      </button>
+    </div>
   );
 }
