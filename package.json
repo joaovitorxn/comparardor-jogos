@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.3",
     "hls.js": "^1.7.3",
     "minisearch": "^7.2.0",
