@@ -5,9 +5,10 @@ import { presence } from "@/db/schema";
 import { RateLimiter } from "@/lib/rate-limit";
 
 /** Quem não avisou nesse prazo deixa de contar como "no site agora". */
-const ONLINE_WINDOW_MS = 150_000;
+// (as abas avisam a cada 5 min; a folga cobre atrasos)
+const ONLINE_WINDOW_MS = 7 * 60_000;
 
-// um aparelho avisa uma vez por minuto; o limite barra quem tentar inflar o contador
+// um aparelho avisa a cada 5 minutos; o limite barra quem tentar inflar o contador
 const perVisitor = new RateLimiter(8, 60_000);
 
 /** Registra que esta aba está aberta e devolve quantas pessoas estão no site agora. */

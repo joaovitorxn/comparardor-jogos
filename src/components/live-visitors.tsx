@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const PING_MS = 60_000;
+const PING_MS = 300_000;
 const KEY = "dropou:visitante";
 
 // frases que se alternam por visita; {n} e o plural saem pelo mesmo formato
@@ -24,7 +24,7 @@ function visitorId(): string {
   }
 }
 
-/** "N pessoas procurando promos": o contador vem do servidor, a cada minuto enquanto a aba está visível. */
+/** "N pessoas procurando promos": o contador vem do servidor, a cada 5 minutos enquanto a aba está visível. */
 export function LiveVisitors() {
   const [state, setState] = useState<{ online: number; phrase: number } | null>(null);
 
@@ -32,9 +32,13 @@ export function LiveVisitors() {
     const id = visitorId();
     const phrase = Math.floor(Math.random() * PHRASES.length);
     let stopped = false;
+    let lastPing = 0;
 
     async function ping() {
       if (document.visibilityState !== "visible") return;
+      // voltar à aba não precisa de aviso novo se o último foi há pouco
+      if (Date.now() - lastPing < PING_MS - 5_000) return;
+      lastPing = Date.now();
       try {
         const res = await fetch("/api/presenca", { method: "POST", body: JSON.stringify({ id }) });
         if (!res.ok || stopped) return;
