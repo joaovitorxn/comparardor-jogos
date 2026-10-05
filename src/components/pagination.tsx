@@ -1,8 +1,11 @@
 import Link from "next/link";
 
-/** Páginas visíveis: primeira, última e vizinhas da atual, com reticências nos saltos. */
+/** Páginas visíveis: sempre pelo menos 4 números seguidos, mais a primeira e a última, com reticências nos saltos. */
 function pageWindow(page: number, totalPages: number): (number | "…")[] {
-  const pages = new Set([1, totalPages, page - 1, page, page + 1].filter((p) => p >= 1 && p <= totalPages));
+  const run = 4;
+  const start = Math.max(1, Math.min(page - 1, totalPages - run + 1));
+  const around = Array.from({ length: Math.min(run, totalPages) }, (_, i) => start + i);
+  const pages = new Set([1, totalPages, ...around]);
   const sorted = [...pages].sort((a, b) => a - b);
   const result: (number | "…")[] = [];
   sorted.forEach((p, i) => {

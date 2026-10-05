@@ -83,9 +83,10 @@ export default async function SearchPage(props: PageProps<"/busca">) {
   const totalPages = Math.max(1, Math.ceil(result.total / PAGE_SIZE));
 
   // links que tiram um filtro (as "etiquetas" de filtros ativos)
-  const hrefWithout = (key: keyof FilterValues | "pagina", extra?: Record<string, string>) => {
+  const hrefWithout = (key?: keyof FilterValues, pagina?: number) => {
     const qs = new URLSearchParams();
-    for (const [k, v] of Object.entries({ ...values, ...extra })) if (v && k !== key && !(k === "ordem" && v === "relevancia")) qs.set(k, v);
+    for (const [k, v] of Object.entries(values)) if (v && k !== key && !(k === "ordem" && v === "relevancia")) qs.set(k, v);
+    if (pagina && pagina > 1) qs.set("pagina", String(pagina));
     return qs.size ? `/busca?${qs}` : "/busca";
   };
   const chips: { key: keyof FilterValues; label: string }[] = [];
@@ -137,7 +138,7 @@ export default async function SearchPage(props: PageProps<"/busca">) {
               {hasFilters ? "Nenhum jogo com esses filtros. Tente remover algum." : "Nenhum jogo do catálogo combina com a busca."}
             </p>
           )}
-          <Pagination page={page} totalPages={totalPages} hrefFor={(p) => hrefWithout("pagina", p > 1 ? { pagina: String(p) } : {})} />
+          <Pagination page={page} totalPages={totalPages} hrefFor={(p) => hrefWithout(undefined, p)} />
 
           {(fromSteam.length > 0 || steam.error) && (
             <section className="mt-12">
