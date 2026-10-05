@@ -56,13 +56,14 @@ export function FeedbackButton() {
       <button
         type="button"
         onClick={open}
-        aria-label="Enviar feedback"
-        title="Bug, sugestão ou elogio"
-        className="fixed bottom-4 right-4 z-40 flex size-12 items-center justify-center rounded-full border border-accent-line bg-surface text-accent shadow-lg shadow-black/40 transition hover:scale-105 hover:bg-accent hover:text-accent-ink"
+        aria-label="Dê seu feedback"
+        title="Dê seu feedback"
+        className="fixed bottom-4 right-4 z-40 flex size-14 items-center justify-center rounded-full border border-accent-line bg-surface text-accent shadow-lg shadow-black/40 transition hover:scale-105 hover:bg-accent hover:text-accent-ink"
       >
-        <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
-          <path d="M8.5 11h7M8.5 14h4" />
+        <svg viewBox="0 0 24 24" aria-hidden className="size-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 9v-1a3 3 0 0 1 6 0v1" />
+          <path d="M8 9h8a6 6 0 0 1 1 3v3a5 5 0 0 1-10 0v-3a6 6 0 0 1 1-3" />
+          <path d="M3 13h4M17 13h4M12 20v-6M4 19l3.35-2M20 19l-3.35-2M4 7l3.75 2.4M20 7l-3.75 2.4" />
         </svg>
       </button>
 
