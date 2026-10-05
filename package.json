@@ -18,7 +18,8 @@
     "seed": "tsx scripts/seed.mts",
     "alerts:test": "tsx scripts/alert-test.mts",
     "sync:consoles": "tsx scripts/sync-consoles.mts",
-    "feedback": "tsx scripts/feedback.mts"
+    "feedback": "tsx scripts/feedback.mts",
+    "media-kit": "tsx scripts/media-kit.mts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
