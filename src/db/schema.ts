@@ -273,3 +273,17 @@ export const presence = sqliteTable(
   },
   (t) => [index("presence_seen_at_idx").on(t.seenAt)],
 );
+
+/** Mensagens enviadas pelo botão de feedback do site. */
+export const feedback = sqliteTable("feedback", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  kind: text("kind", { enum: ["bug", "sugestao", "elogio", "outro"] }).notNull(),
+  message: text("message").notNull(),
+  /** E-mail ou @ que a pessoa quis deixar para resposta (opcional). */
+  contact: text("contact"),
+  page: text("page"),
+  userAgent: text("user_agent"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});

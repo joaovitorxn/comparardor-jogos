@@ -2,6 +2,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
+import { FeedbackButton } from "@/components/feedback-button";
 import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
 import { BRAND } from "@/lib/brand";
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </p>
           </div>
         </footer>
+        <FeedbackButton />
         <Analytics />
       </body>
     </html>

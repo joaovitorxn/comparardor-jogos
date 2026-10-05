@@ -17,7 +17,8 @@
     "seed:coupons": "tsx scripts/seed-coupons.mts",
     "seed": "tsx scripts/seed.mts",
     "alerts:test": "tsx scripts/alert-test.mts",
-    "sync:consoles": "tsx scripts/sync-consoles.mts"
+    "sync:consoles": "tsx scripts/sync-consoles.mts",
+    "feedback": "tsx scripts/feedback.mts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
