@@ -83,3 +83,12 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* filtro de plataforma da tabela de preços (ver PlatformFilter): esconde as linhas das outras famílias */
+/* data-family é uma lista separada por espaço (um jogo Play Anywhere é "xbox pc") */
+[data-filter="pc"] [data-family]:not([data-family~="pc"]),
+[data-filter="playstation"] [data-family]:not([data-family~="playstation"]),
+[data-filter="xbox"] [data-family]:not([data-family~="xbox"]),
+[data-filter="nintendo"] [data-family]:not([data-family~="nintendo"]) {
+  display: none;
+}

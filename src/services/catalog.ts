@@ -1,6 +1,9 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, like, lt, notInArray, or, sql } from "drizzle-orm";
 import { collectors, getCollector } from "@/collectors";
 import { getGogOfferById } from "@/collectors/gog";
+import { HttpError } from "@/collectors/http";
+import { fetchPsConcept, psOffer } from "@/collectors/psstore";
+import { fetchXboxProducts } from "@/collectors/xbox";
 import { fetchIgdbDetails, isIgdbConfigured, lookupIgdbIds } from "@/collectors/igdb";
 import { fetchItadHistory, fetchItadPrices, isItadConfigured, ITAD_STORES, lookupItadIds } from "@/collectors/itad";
 import { getSteamGameDetails } from "@/collectors/steam";
@@ -83,8 +86,11 @@ export async function matchOtherStores(game: Pick<Game, "id" | "title">) {
     if (!collector || known.has(collector.store)) continue;
     try {
       const offers = await collector.findByTitle(game.title);
-      const match = offers.find((o) => normalizeTitle(o.title) === target);
-      if (match) {
+      const exact = offers.find((o) => normalizeTitle(o.title) === target);
+      // a versão de Switch 2 é outro produto na eShop: entra como edição separada
+      const switch2 = offers.find((o) => o.platform === "switch2" && normalizeTitle(o.title) === `${target} nintendo switch 2 edition`);
+      for (const match of [exact, switch2 && { ...switch2, edition: "Nintendo Switch 2 Edition" }]) {
+        if (!match) continue;
         await saveOffer(game.id, match);
         matched.push(match);
       }
@@ -168,6 +174,11 @@ export async function enrichGame(game: Pick<Game, "id" | "title">) {
     console.warn(`[igdb] falha ao sincronizar "${game.title}":`, err);
   }
   try {
+    matched.push(...(await syncConsoleStores([game.id])));
+  } catch (err) {
+    console.warn(`[consoles] falha ao buscar "${game.title}":`, err);
+  }
+  try {
     matched.push(...(await matchOtherStores(game)));
   } catch (err) {
     console.warn(`[lojas] falha ao buscar "${game.title}":`, err);
@@ -193,6 +204,11 @@ export async function enrichGames(list: Pick<Game, "id" | "title">[]) {
     await syncIgdb({ gameIds: ids, maxAgeHours: 0 });
   } catch (err) {
     console.warn("[igdb] falha no lote:", err);
+  }
+  try {
+    await syncConsoleStores(ids);
+  } catch (err) {
+    console.warn("[consoles] falha no lote:", err);
   }
   for (const game of list) {
     try {
@@ -241,19 +257,37 @@ export async function syncItad({ gameIds, historyLimit }: { gameIds?: number[]; 
   const byItadId = new Map(rows.filter((r) => r.itadId).map((r) => [r.itadId!, r]));
   if (!byItadId.size) return { games: 0, offers: [] as StoreOffer[] };
 
+  // jogos cuja oferta direta da Xbox já vale para PC (Play Anywhere): a Microsoft Store da ITAD seria duplicata
+  const playAnywhere = new Set(
+    (
+      await db
+        .select({ gameId: listings.gameId })
+        .from(listings)
+        .where(
+          and(
+            inArray(listings.gameId, [...byItadId.values()].map((g) => g.id)),
+            eq(listings.store, "xbox"),
+            eq(listings.available, true),
+            like(listings.edition, "Play Anywhere%"),
+          ),
+        )
+    ).map((r) => r.gameId),
+  );
+
   const offers: StoreOffer[] = [];
   for (const prices of await fetchItadPrices([...byItadId.keys()])) {
     const game = byItadId.get(prices.itadId);
     if (!game) continue;
 
     await db.update(games).set({ historyLowCents: prices.historyLowCents }).where(eq(games.id, game.id));
-    for (const offer of prices.offers) {
+    const kept = prices.offers.filter((o) => !(o.store === "xbox" && playAnywhere.has(game.id)));
+    for (const offer of kept) {
       await saveOffer(game.id, { ...offer, title: game.title });
       offers.push(offer);
     }
 
-    // lojas que pararam de vender o jogo saem da comparação (o histórico fica)
-    const seen = prices.offers.map((o) => o.store);
+    // lojas que pararam de vender o jogo saem da comparação (o histórico fica) — só ofertas vindas da ITAD
+    const seen = kept.map((o) => o.store);
     await db
       .update(listings)
       .set({ available: false, updatedAt: new Date() })
@@ -261,6 +295,7 @@ export async function syncItad({ gameIds, historyLimit }: { gameIds?: number[]; 
         and(
           eq(listings.gameId, game.id),
           inArray(listings.store, [...ITAD_STORES]),
+          like(listings.storeProductId, "itad:%"),
           seen.length ? notInArray(listings.store, seen) : undefined,
         ),
       );
@@ -343,6 +378,53 @@ export async function syncIgdb({ gameIds, maxAgeHours = 24 * 7, limit }: { gameI
   return { games: byIgdbId.size, offers };
 }
 
+/**
+ * Xbox e PlayStation Store pelos ids que o IGDB informa (a Nintendo entra por busca de
+ * título, em matchOtherStores). A PS Store é lida página a página, então vai devagar.
+ */
+export async function syncConsoleStores(gameIds: number[]) {
+  if (!gameIds.length) return [];
+  const rows = await db.select({ id: games.id, externalIds: games.externalIds }).from(games).where(inArray(games.id, gameIds));
+  const offers: StoreOffer[] = [];
+
+  // Xbox: todos os jogos numa leva só (20 produtos por chamada)
+  const bigIds = [...new Set(rows.flatMap((r) => r.externalIds.xbox ?? []))];
+  if (bigIds.length) {
+    try {
+      const products = await fetchXboxProducts(bigIds);
+      for (const row of rows) {
+        // um jogo pode ter vários ids (edições, versão de PC); fica com o mais barato que roda no Xbox
+        const candidates = (row.externalIds.xbox ?? []).flatMap((id) => (products.get(id) ? [products.get(id)!] : []));
+        const best = candidates.sort((a, b) => (a.offer.price?.priceCents ?? Infinity) - (b.offer.price?.priceCents ?? Infinity))[0];
+        if (!best) continue;
+        await saveOffer(row.id, best.offer);
+        offers.push(best.offer);
+      }
+    } catch (err) {
+      console.warn("[xbox] falha no lote:", err);
+    }
+  }
+
+  for (const row of rows) {
+    const conceptId = row.externalIds.psstore?.[0];
+    if (!conceptId) continue;
+    try {
+      const concept = await fetchPsConcept(conceptId);
+      if (concept) {
+        const offer = psOffer(conceptId, concept);
+        await saveOffer(row.id, offer);
+        offers.push(offer);
+      }
+    } catch (err) {
+      console.warn(`[psstore] falha no concept ${conceptId}:`, err);
+      // bloqueio da loja: não insiste com os próximos
+      if (err instanceof HttpError && (err.status === 403 || err.status === 429)) break;
+    }
+    if (rows.length > 1) await new Promise((r) => setTimeout(r, 1500));
+  }
+  return offers;
+}
+
 const HISTORY_YEARS = 5;
 
 /**
@@ -389,6 +471,10 @@ export async function syncItadHistory({ gameIds, maxAgeHours = 24, limit }: { ga
 }
 
 /** Atualiza preços das listagens não verificadas há mais de `olderThanMinutes`. */
+/** A PS Store não tem API: lemos páginas, então com bem menos frequência e em lotes pequenos. */
+const STORE_MIN_AGE_MINUTES: Record<string, number> = { psstore: 12 * 60 };
+const STORE_MAX_PER_RUN: Record<string, number> = { psstore: 40 };
+
 export interface RefreshLimits {
   /** Máximo de listagens por loja nesta execução (as mais desatualizadas primeiro). */
   maxPerStore?: number;
@@ -412,7 +498,7 @@ export async function refreshPrices({
 }: { olderThanMinutes?: number; store?: string } & RefreshLimits = {}) {
   const cutoff = new Date(Date.now() - olderThanMinutes * 60_000);
   const stale = await db
-    .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId })
+    .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId, lastCheckedAt: listings.lastCheckedAt })
     .from(listings)
     .where(
       and(
@@ -423,7 +509,15 @@ export async function refreshPrices({
     // nunca verificadas (null) e as mais antigas primeiro
     .orderBy(asc(listings.lastCheckedAt));
 
-  const byStore = new Map([...Map.groupBy(stale, (l) => l.store)].map(([s, rows]) => [s, maxPerStore ? rows.slice(0, maxPerStore) : rows]));
+  const now = Date.now();
+  const byStore = new Map(
+    [...Map.groupBy(stale, (l) => l.store)].map(([s, rows]) => {
+      const minAge = (STORE_MIN_AGE_MINUTES[s] ?? 0) * 60_000;
+      const due = rows.filter((r) => !r.storeProductId.startsWith("itad:") && (!minAge || !r.lastCheckedAt || now - r.lastCheckedAt.getTime() > minAge));
+      const cap = Math.min(maxPerStore ?? Infinity, STORE_MAX_PER_RUN[s] ?? Infinity);
+      return [s, due.slice(0, cap)];
+    }),
+  );
   const summary: Record<string, { checked: number; changed: number; error?: string }> = {};
 
   for (const [storeId, rows] of byStore) {

@@ -9,13 +9,14 @@ import { PriceHistoryChart } from "@/components/price-history-chart";
 import { PriceTable } from "@/components/price-table";
 import { Requirements } from "@/components/requirements";
 import { SimilarGames } from "@/components/similar-games";
-import { StoreName } from "@/components/store-logo";
+import { PlatformFilter } from "@/components/platform-filter";
+import { StoreLogo, StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
 import { WishlistButton } from "@/components/wishlist-button";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { formatCents, formatRelative } from "@/lib/format";
-import { getStore, STORES } from "@/lib/stores";
+import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
 export const revalidate = 300;
 
@@ -41,6 +42,44 @@ export async function generateMetadata(props: PageProps<"/jogo/[slug]">): Promis
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
+function familyCounts(offers: GamePageData["offers"]) {
+  const counts: Partial<Record<PlatformFamilyId, number>> = {};
+  for (const o of offers) for (const f of offerFamilies(o.listing)) counts[f] = (counts[f] ?? 0) + 1;
+  return counts;
+}
+
+/** Menor preço em cada plataforma — comparar uma chave de PC com um jogo de PS5 não ajuda quem tem PS5. */
+function PlatformBests({ offers }: { offers: GamePageData["offers"] }) {
+  const bests = PLATFORM_FAMILIES.flatMap((family) => {
+    const cheapest = offers.find((o) => o.finalCents != null && offerFamilies(o.listing).includes(family.id));
+    return cheapest ? [{ family, offer: cheapest }] : [];
+  });
+  if (bests.length < 2) return null;
+  return (
+    <div className="border-t border-line px-5 py-3">
+      <p className="mb-2 font-display text-xs font-semibold uppercase tracking-[0.15em] text-muted">Melhor por plataforma</p>
+      <ul className="space-y-1.5">
+        {bests.map(({ family, offer }) => (
+          <li key={family.id}>
+            <a
+              href={offer.listing.url}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="group flex items-center gap-2.5 text-sm"
+              title={`${family.label}: ${getStore(offer.listing.store)?.name ?? offer.listing.store}`}
+            >
+              <StoreLogo store={offer.listing.store} size={22} />
+              <span className="flex-1 text-text-2 group-hover:text-text">{family.label}</span>
+              {offer.snapshot && offer.snapshot.discountPercent > 0 && <DiscountBadge percent={offer.snapshot.discountPercent} size="sm" />}
+              <PriceText cents={offer.finalCents!} className="font-semibold group-hover:text-accent" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function BestOfferPanel({ data }: { data: GamePageData }) {
   const best = data.offers[0];
   const low = data.historicLow;
@@ -61,7 +100,10 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           <span className="font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Melhor oferta</span>
           {atLow && <Tag tone="accent">Menor preço histórico</Tag>}
         </div>
-        <StoreName store={best.listing.store} size={32} />
+        <div className="flex items-center justify-between gap-2">
+          <StoreName store={best.listing.store} size={32} />
+          <Tag>{PLATFORM_LABELS[best.listing.platform]}</Tag>
+        </div>
         <div>
           {best.snapshot.discountPercent > 0 && (
             <div className="mb-1 flex items-center gap-2">
@@ -85,6 +127,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           <AlertButton gameId={data.game.id} gameTitle={data.game.title} currentCents={Math.min(...shelfPrices)} historicLowCents={low?.cents ?? null} />
         </div>
       </div>
+      <PlatformBests offers={data.offers} />
       <dl className="divide-y divide-line border-t border-line text-sm">
         {low && (
           <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
@@ -220,7 +263,13 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
           <section>
             <SectionHeader title="Onde comprar" aside="Preços em R$, ordenados pelo valor final" />
-            {offers.length ? <PriceTable offers={offers} /> : <p className="text-text-2">Ainda não encontramos este jogo em nenhuma loja.</p>}
+            {offers.length ? (
+              <PlatformFilter counts={familyCounts(offers)} total={offers.length}>
+                <PriceTable offers={offers} />
+              </PlatformFilter>
+            ) : (
+              <p className="text-text-2">Ainda não encontramos este jogo em nenhuma loja.</p>
+            )}
             {missingStores.length > 0 && (
               <p className="mt-3 text-xs text-muted">Ainda não comparado em: {missingStores.map((s) => s.name).join(", ")}.</p>
             )}

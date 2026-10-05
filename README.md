@@ -23,6 +23,7 @@ A busca do site também encontra jogos fora do catálogo (pela Steam). Ao abrir 
 |---|---|
 | `npm run import -- <appid \| "nome">` | Importa da Steam (metadados, mídia, preço) e procura o mesmo jogo nas outras lojas |
 | `npm run import -- --all` | Reimporta o catálogo inteiro (útil depois de mudar um coletor) |
+| `npm run sync:consoles` | Busca Xbox, PS Store e Nintendo para jogos do catálogo que ainda não têm essas lojas |
 | `npm run seed -- --limit 3000` | Pré-carrega os jogos mais populares (ITAD + mais jogados da Steam). Pode ser interrompido e retomado; ~35 jogos/min por causa do limite da Steam |
 | `npm run refresh` | Atualiza preços não verificados há mais de 60 min, sincroniza a ITAD e os metadados do IGDB com mais de 7 dias (`--all` para todos, `--store gog` para uma loja) |
 | `npm run db:studio` | Abre o Drizzle Studio para ver/editar o banco |
@@ -65,9 +66,9 @@ scripts/          CLIs de importação, atualização e seed
 | Steam | ✅ | API pública da loja (`appdetails`, `storesearch`, `IStoreBrowseService` para capas) |
 | GOG | ✅ | `catalog.gog.com` + `api.gog.com/products/{id}/prices`; casada pelo id do IGDB ou, sem ele, pelo título |
 | Epic, Nuuvem, GMG, Microsoft Store (PC) | ✅ | IsThereAnyDeal API (`ITAD_API_KEY`), casada pelo appid da Steam |
-| Xbox (console) | Planejado | `displaycatalog.mp.microsoft.com` |
-| Nintendo eShop | Planejado | `api.ec.nintendo.com/v1/price` |
-| PlayStation Store | Planejado | Sem API — scraping com Playwright |
+| Xbox | ✅ | `displaycatalog.mp.microsoft.com` pelos ids do IGDB; jogos Play Anywhere valem também para PC |
+| PlayStation Store | ✅ | Leitura da página do concept (ids do IGDB), sem preços exclusivos de PS Plus; verificada a cada 12h, 40 por execução |
+| Nintendo eShop | ✅ | Busca no índice do nintendo.com/pt-br + `api.ec.nintendo.com/v1/price` (nsuids das Américas); Switch e Switch 2 |
 
 ### Adicionando uma loja
 
@@ -82,6 +83,9 @@ scripts/          CLIs de importação, atualização e seed
 - Quando a ITAD traz mais de uma oferta da mesma loja (ex.: edições diferentes na Nuuvem), mostramos só a mais barata.
 - Os links das lojas via ITAD passam pelo redirecionador `itad.link`. Para monetizar, troque por links de afiliado próprios.
 - Trailers da Steam são HLS: tocam nativamente onde há suporte (Safari, Chrome recente) e via hls.js nos demais, sempre começando em 30% de volume.
+- **PS Store:** não tem API, e o site dela tem proteção contra robôs. Se ela bloquear o servidor (403/429), a rodada para e os últimos preços conhecidos continuam valendo. O resumo do agendador (`/api/cron/refresh`, visível nos logs do GitHub Actions) mostra o erro.
+- **Plataformas:** a tabela de preços tem filtro por plataforma, lembrado no aparelho. O menor preço geral, os alertas e o gráfico ainda consideram todas as plataformas juntas.
+- O catálogo nasce da Steam, então exclusivos de console (ex.: Zelda, God of War antes do PC) ainda não entram.
 - O limite de importações pela busca (`src/app/steam/[appid]/route.ts`) fica em memória: vale para um servidor só. Com várias instâncias, troque por um armazenamento compartilhado (ex.: Upstash Redis).
 - A busca de jogos fora do catálogo usa a Steam; jogos exclusivos de outras lojas (ex.: exclusivos da Epic) só entram quando houver uma busca pela ITAD.
 

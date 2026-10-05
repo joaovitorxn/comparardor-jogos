@@ -129,7 +129,7 @@ export const listings = sqliteTable(
     store: text("store").notNull(),
     storeProductId: text("store_product_id").notNull(),
     title: text("title").notNull(),
-    platform: text("platform", { enum: ["pc", "ps5", "ps4", "xbox", "switch"] }).notNull(),
+    platform: text("platform", { enum: ["pc", "ps5", "ps4", "xbox", "switch", "switch2"] }).notNull(),
     edition: text("edition").notNull().default("Padrão"),
     /** Onde o jogo é ativado: steam, gog (sem DRM), epic, console... */
     drm: text("drm"),

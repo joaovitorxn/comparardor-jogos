@@ -1,6 +1,6 @@
 import type { OfferRow } from "@/db/queries";
 import { formatCents } from "@/lib/format";
-import { DRM_LABELS, PLATFORM_LABELS } from "@/lib/stores";
+import { DRM_LABELS, offerFamilies, PLATFORM_LABELS } from "@/lib/stores";
 import { CopyCoupon } from "./copy-coupon";
 import { StoreName } from "./store-logo";
 import { buttonStyles, DiscountBadge, PriceText, Tag } from "./ui";
@@ -26,6 +26,7 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
         return (
           <div
             key={listing.id}
+            data-family={offerFamilies(listing).join(" ")}
             className={`relative grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-b border-line px-4 py-3.5 text-sm last:border-b-0 ${COLS} ${
               isBest ? "bg-accent-soft" : "transition hover:bg-surface-2"
             }`}
@@ -36,6 +37,10 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
               <StoreName store={listing.store} />
               <div className="flex flex-wrap gap-1 pl-[38px]">
                 {isBest && <Tag tone="accent">Menor preço</Tag>}
+                {/* no celular a coluna de plataforma some; a etiqueta ocupa o lugar dela */}
+                <span className="md:hidden">
+                  <Tag>{PLATFORM_LABELS[listing.platform]}</Tag>
+                </span>
                 {listing.drm && <Tag>{DRM_LABELS[listing.drm] ?? listing.drm}</Tag>}
                 {listing.isKey && <Tag>Chave</Tag>}
                 {listing.edition !== "Padrão" && <Tag>{listing.edition}</Tag>}
