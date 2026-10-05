@@ -190,8 +190,19 @@ function isUnreleased(game: Game, now: Date): boolean {
 }
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
-export async function getDealPool(): Promise<GameSummary[]> {
-  return (await getDeals({ limit: 500 })).items;
+let poolCache: { at: number; pool: Promise<GameSummary[]> } | null = null;
+const POOL_TTL_MS = 5 * 60_000;
+
+export function getDealPool(): Promise<GameSummary[]> {
+  // a página de ofertas é dinâmica; sem isso cada acesso refaria o ranking inteiro
+  if (!poolCache || Date.now() - poolCache.at > POOL_TTL_MS) {
+    const pool = getDeals({ limit: 2000 }).then((r) => r.items);
+    poolCache = { at: Date.now(), pool };
+    pool.catch(() => {
+      if (poolCache?.pool === pool) poolCache = null;
+    });
+  }
+  return poolCache.pool;
 }
 
 /** Pré-vendas com desconto, do maior desconto para o menor, as mais próximas do lançamento primeiro no empate. */
@@ -214,6 +225,16 @@ export function pickFeaturedDeals(pool: GameSummary[], limit: number): GameSumma
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.s);
+}
+
+/**
+ * Todas as promoções na ordem de relevância (a da home): os que "valem a pena" primeiro e, depois,
+ * o resto (descontos pequenos, pré-vendas) do maior desconto para o menor.
+ */
+export function rankDeals(pool: GameSummary[]): GameSummary[] {
+  const featured = pickFeaturedDeals(pool, Infinity);
+  const shown = new Set(featured.map((s) => s.game.id));
+  return [...featured, ...pool.filter((s) => !shown.has(s.game.id)).sort((a, b) => b.maxDiscount - a.maxDiscount)];
 }
 
 export type CatalogSort = "recentes" | "az";
