@@ -25,16 +25,24 @@ function Featured({ deal }: { deal: GameSummary }) {
       href={`/jogo/${game.slug}`}
       className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-surface lg:min-h-[26rem] lg:flex-row"
     >
-      {/* celular: a arte em cima, inteira, e o texto embaixo; no desktop, o texto por cima da arte */}
-      <div className="relative aspect-[16/9] overflow-hidden lg:absolute lg:inset-0 lg:aspect-auto">
+      {/* celular: a capa em formato de banner (460x215) em cima, inteira, e o texto embaixo; no desktop, o texto por cima da arte larga */}
+      <div className="relative aspect-[460/215] overflow-hidden lg:absolute lg:inset-0 lg:aspect-auto">
+        {(game.headerUrl ?? game.backgroundUrl) && (
+          <Image
+            src={(game.headerUrl ?? game.backgroundUrl)!}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 0px, 100vw"
+            className="object-cover lg:hidden"
+          />
+        )}
         {(game.backgroundUrl ?? game.headerUrl) && (
           <Image
             src={(game.backgroundUrl ?? game.headerUrl)!}
             alt=""
             fill
-            priority
-            sizes="(min-width: 1024px) 66vw, 100vw"
-            className="object-cover transition duration-700 group-hover:scale-[1.02]"
+            sizes="(min-width: 1024px) 66vw, 0px"
+            className="hidden object-cover transition duration-700 group-hover:scale-[1.02] lg:block"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
