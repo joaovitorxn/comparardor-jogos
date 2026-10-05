@@ -1,5 +1,6 @@
 import type { TimeToBeat } from "@/db/schema";
 import { formatCents, formatDuration } from "@/lib/format";
+import { Icon } from "./icon";
 
 const ROWS = [
   { key: "hastily", label: "Só a história", hint: "jogando direto" },
@@ -16,7 +17,10 @@ export function TimeToBeatCard({ ttb, bestPriceCents }: { ttb: TimeToBeat; bestP
 
   return (
     <div className="rounded-card border border-line bg-surface">
-      <h2 className="border-b border-line px-5 py-3 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Tempo para zerar</h2>
+      <h2 className="border-b border-line px-5 py-3 flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
+        <Icon name="clock" className="size-4 text-accent" />
+        Tempo para zerar
+      </h2>
       <dl className="space-y-3 px-5 py-4">
         {rows.map((r) => {
           const seconds = ttb[r.key]!;
@@ -39,7 +43,10 @@ export function TimeToBeatCard({ ttb, bestPriceCents }: { ttb: TimeToBeat; bestP
       <div className="flex items-baseline justify-between gap-3 border-t border-line px-5 py-2.5 text-sm">
         {perHour != null ? (
           <>
-            <span className="text-muted">Custo por hora</span>
+            <span className="flex items-center gap-1.5 text-muted">
+              <Icon name="coin" className="size-4" />
+              Custo por hora
+            </span>
             <span className="tabular font-semibold text-accent">{formatCents(perHour)}/h</span>
           </>
         ) : (

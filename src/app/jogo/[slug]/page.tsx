@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
+import { Icon } from "@/components/icon";
 import { BackToTop } from "@/components/back-to-top";
 import { RarityInfo } from "@/components/rarity-info";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
@@ -134,7 +135,10 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
     <div className="overflow-hidden rounded-card border border-line bg-surface">
       <div className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Melhor drop</span>
+          <span className="flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
+            <Icon name="trophy" className="size-4 text-accent" />
+            Melhor drop
+          </span>
           {rarity && <RarityInfo rarity={rarity} />}
         </div>
         <div className="flex items-center justify-between gap-2">
@@ -150,7 +154,8 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           )}
           <PriceText cents={best.finalCents} className="font-display text-5xl font-bold leading-none text-accent" />
           {best.coupon?.coupon && (
-            <p className="mt-2 text-xs text-coupon">
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-coupon">
+              <Icon name="ticket" className="size-3.5 shrink-0" />
               Com cupom {best.coupon.coupon.code ?? "automático"} (−{formatCents(best.coupon.savedCents)})
             </p>
           )}
@@ -168,7 +173,10 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
       <dl className="divide-y divide-line border-t border-line text-sm">
         {low && (
           <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
-            <dt className="text-muted">Piso histórico</dt>
+            <dt className="flex items-center gap-1.5 text-muted">
+              <Icon name="floor" className="size-4" />
+              Piso histórico
+            </dt>
             <dd className="text-right">
               <PriceText cents={low.cents} className="font-semibold" />
               {low.date && (
@@ -181,7 +189,10 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           </div>
         )}
         <div className="flex justify-between gap-3 px-5 py-2.5">
-          <dt className="text-muted">Lojas comparadas</dt>
+          <dt className="flex items-center gap-1.5 text-muted">
+            <Icon name="store" className="size-4" />
+            Lojas comparadas
+          </dt>
           <dd className="tabular">{data.offers.length}</dd>
         </div>
         {data.lastChecked && (
@@ -228,7 +239,10 @@ function DetailsPanel({ data }: { data: GamePageData }) {
         {game.criticRating != null && (
           <div className="flex items-center justify-between gap-3 px-5 py-2.5">
             <dt className="text-muted">
-              Média da crítica
+              <span className="flex items-center gap-1.5">
+                <Icon name="star" className="size-4" />
+                Média da crítica
+              </span>
               {game.criticRatingCount != null && (
                 <span className="block text-xs">
                   {game.criticRatingCount} {game.criticRatingCount === 1 ? "análise" : "análises"} · IGDB

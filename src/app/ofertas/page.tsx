@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
+import { Icon, type IconName } from "@/components/icon";
 import { Pagination, parsePage } from "@/components/pagination";
 import { SectionHeader } from "@/components/ui";
 import { getDealPool, getDeals, rankDeals } from "@/db/queries";
@@ -13,10 +14,10 @@ export const metadata: Metadata = {
 };
 
 const SORTS = [
-  { id: "relevancia", label: "Relevância", hint: "os que mais valem a pena primeiro" },
-  { id: "desconto", label: "Maior desconto", hint: "do maior desconto para o menor" },
-  { id: "preco", label: "Menor preço", hint: "do mais barato para o mais caro" },
-] as const;
+  { id: "relevancia", label: "Relevância", icon: "flame", hint: "os que mais valem a pena primeiro" },
+  { id: "desconto", label: "Maior desconto", icon: "tag", hint: "do maior desconto para o menor" },
+  { id: "preco", label: "Menor preço", icon: "coin", hint: "do mais barato para o mais caro" },
+] as const satisfies readonly { id: string; label: string; icon: IconName; hint: string }[];
 type SortId = (typeof SORTS)[number]["id"];
 
 export default async function DealsPage(props: PageProps<"/ofertas">) {
@@ -51,10 +52,11 @@ export default async function DealsPage(props: PageProps<"/ofertas">) {
             key={s.id}
             href={href(s.id)}
             aria-current={s.id === sort ? "true" : undefined}
-            className={`inline-flex h-9 items-center rounded-[4px] border px-3 font-display text-sm font-semibold uppercase tracking-wider transition ${
+            className={`inline-flex h-9 items-center gap-1.5 rounded-[4px] border px-3 font-display text-sm font-semibold uppercase tracking-wider transition ${
               s.id === sort ? "border-accent bg-accent text-accent-ink" : "border-line text-text-2 hover:border-accent hover:text-accent"
             }`}
           >
+            <Icon name={s.icon} className="size-4" />
             {s.label}
           </Link>
         ))}

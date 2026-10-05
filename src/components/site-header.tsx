@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND, LOGO } from "@/lib/brand";
+import { Icon } from "./icon";
 import { MobileSearch } from "./mobile-search";
 import { SearchForm } from "./search-form";
 
@@ -36,6 +37,9 @@ export function SiteHeader() {
         </nav>
         <SearchForm className="ml-auto hidden w-full max-w-sm sm:block" />
         <MobileSearch />
+        <Link href="/ofertas" aria-label="Ofertas" className="flex shrink-0 text-text-2 transition hover:text-accent md:hidden">
+          <Icon name="tag" className="size-5" />
+        </Link>
         <Link
           href="/minha-lista"
           aria-label="Wishlist"
