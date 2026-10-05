@@ -5,6 +5,7 @@ export type StoreId =
   | "epic"
   | "gog"
   | "psstore"
+  | "msstore"
   | "xbox"
   | "nintendo"
   | "nuuvem"
@@ -27,8 +28,10 @@ export const STORES: Record<StoreId, StoreInfo> = {
   epic: { id: "epic", name: "Epic Games", color: "#e6e6e6", platforms: ["pc"], homepage: "https://store.epicgames.com", status: "active" },
   nuuvem: { id: "nuuvem", name: "Nuuvem", color: "#ff7a00", platforms: ["pc"], homepage: "https://www.nuuvem.com", status: "active" },
   gmg: { id: "gmg", name: "Green Man Gaming", color: "#2ecc71", platforms: ["pc"], homepage: "https://www.greenmangaming.com", status: "active" },
-  // Xbox: coletor direto (console e Play Anywhere); a ITAD complementa a versão PC da Microsoft Store
-  xbox: { id: "xbox", name: "Xbox", color: "#107c10", platforms: ["xbox", "pc"], homepage: "https://www.xbox.com/pt-BR/games/store", status: "active" },
+  // Microsoft Store (versão PC, via ITAD) e Xbox (console, coletor direto) são lojas separadas aqui:
+  // um jogo Xbox Play Anywhere aparece só como Xbox, e a compra vale também para o PC
+  msstore: { id: "msstore", name: "Microsoft Store", color: "#00a4ef", platforms: ["pc"], homepage: "https://apps.microsoft.com", status: "active" },
+  xbox: { id: "xbox", name: "Xbox", color: "#107c10", platforms: ["xbox"], homepage: "https://www.xbox.com/pt-BR/games/store", status: "active" },
   psstore: { id: "psstore", name: "PlayStation Store", color: "#0070d1", platforms: ["ps5", "ps4"], homepage: "https://store.playstation.com/pt-br", status: "active" },
   nintendo: { id: "nintendo", name: "Nintendo eShop", color: "#e60012", platforms: ["switch", "switch2"], homepage: "https://www.nintendo.com/pt-br/store", status: "active" },
 };

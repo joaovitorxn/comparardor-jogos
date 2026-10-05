@@ -18,6 +18,15 @@ const M = { top: 20, right: 16, bottom: 28, left: 64 };
 const DAY = 86_400_000;
 
 const seriesColor = (store: string) => `var(--series-${store}, var(--text-2))`;
+// a Microsoft Store (PC) divide a cor com a Xbox (mesma empresa); o tracejado a diferencia
+const seriesDash = (store: string) => (store === "msstore" ? "5 3" : undefined);
+
+/** Amostra da série na legenda/tooltip — tracejada quando a linha é tracejada. */
+function SeriesKey({ store, muted = false }: { store: string; muted?: boolean }) {
+  const color = muted ? "var(--line-strong)" : seriesColor(store);
+  const background = seriesDash(store) ? `repeating-linear-gradient(90deg, ${color} 0 4px, transparent 4px 6px)` : color;
+  return <span aria-hidden className="h-0.5 w-3 shrink-0 rounded-full" style={{ background }} />;
+}
 const storeName = (store: string) => getStore(store)?.name ?? store;
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -215,7 +224,7 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
                   on ? "border-line-strong bg-surface-2 text-text" : "border-line text-muted hover:border-line-strong hover:text-text-2"
                 }`}
               >
-                <span aria-hidden className="h-0.5 w-3 rounded-full" style={{ background: on ? seriesColor(s.store) : "var(--line-strong)" }} />
+                <SeriesKey store={s.store} muted={!on} />
                 {storeName(s.store)}
               </button>
             );
@@ -256,7 +265,16 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
             ))}
 
             {stores.map((s) => (
-              <path key={s.store} d={linePath(s.points)} fill="none" stroke={seriesColor(s.store)} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              <path
+                key={s.store}
+                d={linePath(s.points)}
+                fill="none"
+                stroke={seriesColor(s.store)}
+                strokeDasharray={seriesDash(s.store)}
+                strokeWidth={2}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
             ))}
 
             <path d={areaPath(best)} fill="var(--accent)" fillOpacity={0.1} />
@@ -320,7 +338,7 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
               <ul className="mt-1.5 space-y-1 border-t border-line pt-1.5">
                 {hover.stores.map((r) => (
                   <li key={r.store} className="flex items-center gap-2">
-                    <span aria-hidden className="h-0.5 w-3 shrink-0 rounded-full" style={{ background: seriesColor(r.store) }} />
+                    <SeriesKey store={r.store} />
                     <span className="flex-1 truncate text-text-2">{storeName(r.store)}</span>
                     <span className="tabular text-text">{formatCents(r.cents)}</span>
                   </li>

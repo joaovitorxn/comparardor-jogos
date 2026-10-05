@@ -14,7 +14,7 @@ const ITAD_SHOPS: Record<number, StoreId> = {
   16: "epic",
   50: "nuuvem",
   36: "gmg",
-  48: "xbox", // Microsoft Store (versão PC)
+  48: "msstore", // Microsoft Store (versão PC; a de console vem do coletor da Xbox)
 };
 const STEAM_SHOP = 61;
 const GOG_SHOP = 35;
@@ -95,7 +95,7 @@ function toOffer(itadId: string, store: StoreId, deal: ItadDeal): StoreOffer {
     storeProductId: `itad:${itadId}`,
     title: "",
     platform: "pc",
-    drm: drmId != null ? (DRM_MAP[drmId] ?? deal.drm[0].name.toLowerCase()) : store === "xbox" ? "microsoft" : null,
+    drm: drmId != null ? (DRM_MAP[drmId] ?? deal.drm[0].name.toLowerCase()) : store === "msstore" ? "microsoft" : null,
     isKey: RESELLERS.has(store),
     url: deal.url,
     voucher: deal.voucher,

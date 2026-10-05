@@ -1,6 +1,6 @@
 import type { OfferRow } from "@/db/queries";
 import { formatCents } from "@/lib/format";
-import { DRM_LABELS, offerFamilies, PLATFORM_LABELS } from "@/lib/stores";
+import { DRM_LABELS, offerFamilies, PLATFORM_LABELS, PLAY_ANYWHERE } from "@/lib/stores";
 import { CopyCoupon } from "./copy-coupon";
 import { StoreName } from "./store-logo";
 import { buttonStyles, DiscountBadge, PriceText, Tag } from "./ui";
@@ -43,7 +43,7 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
                 </span>
                 {listing.drm && <Tag>{DRM_LABELS[listing.drm] ?? listing.drm}</Tag>}
                 {listing.isKey && <Tag>Chave</Tag>}
-                {listing.edition !== "Padrão" && <Tag>{listing.edition}</Tag>}
+                {listing.edition !== "Padrão" && <Tag>{listing.edition === PLAY_ANYWHERE ? "Play Anywhere (inclui PC)" : listing.edition}</Tag>}
               </div>
             </div>
 

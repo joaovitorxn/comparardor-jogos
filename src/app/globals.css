@@ -35,6 +35,8 @@
   --series-gmg: #c98500;
   --series-gog: #d55181;
   --series-xbox: #008300;
+  /* Microsoft Store (PC) usa o mesmo verde da Xbox — é a mesma empresa — e o gráfico a diferencia com linha tracejada */
+  --series-msstore: #008300;
   --series-psstore: #9085e9;
   --series-nintendo: #e66767;
 }

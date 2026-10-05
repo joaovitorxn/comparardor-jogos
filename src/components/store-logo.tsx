@@ -11,6 +11,16 @@ const ICONS: Record<string, string> = {
 
 const MONOGRAMS: Record<string, string> = { nuuvem: "NU", gmg: "GM", nintendo: "N" };
 
+/** Marca simplificada da Xbox: esfera com o "X" curvo (o simple-icons não traz o logo oficial). */
+function XboxMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="size-[60%]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round">
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M7 5.8c3.2 2.6 6.4 7 10 12.4M17 5.8c-3.2 2.6-6.4 7-10 12.4" />
+    </svg>
+  );
+}
+
 function MicrosoftMark() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden className="size-[55%]">
@@ -31,8 +41,10 @@ export function StoreLogo({ store, size = 28 }: { store: string; size?: number }
         <svg viewBox="0 0 24 24" className="size-[55%]">
           <path fill="currentColor" d={icon} />
         </svg>
-      ) : store === "xbox" ? (
+      ) : store === "msstore" ? (
         <MicrosoftMark />
+      ) : store === "xbox" ? (
+        <XboxMark />
       ) : (
         <span className="font-display font-bold leading-none tracking-tight" style={{ fontSize: Math.max(11, size * 0.44) }}>
           {MONOGRAMS[store] ?? store.slice(0, 2).toUpperCase()}

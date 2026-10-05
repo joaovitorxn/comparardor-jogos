@@ -257,7 +257,7 @@ export async function syncItad({ gameIds, historyLimit }: { gameIds?: number[]; 
   const byItadId = new Map(rows.filter((r) => r.itadId).map((r) => [r.itadId!, r]));
   if (!byItadId.size) return { games: 0, offers: [] as StoreOffer[] };
 
-  // jogos cuja oferta direta da Xbox já vale para PC (Play Anywhere): a Microsoft Store da ITAD seria duplicata
+  // jogos cuja oferta direta da Xbox já vale para PC (Play Anywhere): a Microsoft Store (PC) da ITAD seria duplicata
   const playAnywhere = new Set(
     (
       await db
@@ -280,7 +280,7 @@ export async function syncItad({ gameIds, historyLimit }: { gameIds?: number[]; 
     if (!game) continue;
 
     await db.update(games).set({ historyLowCents: prices.historyLowCents }).where(eq(games.id, game.id));
-    const kept = prices.offers.filter((o) => !(o.store === "xbox" && playAnywhere.has(game.id)));
+    const kept = prices.offers.filter((o) => !(o.store === "msstore" && playAnywhere.has(game.id)));
     for (const offer of kept) {
       await saveOffer(game.id, { ...offer, title: game.title });
       offers.push(offer);
