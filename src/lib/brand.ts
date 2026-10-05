@@ -1,7 +1,7 @@
 /** Marca do site — usado no cabeçalho, metadados, manifest e ícones. */
 export const BRAND = {
   name: "Dropou",
-  tagline: "o menor preço de cada jogo",
+  tagline: "Desbloqueie o menor preço",
   domain: "dropou.com.br",
 } as const;
 

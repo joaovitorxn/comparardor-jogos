@@ -4,6 +4,7 @@ import { GameGrid } from "@/components/game-card";
 import { StoreLogo } from "@/components/store-logo";
 import { buttonStyles, DiscountBadge, PriceText, SectionHeader } from "@/components/ui";
 import { getDeals, getDealPool, pickFeaturedDeals, pickPreorderDeals, type GameSummary } from "@/db/queries";
+import { BRAND } from "@/lib/brand";
 import { formatCents } from "@/lib/format";
 import { getStore, STORES } from "@/lib/stores";
 
@@ -112,7 +113,7 @@ export default async function Home() {
         </section>
       ) : (
         <section className="rounded-card border border-line bg-surface p-10 text-center">
-          <h1 className="font-display text-3xl font-bold uppercase">O menor preço de cada jogo</h1>
+          <h1 className="font-display text-3xl font-bold uppercase">{BRAND.tagline}</h1>
           <p className="mt-2 text-text-2">Busque um jogo no topo da página para adicioná-lo ao catálogo.</p>
         </section>
       )}
