@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, like, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
@@ -364,24 +364,33 @@ export interface SimilarGameView extends SimilarGame {
   /** Preenchidos quando o jogo já está no catálogo. */
   slug: string | null;
   bestPriceCents: number | null;
+  regularPriceCents: number | null;
+  discountPercent: number;
 }
 
 /** Jogos parecidos (IGDB), marcando os que já estão no catálogo — esses vêm primeiro, com preço. */
 async function resolveSimilarGames(game: Game): Promise<SimilarGameView[]> {
   const steamIds = game.similarGames.flatMap((s) => (s.steamAppId != null ? [s.steamAppId] : []));
-  const inCatalog = steamIds.length
-    ? await db.select({ id: games.id, slug: games.slug, steamAppId: games.steamAppId }).from(games).where(inArray(games.steamAppId, steamIds))
-    : [];
+  const igdbIds = game.similarGames.map((s) => s.igdbId);
+  // por appid da Steam ou pelo id do IGDB (os exclusivos de console não têm appid)
+  const inCatalog = await db
+    .select({ id: games.id, slug: games.slug, steamAppId: games.steamAppId, igdbId: games.igdbId })
+    .from(games)
+    .where(or(steamIds.length ? inArray(games.steamAppId, steamIds) : undefined, igdbIds.length ? inArray(games.igdbId, igdbIds) : undefined));
   const prices = inCatalog.length ? Map.groupBy(await latestPrices(inCatalog.map((g) => g.id)), (p) => p.listing.gameId) : new Map();
 
   return game.similarGames
     .map((s) => {
-      const match = inCatalog.find((g) => g.steamAppId === s.steamAppId);
+      const match = inCatalog.find((g) => (s.steamAppId != null && g.steamAppId === s.steamAppId) || g.igdbId === s.igdbId);
       const offers: { snapshot: PriceSnapshot }[] = match ? (prices.get(match.id) ?? []) : [];
+      // a melhor oferta é a mais barata; o desconto e o preço cheio vêm dela
+      const best = offers.reduce<PriceSnapshot | null>((acc, o) => (!acc || o.snapshot.priceCents < acc.priceCents ? o.snapshot : acc), null);
       return {
         ...s,
         slug: match?.slug ?? null,
-        bestPriceCents: offers.length ? Math.min(...offers.map((o) => o.snapshot.priceCents)) : null,
+        bestPriceCents: best?.priceCents ?? null,
+        regularPriceCents: best?.regularPriceCents ?? null,
+        discountPercent: best?.discountPercent ?? 0,
       };
     })
     .sort((a, b) => Number(b.slug != null) - Number(a.slug != null));
