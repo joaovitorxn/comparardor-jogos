@@ -60,10 +60,10 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
 
   return (
     <section className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" aria-roledescription="carrossel">
-      <div className="relative" {...pause}>
+      <div className="relative flex flex-col" {...pause}>
         <Link
           href={`/jogo/${deal.slug}`}
-          className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-surface lg:min-h-[26rem] lg:flex-row"
+          className="group relative flex flex-1 flex-col overflow-hidden rounded-card border border-line bg-surface lg:min-h-[26rem] lg:flex-row"
         >
           {/* celular: a capa em formato banner (460x215) em cima, inteira, e o texto embaixo; no desktop, o texto por cima da arte larga */}
           <div key={deal.slug} className="relative aspect-[460/215] animate-[showcase-in_500ms_ease-out] overflow-hidden lg:absolute lg:inset-0 lg:aspect-auto">
@@ -82,7 +82,7 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
             <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
           </div>
 
-          <div key={`${deal.slug}-info`} className="relative -mt-8 flex min-h-[15rem] max-w-lg animate-[showcase-in_500ms_ease-out] flex-col justify-end gap-4 p-5 pt-0 sm:p-6 sm:pt-0 lg:my-auto lg:mt-0 lg:min-h-0 lg:p-10">
+          <div key={`${deal.slug}-info`} className="relative -mt-8 flex min-h-[15rem] max-w-lg animate-[showcase-in_500ms_ease-out] flex-col justify-end gap-4 p-5 pt-0 sm:p-6 sm:pt-0 lg:mt-auto lg:min-h-0 lg:p-10">
             <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight lg:text-5xl">{deal.title}</h1>
             {deal.bestPriceCents != null && (
               <div className="flex flex-wrap items-center gap-3">
