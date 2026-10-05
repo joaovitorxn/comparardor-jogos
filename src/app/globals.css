@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — tema escuro único.
+ * Superfícies sobem em degraus de luminosidade; o verde-limão é reservado para
+ * preço/oferta e para a ação principal, o azul para cupons.
+ */
+:root {
+  color-scheme: dark;
+
+  --bg: #0b0d12;
+  --surface: #12151c;
+  --surface-2: #181c25;
+  --surface-3: #1f2430;
+  --line: #242a36;
+  --line-strong: #333b4b;
+
+  --text: #e8eaef;
+  --text-2: #a5acba;
+  --muted: #727b8c;
+
+  --accent: #b6f03c;
+  --accent-ink: #0b0d12;
+  --accent-soft: rgb(182 240 60 / 0.08);
+  --accent-line: rgb(182 240 60 / 0.35);
+
+  --coupon: #5aa9ff;
+  --coupon-soft: rgb(90 169 255 / 0.1);
+  --danger: #f2706b;
+
+  /* série do gráfico por loja — paleta categórica validada (CVD + contraste) no --surface */
+  --series-steam: #3987e5;
+  --series-nuuvem: #d95926;
+  --series-epic: #199e70;
+  --series-gmg: #c98500;
+  --series-gog: #d55181;
+  --series-xbox: #008300;
+  --series-psstore: #9085e9;
+  --series-nintendo: #e66767;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-coupon: var(--coupon);
+  --color-coupon-soft: var(--coupon-soft);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-barlow);
+
+  --radius-card: 6px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* preços sempre em colunas alinhadas */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

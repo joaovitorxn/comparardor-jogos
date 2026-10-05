@@ -1,0 +1,27 @@
+import { revalidatePath } from "next/cache";
+import type { NextRequest } from "next/server";
+import { refreshPrices } from "@/services/catalog";
+
+// atualizar o catálogo inteiro pode levar alguns minutos
+export const maxDuration = 300;
+
+/**
+ * Atualização periódica de preços — o mesmo que `npm run refresh`, para ser chamado por um
+ * agendador (Vercel Cron, GitHub Actions, cron do servidor) com `Authorization: Bearer <CRON_SECRET>`.
+ * A Vercel envia esse cabeçalho sozinha quando a variável CRON_SECRET está configurada.
+ */
+export async function GET(request: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const startedAt = Date.now();
+  // limites por execução: com o agendador rodando de hora em hora, o catálogo inteiro roda em rodízio
+  const summary = await refreshPrices({ maxPerStore: 800, maxHistory: 150, maxIgdb: 300 });
+  // preços novos: descarta o cache da home e de todas as páginas de jogo
+  revalidatePath("/");
+  revalidatePath("/jogo/[slug]", "page");
+
+  return Response.json({ ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary });
+}

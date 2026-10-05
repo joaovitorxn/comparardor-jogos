@@ -1,0 +1,221 @@
+import { sql } from "drizzle-orm";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
+
+export interface RequirementItem {
+  /** "Processador", "Memória"... — null para linhas soltas ("Requer 64 bits"). */
+  label: string | null;
+  value: string;
+}
+
+export interface PcRequirements {
+  minimum: RequirementItem[];
+  recommended: RequirementItem[];
+}
+
+/** Tempo para zerar (IGDB), em segundos. */
+export interface TimeToBeat {
+  hastily: number | null;
+  normally: number | null;
+  completely: number | null;
+  /** Quantas pessoas informaram o tempo. */
+  count: number;
+}
+
+export interface SimilarGame {
+  igdbId: number;
+  name: string;
+  coverImageId: string | null;
+  steamAppId: number | null;
+}
+
+/** IDs do jogo em outras lojas, vindos do IGDB — base para os coletores de console. */
+export interface ExternalIds {
+  gog?: string;
+  epic?: string[];
+  xbox?: string[];
+  psstore?: string[];
+}
+
+const timestamps = {
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+};
+
+/** Jogo canônico — uma linha por jogo, independente de loja/plataforma. */
+export const games = sqliteTable(
+  "games",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    normalizedTitle: text("normalized_title").notNull(),
+    shortDescription: text("short_description"),
+    developers: text("developers", { mode: "json" }).$type<string[]>().notNull().default([]),
+    publishers: text("publishers", { mode: "json" }).$type<string[]>().notNull().default([]),
+    genres: text("genres", { mode: "json" }).$type<string[]>().notNull().default([]),
+    releaseDate: text("release_date"),
+    coverUrl: text("cover_url"),
+    headerUrl: text("header_url"),
+    backgroundUrl: text("background_url"),
+    metacritic: integer("metacritic"),
+    website: text("website"),
+    steamAppId: integer("steam_app_id"),
+    igdbId: integer("igdb_id"),
+    itadId: text("itad_id"),
+    /** Menor preço já registrado pela IsThereAnyDeal no Brasil, entre as lojas que comparamos. */
+    historyLowCents: integer("history_low_cents"),
+    historySyncedAt: integer("history_synced_at", { mode: "timestamp" }),
+    requirements: text("requirements", { mode: "json" }).$type<PcRequirements | null>(),
+    // --- IGDB ---
+    igdbSyncedAt: integer("igdb_synced_at", { mode: "timestamp" }),
+    platforms: text("platforms", { mode: "json" }).$type<string[]>().notNull().default([]),
+    gameModes: text("game_modes", { mode: "json" }).$type<string[]>().notNull().default([]),
+    themes: text("themes", { mode: "json" }).$type<string[]>().notNull().default([]),
+    perspectives: text("perspectives", { mode: "json" }).$type<string[]>().notNull().default([]),
+    /** Média da crítica especializada (0–100) e quantas críticas entraram nela. */
+    criticRating: integer("critic_rating"),
+    criticRatingCount: integer("critic_rating_count"),
+    timeToBeat: text("time_to_beat", { mode: "json" }).$type<TimeToBeat | null>(),
+    similarGames: text("similar_games", { mode: "json" }).$type<SimilarGame[]>().notNull().default([]),
+    externalIds: text("external_ids", { mode: "json" }).$type<ExternalIds>().notNull().default({}),
+    /**
+     * Quando terminamos de buscar o jogo nas outras lojas (IGDB, GOG, ITAD). Fica null logo
+     * depois da importação pela busca, enquanto isso roda em segundo plano.
+     */
+    enrichedAt: integer("enriched_at", { mode: "timestamp" }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("games_slug_idx").on(t.slug),
+    uniqueIndex("games_steam_app_id_idx").on(t.steamAppId),
+    index("games_normalized_title_idx").on(t.normalizedTitle),
+  ],
+);
+
+export const gameMedia = sqliteTable(
+  "game_media",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    type: text("type", { enum: ["screenshot", "video"] }).notNull(),
+    url: text("url").notNull(),
+    thumbUrl: text("thumb_url"),
+    title: text("title"),
+    position: integer("position").notNull().default(0),
+  },
+  (t) => [index("game_media_game_idx").on(t.gameId)],
+);
+
+/** Um produto específico numa loja (jogo + loja + plataforma + edição). */
+export const listings = sqliteTable(
+  "listings",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    store: text("store").notNull(),
+    storeProductId: text("store_product_id").notNull(),
+    title: text("title").notNull(),
+    platform: text("platform", { enum: ["pc", "ps5", "ps4", "xbox", "switch"] }).notNull(),
+    edition: text("edition").notNull().default("Padrão"),
+    /** Onde o jogo é ativado: steam, gog (sem DRM), epic, console... */
+    drm: text("drm"),
+    /** true quando a loja revende uma chave de outra plataforma (ex.: Nuuvem vendendo key Steam). */
+    isKey: integer("is_key", { mode: "boolean" }).notNull().default(false),
+    url: text("url").notNull(),
+    /** false quando a loja parou de vender — mantemos a linha para não perder o histórico. */
+    available: integer("available", { mode: "boolean" }).notNull().default(true),
+    /** Código de voucher exigido pela oferta atual; o preço do snapshot já o inclui. */
+    voucher: text("voucher"),
+    lastCheckedAt: integer("last_checked_at", { mode: "timestamp" }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("listings_store_product_idx").on(t.store, t.storeProductId),
+    index("listings_game_idx").on(t.gameId),
+  ],
+);
+
+/** Histórico de preços. Só gravamos um snapshot novo quando o preço muda. */
+export const priceSnapshots = sqliteTable(
+  "price_snapshots",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    listingId: integer("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    currency: text("currency").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    regularPriceCents: integer("regular_price_cents").notNull(),
+    discountPercent: integer("discount_percent").notNull().default(0),
+    capturedAt: integer("captured_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("price_snapshots_listing_idx").on(t.listingId, t.capturedAt)],
+);
+
+/**
+ * Histórico de longo prazo importado da IsThereAnyDeal: cada linha é uma mudança de
+ * preço numa loja. Fica separado de `price_snapshots`, que são as nossas próprias coletas.
+ */
+export const priceHistory = sqliteTable(
+  "price_history",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    store: text("store").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    regularPriceCents: integer("regular_price_cents").notNull(),
+    discountPercent: integer("discount_percent").notNull().default(0),
+    recordedAt: integer("recorded_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [uniqueIndex("price_history_unique_idx").on(t.gameId, t.store, t.recordedAt)],
+);
+
+export const coupons = sqliteTable(
+  "coupons",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    store: text("store").notNull(),
+    /** null = desconto automático (ex.: VIP da GMG), sem código para digitar. */
+    code: text("code"),
+    description: text("description").notNull(),
+    kind: text("kind", { enum: ["percent", "fixed"] }).notNull(),
+    /** Percentual (10 = 10%) ou valor fixo em centavos. */
+    value: integer("value").notNull(),
+    minPurchaseCents: integer("min_purchase_cents"),
+    maxDiscountCents: integer("max_discount_cents"),
+    /** Se o cupom vale para jogos que já estão em promoção. */
+    stacksWithSale: integer("stacks_with_sale", { mode: "boolean" }).notNull().default(true),
+    startsAt: integer("starts_at", { mode: "timestamp" }),
+    expiresAt: integer("expires_at", { mode: "timestamp" }),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    sourceUrl: text("source_url"),
+    ...timestamps,
+  },
+  (t) => [index("coupons_store_idx").on(t.store)],
+);
+
+export type Game = typeof games.$inferSelect;
+export type GameMedia = typeof gameMedia.$inferSelect;
+export type Listing = typeof listings.$inferSelect;
+export type PriceSnapshot = typeof priceSnapshots.$inferSelect;
+export type Coupon = typeof coupons.$inferSelect;
+export type PriceHistoryEntry = typeof priceHistory.$inferSelect;
+export type Platform = Listing["platform"];
