@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, like, sql } from "drizzle-orm";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
+import { compareOffers } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
 import { db } from ".";
 import {
@@ -51,7 +52,8 @@ async function summarize(rows: Game[]): Promise<GameSummary[]> {
   return rows.map((game) => {
     const offers = prices.get(game.id) ?? [];
     const best = offers.reduce<(typeof offers)[number] | null>(
-      (acc, o) => (!acc || o.snapshot.priceCents < acc.snapshot.priceCents ? o : acc),
+      (acc, o) =>
+        !acc || compareOffers({ cents: o.snapshot.priceCents, store: o.listing.store }, { cents: acc.snapshot.priceCents, store: acc.listing.store }) < 0 ? o : acc,
       null,
     );
     return {
@@ -258,7 +260,7 @@ export async function getGamePage(slug: string) {
       );
       return { listing, snapshot, coupon: coupon.coupon ? coupon : null, finalCents: coupon.finalCents };
     })
-    .sort((a, b) => (a.finalCents ?? Infinity) - (b.finalCents ?? Infinity));
+    .sort((a, b) => compareOffers({ cents: a.finalCents ?? Infinity, store: a.listing.store }, { cents: b.finalCents ?? Infinity, store: b.listing.store }));
 
   const lastChecked = gameListings.reduce<Date | null>(
     (acc, l) => (l.lastCheckedAt && (!acc || l.lastCheckedAt > acc) ? l.lastCheckedAt : acc),

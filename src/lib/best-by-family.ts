@@ -1,5 +1,5 @@
 import type { Platform } from "@/db/schema";
-import { offerFamilies, type PlatformFamilyId } from "./stores";
+import { compareOffers, offerFamilies, type PlatformFamilyId } from "./stores";
 
 /** "all" = qualquer plataforma. */
 export type FamilyKey = PlatformFamilyId | "all";
@@ -31,7 +31,7 @@ export function bestByFamily(offers: PricedOffer[]): Map<FamilyKey, BestPrice> {
     const best: BestPrice = { cents: o.cents, regularCents: o.regularCents, discountPercent: o.discountPercent, store: o.store, platform: o.platform };
     for (const key of ["all", ...offerFamilies(o)] as FamilyKey[]) {
       const current = result.get(key);
-      if (!current || o.cents < current.cents) result.set(key, best);
+      if (!current || compareOffers({ cents: o.cents, store: o.store }, { cents: current.cents, store: current.store }) < 0) result.set(key, best);
     }
   }
   return result;

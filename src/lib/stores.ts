@@ -36,6 +36,23 @@ export const STORES: Record<StoreId, StoreInfo> = {
   nintendo: { id: "nintendo", name: "Nintendo eShop", color: "#e60012", platforms: ["switch", "switch2"], homepage: "https://www.nintendo.com/pt-br/store", status: "active" },
 };
 
+/**
+ * Lojas com programa de afiliados: em empate de preço, a oferta delas aparece como a melhor
+ * (botão "Comprar", destaque da vitrine e dos cards). Nunca vence uma loja mais barata.
+ */
+const PREFERRED_STORES: readonly string[] = ["nuuvem"];
+
+/** Menor número = mais preferida no desempate (lojas sem afiliado empatam entre si). */
+export function storePreference(store: string): number {
+  const i = PREFERRED_STORES.indexOf(store);
+  return i === -1 ? PREFERRED_STORES.length : i;
+}
+
+/** Comparador de ofertas: menor preço primeiro; no empate, a loja preferida. */
+export function compareOffers(a: { cents: number; store: string }, b: { cents: number; store: string }): number {
+  return a.cents - b.cents || storePreference(a.store) - storePreference(b.store);
+}
+
 export function getStore(id: string): StoreInfo | undefined {
   return STORES[id as StoreId];
 }
