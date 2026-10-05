@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
 import { LogoMark, SiteHeader } from "@/components/site-header";
@@ -22,6 +22,13 @@ export const metadata: Metadata = {
     template: "%s — comparador.jogos",
   },
   description: "Compare preços de jogos na Steam, GOG, Epic, Nuuvem, Green Man Gaming e Microsoft Store, já com cupons.",
+  // instalado na tela inicial do iPhone, abre como app (requisito para notificações no iOS)
+  appleWebApp: { capable: true, title: "comparador", statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b0d12",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -80,6 +80,32 @@ export async function getGameSummaries({
   return summarize(rows);
 }
 
+export interface BestPrice {
+  cents: number;
+  regularCents: number;
+  discountPercent: number;
+  store: string;
+}
+
+/** Menor preço de vitrine atual de cada jogo, entre as lojas que ainda vendem. */
+export async function getBestPrices(gameIds: number[]): Promise<Map<number, BestPrice>> {
+  const result = new Map<number, BestPrice>();
+  for (let i = 0; i < gameIds.length; i += 500) {
+    for (const { listing, snapshot } of await latestPrices(gameIds.slice(i, i + 500))) {
+      const current = result.get(listing.gameId);
+      if (!current || snapshot.priceCents < current.cents) {
+        result.set(listing.gameId, {
+          cents: snapshot.priceCents,
+          regularCents: snapshot.regularPriceCents,
+          discountPercent: snapshot.discountPercent,
+          store: listing.store,
+        });
+      }
+    }
+  }
+  return result;
+}
+
 export interface Paged<T> {
   items: T[];
   total: number;

@@ -26,8 +26,15 @@ A busca do site também encontra jogos fora do catálogo (pela Steam). Ao abrir 
 | `npm run seed -- --limit 3000` | Pré-carrega os jogos mais populares (ITAD + mais jogados da Steam). Pode ser interrompido e retomado; ~35 jogos/min por causa do limite da Steam |
 | `npm run refresh` | Atualiza preços não verificados há mais de 60 min, sincroniza a ITAD e os metadados do IGDB com mais de 7 dias (`--all` para todos, `--store gog` para uma loja) |
 | `npm run db:studio` | Abre o Drizzle Studio para ver/editar o banco |
-| `npm test` | Testes (lógica de cupons) |
+| `npm run alerts:test` | Envia uma notificação de teste para o aparelho que criou o alerta mais recente |
+| `npm test` | Testes (cupons, alertas, requisitos, formatação…) |
 | `npm run typecheck` / `npm run lint` | Verificações estáticas |
+
+## Alertas de preço
+
+Sem cadastro: a pessoa ativa as notificações do navegador e o alerta fica ligado àquele aparelho (Web Push com chaves VAPID). Há dois tipos: **chegar a um preço-alvo** ou **qualquer queda de preço**. Depois de cada atualização de preços, `checkPriceAlerts` compara o menor preço de vitrine de cada jogo com os alertas. Ele avisa uma vez por preço, avisa de novo só se cair mais e rearma quando o preço volta a subir. Aparelhos que revogaram a permissão são removidos sozinhos.
+
+A lista de desejos fica no `localStorage` do aparelho (página **Minha lista**). No iPhone, notificações só funcionam com o site instalado na tela de início (iOS 16.4+), e o site explica isso na hora de criar o alerta.
 
 ## Arquitetura
 
@@ -83,7 +90,7 @@ scripts/          CLIs de importação, atualização e seed
 Arquitetura: **GitHub** (código) → **Vercel** (hospedagem, deploy automático a cada push) + **Turso** (banco) + **GitHub Actions** (atualização de preços de hora em hora).
 
 1. **Banco:** crie um banco no [Turso](https://turso.tech) (SQLite gerenciado, compatível com o libsql daqui), na região mais próxima do Brasil. Gere um token e rode `npm run db:push` com `DATABASE_URL=libsql://...` e `DATABASE_AUTH_TOKEN` apontando para ele.
-2. **Hospedagem:** importe o repositório na [Vercel](https://vercel.com/new) e configure as variáveis `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `ITAD_API_KEY`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` e `CRON_SECRET`. Escolha para as funções a mesma região do banco.
+2. **Hospedagem:** importe o repositório na [Vercel](https://vercel.com/new) e configure as variáveis `DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `ITAD_API_KEY`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`, `CRON_SECRET`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT`. A `NEXT_PUBLIC_*` entra no código do navegador no build, então mudar uma delas exige um novo deploy. Escolha para as funções a mesma região do banco.
 3. **Catálogo inicial:** `npm run seed -- --limit 3000` (≈1h30) a partir da sua máquina, com o `.env` apontando para o banco de produção.
 4. **Atualização de preços:** no GitHub, em Settings → Secrets and variables → Actions, crie `SITE_URL` e `CRON_SECRET`. O workflow `.github/workflows/refresh-prices.yml` chama `/api/cron/refresh` de hora em hora (no plano gratuito da Vercel, o cron próprio dela só roda uma vez por dia). Cada execução atualiza as listagens mais desatualizadas primeiro, com limites que cabem no tempo máximo de uma função.
 

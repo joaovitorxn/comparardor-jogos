@@ -188,6 +188,46 @@ export const priceHistory = sqliteTable(
   (t) => [uniqueIndex("price_history_unique_idx").on(t.gameId, t.store, t.recordedAt)],
 );
 
+/**
+ * Inscrição de notificações push de um navegador. Não há conta: o próprio endpoint
+ * (longo e impossível de adivinhar) identifica o aparelho.
+ */
+export const pushSubscriptions = sqliteTable(
+  "push_subscriptions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("push_subscriptions_endpoint_idx").on(t.endpoint)],
+);
+
+export const priceAlerts = sqliteTable(
+  "price_alerts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    subscriptionId: integer("subscription_id")
+      .notNull()
+      .references(() => pushSubscriptions.id, { onDelete: "cascade" }),
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    /** "target": preço escolhido pela pessoa; "sale": qualquer preço abaixo do de quando o alerta foi criado. */
+    kind: text("kind", { enum: ["target", "sale"] }).notNull(),
+    /** Avisa quando o menor preço ficar igual ou abaixo deste valor. */
+    thresholdCents: integer("threshold_cents").notNull(),
+    /** Menor preço quando o alerta foi criado (para mostrar a economia). */
+    baselineCents: integer("baseline_cents").notNull(),
+    /** Preço do último aviso; volta a null quando o preço sobe acima do alvo (rearma o alerta). */
+    lastNotifiedCents: integer("last_notified_cents"),
+    lastNotifiedAt: integer("last_notified_at", { mode: "timestamp" }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("price_alerts_sub_game_idx").on(t.subscriptionId, t.gameId), index("price_alerts_game_idx").on(t.gameId)],
+);
+
 export const coupons = sqliteTable(
   "coupons",
   {
@@ -218,4 +258,6 @@ export type Listing = typeof listings.$inferSelect;
 export type PriceSnapshot = typeof priceSnapshots.$inferSelect;
 export type Coupon = typeof coupons.$inferSelect;
 export type PriceHistoryEntry = typeof priceHistory.$inferSelect;
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
+export type PriceAlert = typeof priceAlerts.$inferSelect;
 export type Platform = Listing["platform"];

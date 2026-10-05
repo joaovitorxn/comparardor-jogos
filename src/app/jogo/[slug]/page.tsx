@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
 import { MediaGallery } from "@/components/media-gallery";
@@ -10,6 +11,7 @@ import { Requirements } from "@/components/requirements";
 import { SimilarGames } from "@/components/similar-games";
 import { StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
+import { WishlistButton } from "@/components/wishlist-button";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { formatCents, formatRelative } from "@/lib/format";
@@ -75,9 +77,13 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           )}
           {best.listing.voucher && <p className="mt-2 text-xs text-coupon">Use o código {best.listing.voucher} no checkout</p>}
         </div>
-        <a href={best.listing.url} target="_blank" rel="noopener noreferrer sponsored" className={`${buttonStyles.primary} w-full`}>
-          Comprar na {storeName} <span aria-hidden>↗</span>
-        </a>
+        <div className="space-y-2">
+          <a href={best.listing.url} target="_blank" rel="noopener noreferrer sponsored" className={`${buttonStyles.primary} w-full`}>
+            Comprar na {storeName} <span aria-hidden>↗</span>
+          </a>
+          {/* alertas comparam preço de vitrine (sem cupom), igual ao histórico */}
+          <AlertButton gameId={data.game.id} gameTitle={data.game.title} currentCents={Math.min(...shelfPrices)} historicLowCents={low?.cents ?? null} />
+        </div>
       </div>
       <dl className="divide-y divide-line border-t border-line text-sm">
         {low && (
@@ -192,6 +198,9 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </div>
             <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">{game.title}</h1>
             <p className="mt-3 text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
+            <div className="mt-4">
+              <WishlistButton gameId={game.id} />
+            </div>
           </div>
         </div>
       </header>
