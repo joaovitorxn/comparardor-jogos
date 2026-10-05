@@ -15,7 +15,7 @@ export interface CardData {
   bestStore: string | null;
 }
 
-export function GameCard({ summary }: { summary: CardData }) {
+export function GameCard({ summary, releaseLabel }: { summary: CardData; releaseLabel?: string }) {
   const { game, bestPriceCents, regularPriceCents, maxDiscount, storeCount, bestStore } = summary;
   const discounted = regularPriceCents != null && bestPriceCents != null && regularPriceCents > bestPriceCents;
 
@@ -34,6 +34,11 @@ export function GameCard({ summary }: { summary: CardData }) {
         {maxDiscount > 0 && (
           <span className="absolute left-0 top-3">
             <DiscountBadge percent={maxDiscount} className="rounded-l-none pl-2" />
+          </span>
+        )}
+        {releaseLabel && (
+          <span className="absolute inset-x-0 bottom-0 bg-bg/85 px-2.5 py-1.5 font-display text-xs font-semibold uppercase tracking-wider text-accent backdrop-blur-sm">
+            {releaseLabel}
           </span>
         )}
       </div>
@@ -65,11 +70,11 @@ export function GameCard({ summary }: { summary: CardData }) {
   );
 }
 
-export function GameGrid({ games }: { games: CardData[] }) {
+export function GameGrid({ games, releaseLabel }: { games: CardData[]; releaseLabel?: (game: CardData) => string | undefined }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4 xl:grid-cols-6">
       {games.map((s) => (
-        <GameCard key={s.game.id} summary={s} />
+        <GameCard key={s.game.id} summary={s} releaseLabel={releaseLabel?.(s)} />
       ))}
     </div>
   );

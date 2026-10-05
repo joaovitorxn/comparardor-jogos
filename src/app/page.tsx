@@ -3,7 +3,7 @@ import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
 import { StoreLogo } from "@/components/store-logo";
 import { buttonStyles, DiscountBadge, PriceText, SectionHeader } from "@/components/ui";
-import { getCatalog, getDeals, getFeaturedDeals, type GameSummary } from "@/db/queries";
+import { getDeals, getDealPool, pickFeaturedDeals, pickPreorderDeals, type GameSummary } from "@/db/queries";
 import { formatCents } from "@/lib/format";
 import { getStore, STORES } from "@/lib/stores";
 
@@ -92,11 +92,10 @@ function TopDeals({ deals }: { deals: GameSummary[] }) {
 }
 
 export default async function Home() {
-  const [featuredDeals, { items: cheap, total: dealCount }, { items: recent, total: catalogCount }] = await Promise.all([
-    getFeaturedDeals({ limit: 18 }),
-    getDeals({ limit: 24, sort: "preco" }),
-    getCatalog({ limit: 12 }),
-  ]);
+  const [pool, { items: cheap, total: dealCount }] = await Promise.all([getDealPool(), getDeals({ limit: 24, sort: "preco" })]);
+  const featuredDeals = pickFeaturedDeals(pool, 18);
+  const preorders = pickPreorderDeals(pool, 6);
+  const preorderDates = new Map(preorders.map((s) => [s.game.id, s.game.releaseDate?.replace(/\./g, "")]));
   const [featured, ...rest] = featuredDeals;
   const deals = featuredDeals.slice(1 + 5); // o destaque e a lista lateral já usam os primeiros
   // os mais baratos não repetem o que já apareceu acima
@@ -132,16 +131,12 @@ export default async function Home() {
         </section>
       )}
 
-      <section>
-        <SectionHeader id="catalogo" title="Adicionados recentemente" aside={<SeeAll href="/jogos" label={`Ver catálogo completo (${catalogCount})`} />} />
-        {recent.length ? (
-          <GameGrid games={recent} />
-        ) : (
-          <p className="rounded-card border border-dashed border-line p-8 text-center text-text-2">
-            Catálogo vazio. Rode <code className="font-mono text-text">npm run import -- &quot;nome do jogo&quot;</code> ou use a busca.
-          </p>
-        )}
-      </section>
+      {preorders.length > 0 && (
+        <section>
+          <SectionHeader id="pre-venda" title="Pré-venda com desconto" aside="Só jogos que ainda não saíram e já têm desconto" />
+          <GameGrid games={preorders} releaseLabel={(c) => `Lança em ${preorderDates.get(c.game.id)}`} />
+        </section>
+      )}
 
       <section>
         <SectionHeader id="lojas" title="Lojas monitoradas" aside={`${stores.filter((s) => s.status === "active").length} de ${stores.length} ativas`} />

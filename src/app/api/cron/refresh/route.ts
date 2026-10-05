@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { checkPriceAlerts } from "@/services/alerts";
-import { refreshPrices } from "@/services/catalog";
+import { refreshPrices, syncPreorders } from "@/services/catalog";
 
 // atualizar o catálogo inteiro pode levar alguns minutos
 export const maxDuration = 300;
@@ -20,11 +20,13 @@ export async function GET(request: NextRequest) {
   const startedAt = Date.now();
   // limites por execução: com o agendador rodando de hora em hora, o catálogo inteiro roda em rodízio
   const summary = await refreshPrices({ maxPerStore: 800, maxHistory: 150, maxIgdb: 300 });
+  // pré-vendas com desconto entram no catálogo; uma falha aqui não derruba a atualização
+  const preorders = await syncPreorders().catch(() => -1);
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
   // preços novos: descarta o cache da home e de todas as páginas de jogo
   revalidatePath("/");
   revalidatePath("/jogo/[slug]", "page");
 
-  return Response.json({ ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, alerts });
+  return Response.json({ ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, alerts });
 }

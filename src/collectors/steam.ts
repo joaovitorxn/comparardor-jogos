@@ -175,6 +175,23 @@ export async function searchSteamGames(term: string): Promise<SteamStoreItem[]> 
   });
 }
 
+/**
+ * Jogos ainda não lançados com desconto de pré-venda na Steam (a própria busca da loja filtra
+ * "em breve" + "em oferta"). Devolve só os appids, para importar no catálogo.
+ */
+export async function fetchPreorderDealAppIds(limit = 50): Promise<number[]> {
+  const qs = new URLSearchParams({ query: "", start: "0", count: String(limit), filter: "comingsoon", specials: "1", category1: "998", cc: "br", l: "brazilian", infinite: "1" });
+  const res = await fetchJson<{ results_html: string }>(`https://store.steampowered.com/search/results/?${qs}`);
+  const ids: number[] = [];
+  // cada resultado é um <a data-ds-appid="..."> e o desconto vem em data-discount
+  for (const block of res.results_html.split("<a ").slice(1)) {
+    const id = block.match(/data-ds-appid="(\d+)"/)?.[1];
+    const discount = Number(block.match(/data-discount="(\d+)"/)?.[1] ?? 0);
+    if (id && discount > 0) ids.push(Number(id));
+  }
+  return ids;
+}
+
 /** Detalhes completos de um app — é a nossa fonte principal de metadados e mídia por enquanto. */
 export async function getSteamGameDetails(appId: number): Promise<SteamGameDetails | null> {
   const [res, item] = await Promise.all([

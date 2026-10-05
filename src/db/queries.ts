@@ -173,12 +173,42 @@ function featuredScore(s: GameSummary, year: number): number {
   return quality + recency + Math.min(s.maxDiscount, 80) / 10;
 }
 
+const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+/** Data exata de lançamento quando a Steam informa dia, mês e ano ("5/out./2026"); senão null. */
+function releaseDate(text: string | null): Date | null {
+  const m = text?.match(/^(\d{1,2})\/([a-zç]{3})\.?\/((?:19|20)\d{2})$/i);
+  const month = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1;
+  return m && month >= 0 ? new Date(Date.UTC(Number(m[3]), month, Number(m[1]), 23, 59, 59)) : null;
+}
+
+/** Ainda não lançado (o dia do lançamento já conta como lançado). */
+function isUnreleased(game: Game, now: Date): boolean {
+  const date = releaseDate(game.releaseDate);
+  return date != null && date > now;
+}
+
+/** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
+export async function getDealPool(): Promise<GameSummary[]> {
+  return (await getDeals({ limit: 500 })).items;
+}
+
+/** Pré-vendas com desconto, do maior desconto para o menor, as mais próximas do lançamento primeiro no empate. */
+export function pickPreorderDeals(pool: GameSummary[], limit: number): GameSummary[] {
+  const now = new Date();
+  return pool
+    .filter((s) => s.maxDiscount > 0 && isUnreleased(s.game, now))
+    .sort((a, b) => b.maxDiscount - a.maxDiscount || (releaseDate(a.game.releaseDate)!.getTime() - releaseDate(b.game.releaseDate)!.getTime()))
+    .slice(0, limit);
+}
+
 /** Jogos recentes e relevantes com desconto (a partir de 20%), do mais ao menos "vale a pena". */
-export async function getFeaturedDeals({ limit }: { limit: number }): Promise<GameSummary[]> {
-  const { items } = await getDeals({ limit: 500 });
+export function pickFeaturedDeals(pool: GameSummary[], limit: number): GameSummary[] {
   const year = new Date().getFullYear();
-  return items
-    .filter((s) => s.maxDiscount >= 20 && s.bestPriceCents !== 0)
+  const now = new Date();
+  return pool
+    // pré-vendas têm seção própria
+    .filter((s) => s.maxDiscount >= 20 && s.bestPriceCents !== 0 && !isUnreleased(s.game, now))
     .map((s) => ({ s, score: featuredScore(s, year) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)

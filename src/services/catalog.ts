@@ -6,7 +6,7 @@ import { fetchPsConcept, psOffer } from "@/collectors/psstore";
 import { fetchXboxProducts } from "@/collectors/xbox";
 import { fetchIgdbDetails, isIgdbConfigured, lookupIgdbIds } from "@/collectors/igdb";
 import { fetchItadHistory, fetchItadPrices, isItadConfigured, ITAD_STORES, lookupItadIds } from "@/collectors/itad";
-import { getSteamGameDetails } from "@/collectors/steam";
+import { fetchPreorderDealAppIds, getSteamGameDetails } from "@/collectors/steam";
 import type { OfferPrice, StoreOffer } from "@/collectors/types";
 import { db } from "@/db";
 import { gameMedia, games, listings, priceHistory, priceSnapshots, type Game } from "@/db/schema";
@@ -230,6 +230,26 @@ export async function importSteamGame(appId: number) {
   const game = await importSteamGameBasic(appId);
   const matched = await enrichGame(game);
   return { game, matched };
+}
+
+/**
+ * Pré-vendas com desconto na Steam entram no catálogo sozinhas (a página inicial as destaca).
+ * Devolve quantos jogos novos foram importados.
+ */
+export async function syncPreorders(): Promise<number> {
+  const appIds = await fetchPreorderDealAppIds();
+  if (!appIds.length) return 0;
+  const known = new Set((await db.select({ id: games.steamAppId }).from(games).where(inArray(games.steamAppId, appIds))).map((g) => g.id));
+  let imported = 0;
+  for (const appId of appIds.filter((id) => !known.has(id))) {
+    try {
+      await importSteamGame(appId);
+      imported++;
+    } catch (err) {
+      if (!(err instanceof NotAGameError)) console.error(`pré-venda ${appId}:`, err);
+    }
+  }
+  return imported;
 }
 
 /**
