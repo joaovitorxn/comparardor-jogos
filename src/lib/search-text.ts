@@ -10,7 +10,8 @@ const ROMAN: Record<string, string> = { ii: "2", iii: "3", iv: "4", v: "5", vi: 
 export function searchTerm(term: string): string | null {
   const t = normalizeTitle(term);
   if (!t) return null;
-  return ROMAN[t] ?? t;
+  // hasOwn: palavras como "constructor" ou "toString" não podem cair nas propriedades do objeto
+  return Object.hasOwn(ROMAN, t) ? ROMAN[t] : t;
 }
 
 /** Palavras curtas que geram uma segunda sigla sem elas ("The Legend of Zelda" → "tloz" e "lz"). */
@@ -27,10 +28,10 @@ export function titleAcronyms(title: string): string[] {
   const words = normalizeTitle(main).split(" ").filter(Boolean);
   if (!words.length) return [];
   // o número nem sempre é a última palavra: "Grand Theft Auto V Enhanced"
-  const isNumber = (w: string) => /^\d+$/.test(w) || w in ROMAN;
+  const isNumber = (w: string) => /^\d+$/.test(w) || Object.hasOwn(ROMAN, w);
   const numberAt = words.findLastIndex((w, i) => i > 0 && isNumber(w));
   const numberWord = numberAt >= 0 ? words[numberAt] : null;
-  const number = numberWord ? (ROMAN[numberWord] ?? numberWord) : null;
+  const number = numberWord ? (Object.hasOwn(ROMAN, numberWord) ? ROMAN[numberWord] : numberWord) : null;
   const base = numberAt >= 0 ? words.slice(0, numberAt) : words;
   if (base.length < 2) return [];
 

@@ -9,6 +9,13 @@ describe("searchTerm", () => {
     expect(searchTerm("Valheim")).toBe("valheim");
   });
 
+  it("never mistakes ordinary words for object properties", () => {
+    for (const word of ["constructor", "toString", "valueOf", "hasOwnProperty", "__proto__"]) {
+      expect(typeof searchTerm(word)).toBe("string");
+    }
+    expect(searchTerm("constructor")).toBe("constructor");
+  });
+
   it("drops empty terms", () => {
     expect(searchTerm("—")).toBeNull();
   });
@@ -35,6 +42,11 @@ describe("titleAcronyms", () => {
     expect(titleAcronyms("Counter-Strike 2")).toEqual(expect.arrayContaining(["cs", "cs2"]));
     expect(titleAcronyms("Half-Life 2")).toEqual(expect.arrayContaining(["hl2"]));
     expect(titleAcronyms("Disco Elysium - The Final Cut")).toEqual(expect.arrayContaining(["de"]));
+  });
+
+  it("does not read ordinary words as numbers", () => {
+    expect(titleAcronyms("The Constructor Game")).toEqual(expect.arrayContaining(["tcg"]));
+    expect(titleAcronyms("Grand Constructor")).not.toContain("gc" + "constructor");
   });
 
   it("skips single-word titles", () => {
