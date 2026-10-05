@@ -31,6 +31,12 @@ A busca do site também encontra jogos fora do catálogo (pela Steam). Ao abrir 
 | `npm test` | Testes (cupons, alertas, requisitos, formatação…) |
 | `npm run typecheck` / `npm run lint` | Verificações estáticas |
 
+## Busca
+
+Índice [MiniSearch](https://lucaong.github.io/minisearch/) em memória com o catálogo inteiro (`src/services/search.ts`), reconstruído a cada 5 minutos em segundo plano. Tolera erros de digitação ("hollw knigt"), completa a última palavra enquanto se digita, entende algarismos romanos ("hades 2") e siglas geradas do título ("gta", "rdr2", "bg3"). A barra de busca sugere até 3 jogos enquanto se digita; a página **Explorar** (`/busca`) tem filtros de plataforma, preço, desconto, loja e gênero, além de ordenação, todos na URL. Jogos fora do catálogo aparecem em "Mais na Steam" quando não há filtros.
+
+Com alguns milhares de jogos isso cabe na memória de cada instância com folga. Se o catálogo chegar a centenas de milhares, troque o índice por um serviço dedicado (Meilisearch, Typesense ou Elasticsearch) mantendo a interface de `searchCatalog`/`suggest`.
+
 ## Alertas de preço
 
 Sem cadastro: a pessoa ativa as notificações do navegador e o alerta fica ligado àquele aparelho (Web Push com chaves VAPID). Há dois tipos: **chegar a um preço-alvo** ou **qualquer queda de preço**, e cada alerta pode valer para **uma plataforma** (PC, PlayStation, Xbox, Switch) ou para qualquer uma. O diálogo abre na plataforma escolhida no filtro da tabela. Ofertas Xbox Play Anywhere contam também para PC. Depois de cada atualização de preços, `checkPriceAlerts` compara o menor preço de vitrine de cada jogo com os alertas. Ele avisa uma vez por preço, avisa de novo só se cair mais e rearma quando o preço volta a subir. Aparelhos que revogaram a permissão são removidos sozinhos.

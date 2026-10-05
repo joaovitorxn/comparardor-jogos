@@ -1,12 +1,21 @@
 import Link from "next/link";
-import type { GameSummary } from "@/db/queries";
 import { formatCents } from "@/lib/format";
 import { getStore } from "@/lib/stores";
 import { CoverImage } from "./cover-image";
 import { StoreLogo } from "./store-logo";
 import { DiscountBadge } from "./ui";
 
-export function GameCard({ summary }: { summary: GameSummary }) {
+/** O que o card precisa — vem tanto do catálogo (GameSummary) quanto da busca (SearchDoc). */
+export interface CardData {
+  game: { id: number; slug: string; title: string; coverUrl: string | null };
+  bestPriceCents: number | null;
+  regularPriceCents: number | null;
+  maxDiscount: number;
+  storeCount: number;
+  bestStore: string | null;
+}
+
+export function GameCard({ summary }: { summary: CardData }) {
   const { game, bestPriceCents, regularPriceCents, maxDiscount, storeCount, bestStore } = summary;
   const discounted = regularPriceCents != null && bestPriceCents != null && regularPriceCents > bestPriceCents;
 
@@ -56,7 +65,7 @@ export function GameCard({ summary }: { summary: GameSummary }) {
   );
 }
 
-export function GameGrid({ games }: { games: GameSummary[] }) {
+export function GameGrid({ games }: { games: CardData[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4 xl:grid-cols-6">
       {games.map((s) => (

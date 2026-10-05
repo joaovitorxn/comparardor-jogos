@@ -14,7 +14,7 @@ export function LogoMark({ className = "size-7" }: { className?: string }) {
 
 const NAV = [
   { href: "/ofertas", label: "Ofertas" },
-  { href: "/jogos", label: "Catálogo" },
+  { href: "/busca", label: "Explorar" },
   { href: "/#lojas", label: "Lojas" },
 ];
 
