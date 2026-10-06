@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
@@ -247,8 +248,8 @@ export async function getShowcaseImages(ids: number[]): Promise<Map<number, { he
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
 const poolCache = new Map<string, { at: number; pool: Promise<GameSummary[]> }>();
-// os preços só mudam quando o robô de coleta roda (de hora em hora), então 15 min não se nota
-const POOL_TTL_MS = 15 * 60_000;
+// 1ª camada, na memória de cada instância. Os preços só mudam quando o robô de coleta roda (de hora em hora)
+const POOL_TTL_MS = 5 * 60_000;
 
 /**
  * Todos os jogos em promoção. Com `platforms`, só contam as ofertas das plataformas escolhidas (o
@@ -259,13 +260,26 @@ export function getDealPool(platforms: PlatformFamilyId[] = []): Promise<GameSum
   const key = platforms.join("-");
   const cached = poolCache.get(key);
   if (cached && Date.now() - cached.at < POOL_TTL_MS) return cached.pool;
-  const pool = platforms.length ? getPlatformDeals(platforms) : getDeals({ limit: 100_000 }).then((r) => r.items);
+  const pool = sharedPool(key);
   poolCache.set(key, { at: Date.now(), pool });
   pool.catch(() => {
     if (poolCache.get(key)?.pool === pool) poolCache.delete(key);
   });
   return pool;
 }
+
+export const DEAL_POOL_TAG = "deal-pool";
+
+/**
+ * 2ª camada: cache de dados do Next, compartilhado entre todas as instâncias da hospedagem, então a lista só é
+ * montada uma vez (e não a cada instância fria). A coleta de preços expira a etiqueta; a validade de 1 hora é
+ * só uma rede de segurança.
+ */
+const sharedPool = unstable_cache(
+  async (key: string): Promise<GameSummary[]> => (key ? getPlatformDeals(key.split("-") as PlatformFamilyId[]) : getDeals({ limit: 100_000 }).then((r) => r.items)),
+  ["deal-pool"],
+  { revalidate: 3600, tags: [DEAL_POOL_TAG] },
+);
 
 /** Promoções vistas só pelas ofertas das plataformas escolhidas. */
 async function getPlatformDeals(platforms: PlatformFamilyId[]): Promise<GameSummary[]> {

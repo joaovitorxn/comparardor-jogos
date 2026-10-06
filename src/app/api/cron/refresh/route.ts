@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { NextRequest } from "next/server";
+import { DEAL_POOL_TAG } from "@/db/queries";
 import { checkPriceAlerts } from "@/services/alerts";
 import { refreshPrices, syncExclusives, syncPreorders } from "@/services/catalog";
 
@@ -35,6 +36,8 @@ export async function GET(request: NextRequest) {
   const alerts = await checkPriceAlerts();
   // preços novos: descarta o cache da home e de todas as páginas de jogo
   revalidatePath("/");
+  // a lista de promoções (home e ofertas) é refeita no próximo acesso; até lá serve a anterior
+  revalidateTag(DEAL_POOL_TAG, "max");
   revalidatePath("/jogo/[slug]", "page");
 
   return Response.json({ ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, alerts });
