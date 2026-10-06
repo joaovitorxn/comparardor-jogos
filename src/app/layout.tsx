@@ -4,6 +4,7 @@ import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
 import { BetaNotice } from "@/components/beta-notice";
 import { FeedbackButton } from "@/components/feedback-button";
+import { KofiButton } from "@/components/kofi-button";
 import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
 import { BRAND } from "@/lib/brand";
@@ -107,6 +108,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </footer>
         <FeedbackButton />
+        <KofiButton />
         <BetaNotice />
         <Analytics />
       </body>

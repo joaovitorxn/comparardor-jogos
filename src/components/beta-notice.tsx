@@ -40,7 +40,7 @@ export function BetaNotice() {
     <aside
       role="status"
       aria-label="Aviso: o Dropou está em beta"
-      className="fixed inset-x-3 bottom-20 z-40 animate-[showcase-in_400ms_ease-out] rounded-card border border-accent-line bg-surface-2 p-4 shadow-2xl shadow-black/60 sm:inset-x-auto sm:bottom-4 sm:left-4 sm:w-96"
+      className="fixed inset-x-3 bottom-24 z-40 animate-[showcase-in_400ms_ease-out] rounded-card border border-accent-line bg-surface-2 p-4 shadow-2xl shadow-black/60 sm:inset-x-auto sm:bottom-24 sm:left-4 sm:w-96"
     >
       <div className="flex items-start gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
