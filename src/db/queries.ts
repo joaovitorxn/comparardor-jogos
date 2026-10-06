@@ -2,6 +2,7 @@ import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-o
 import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
+import { onePerFranchise } from "@/lib/franchise";
 import { parseReleaseDate } from "@/lib/release-date";
 import { compareOffers, offerFamilies, PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
@@ -279,6 +280,12 @@ export function pickPreorderDeals(pool: GameSummary[], limit: number): GameSumma
     .slice(0, limit);
 }
 
+/** No máximo um jogo por franquia nas vitrines; lista inteira (limite infinito) fica como está. */
+function diversify(list: GameSummary[], limit: number): GameSummary[] {
+  if (!Number.isFinite(limit)) return list;
+  return onePerFranchise(list, limit, (s) => ({ title: s.game.title, developers: s.game.developers, publishers: s.game.publishers }));
+}
+
 /** Preço original mínimo (R$ 30) para um jogo contar como "quase de graça": evita o que já era barato. */
 const MIN_REGULAR_CENTS = 3000;
 
@@ -290,7 +297,7 @@ export function pickCheapestDeals(pool: GameSummary[], limit: number): GameSumma
   const onSale = pool.filter((s) => s.maxDiscount > 0 && (s.bestPriceCents ?? 0) > 0);
   const byPrice = (a: GameSummary, b: GameSummary) => a.bestPriceCents! - b.bestPriceCents! || b.maxDiscount - a.maxDiscount;
   const good = (s: GameSummary) => qualityOf(s.game) >= MIN_QUALITY && (s.regularPriceCents ?? 0) >= MIN_REGULAR_CENTS;
-  const picked = onSale.filter(good).sort(byPrice).slice(0, limit);
+  const picked = diversify(onSale.filter(good).sort(byPrice), limit);
   if (picked.length >= limit) return picked;
   const rest = onSale.filter((s) => !good(s)).sort(byPrice);
   return [...picked, ...rest.slice(0, limit - picked.length)];
@@ -309,7 +316,7 @@ export function pickFeaturedDeals(pool: GameSummary[], limit: number): GameSumma
     .filter((s) => s.maxDiscount >= 20 && s.bestPriceCents !== 0 && !isUnreleased(s.game, now))
     .map((s) => ({ s, strong: s.maxDiscount >= 30 && qualityOf(s.game) >= MIN_QUALITY, score: featuredScore(s, year) }))
     .sort((a, b) => Number(b.strong) - Number(a.strong) || b.score - a.score || a.s.game.id - b.s.game.id);
-  return ranked.slice(0, limit).map((x) => x.s);
+  return diversify(ranked.map((x) => x.s), limit);
 }
 
 /**
