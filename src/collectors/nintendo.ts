@@ -20,6 +20,7 @@ interface SearchHit {
   title: string;
   platformCode?: string;
   url?: string;
+  releaseDate?: string | null;
 }
 
 interface PriceEntry {
@@ -74,6 +75,7 @@ export const nintendoCollector: StoreCollector = {
         isKey: false,
         url: h.url ? `https://www.nintendo.com${h.url}` : "https://www.nintendo.com/pt-br/store/",
         price: prices.get(h.nsuid) ?? null,
+        releasedAt: h.releaseDate ? new Date(h.releaseDate) : null,
       }),
     );
   },

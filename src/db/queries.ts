@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
+import { parseReleaseDate } from "@/lib/release-date";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
 import { compareOffers, offerFamilies, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
@@ -174,18 +175,9 @@ function featuredScore(s: GameSummary, year: number): number {
   return quality + recency + Math.min(s.maxDiscount, 80) / 10;
 }
 
-const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-
-/** Data exata de lançamento quando a Steam informa dia, mês e ano ("5/out./2026"); senão null. */
-function releaseDate(text: string | null): Date | null {
-  const m = text?.match(/^(\d{1,2})\/([a-zç]{3})\.?\/((?:19|20)\d{2})$/i);
-  const month = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1;
-  return m && month >= 0 ? new Date(Date.UTC(Number(m[3]), month, Number(m[1]), 23, 59, 59)) : null;
-}
-
 /** Ainda não lançado (o dia do lançamento já conta como lançado). */
 function isUnreleased(game: Game, now: Date): boolean {
-  const date = releaseDate(game.releaseDate);
+  const date = parseReleaseDate(game.releaseDate);
   return date != null && date > now;
 }
 
@@ -244,7 +236,7 @@ export function pickPreorderDeals(pool: GameSummary[], limit: number): GameSumma
   const now = new Date();
   return pool
     .filter((s) => s.maxDiscount > 0 && isUnreleased(s.game, now))
-    .sort((a, b) => b.maxDiscount - a.maxDiscount || (releaseDate(a.game.releaseDate)!.getTime() - releaseDate(b.game.releaseDate)!.getTime()))
+    .sort((a, b) => b.maxDiscount - a.maxDiscount || (parseReleaseDate(a.game.releaseDate)!.getTime() - parseReleaseDate(b.game.releaseDate)!.getTime()))
     .slice(0, limit);
 }
 

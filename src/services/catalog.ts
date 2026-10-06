@@ -10,6 +10,7 @@ import { fetchPreorderDealAppIds, getSteamGameDetails } from "@/collectors/steam
 import type { OfferPrice, StoreOffer } from "@/collectors/types";
 import { db } from "@/db";
 import { gameMedia, games, listings, priceHistory, priceSnapshots, skippedGames, type Game } from "@/db/schema";
+import { isDifferentGame, parseReleaseDate } from "@/lib/release-date";
 import { normalizeTitle, slugify } from "@/lib/text";
 
 /** Grava um snapshot só se o preço mudou desde o último — mantém o histórico enxuto. */
@@ -73,6 +74,8 @@ async function uniqueSlug(title: string, steamAppId: number) {
 export async function matchOtherStores(game: Pick<Game, "id" | "title">) {
   const target = normalizeTitle(game.title);
   const matched: StoreOffer[] = [];
+  const [row] = await db.select({ releaseDate: games.releaseDate, platforms: games.platforms }).from(games).where(eq(games.id, game.id));
+  const gameInfo = { release: parseReleaseDate(row?.releaseDate), platforms: row?.platforms ?? [] };
   const known = new Set(
     (
       await db
@@ -86,7 +89,8 @@ export async function matchOtherStores(game: Pick<Game, "id" | "title">) {
     if (!collector || known.has(collector.store)) continue;
     try {
       const offers = await collector.findByTitle(game.title);
-      const exact = offers.find((o) => normalizeTitle(o.title) === target);
+      // mesmo título não basta: o "Resident Evil 4" de 2005 não é o remake de 2023
+      const exact = offers.find((o) => normalizeTitle(o.title) === target && !isDifferentGame(gameInfo, o));
       // a versão de Switch 2 é outro produto na eShop: entra como edição separada
       const switch2 = offers.find((o) => o.platform === "switch2" && normalizeTitle(o.title) === `${target} nintendo switch 2 edition`);
       for (const match of [exact, switch2 && { ...switch2, edition: "Nintendo Switch 2 Edition" }]) {

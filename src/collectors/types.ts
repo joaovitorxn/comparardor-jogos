@@ -21,6 +21,8 @@ export interface StoreOffer {
   price: OfferPrice | null;
   /** Código exigido para chegar ao preço informado (já descontado em `price`). */
   voucher?: string | null;
+  /** Data de lançamento desta versão na loja, quando ela informa (ajuda a não confundir jogos de mesmo título). */
+  releasedAt?: Date | null;
 }
 
 /**
