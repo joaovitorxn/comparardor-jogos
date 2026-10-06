@@ -44,6 +44,8 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
 
   return (
     <div className="mx-auto max-w-7xl space-y-14 px-4 py-8 lg:px-6">
+      {/* verificação de afiliado (Impact / Green Man Gaming); o React leva a tag para o <head>. O atributo é `value`, como a Impact pede */}
+      <meta name="impact-site-verification" {...{ value: "80bbbd5a-6c43-4523-8d00-60a3054136a1" }} />
       <JsonLd
         data={{
           "@context": "https://schema.org",
