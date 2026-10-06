@@ -96,7 +96,7 @@ export function ShareButton({ url, text, imageUrl, filename }: Props) {
               </button>
             </div>
 
-            <div className="skeleton relative mx-auto aspect-[4/5] max-h-[55vh] overflow-hidden rounded-[8px] border border-line">
+            <div className={`${loaded ? "bg-surface" : "skeleton"} relative mx-auto aspect-[4/5] max-h-[55vh] overflow-hidden rounded-[8px] border border-line`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl}
@@ -108,23 +108,28 @@ export function ShareButton({ url, text, imageUrl, filename }: Props) {
 
             <div className="mt-4 space-y-2">
               <a href={imageUrl} download={filename} className={`${buttonStyles.primary} w-full`}>
+                <Icon name="download" className="size-5" />
                 Baixar imagem
               </a>
               {canShare ? (
                 <button type="button" onClick={share} className={`${secondary} w-full`}>
+                  <Icon name="share" className="size-4" />
                   Compartilhar…
                 </button>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   <a href={`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`} target="_blank" rel="noopener noreferrer" className={secondary}>
+                    <Icon name="chat" className="size-4" />
                     WhatsApp
                   </a>
                   <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer" className={secondary}>
+                    <Icon name="cross" className="size-4" />
                     X (Twitter)
                   </a>
                 </div>
               )}
               <button type="button" onClick={copy} className={`${secondary} w-full`}>
+                <Icon name="link" className="size-4" />
                 Copiar link
               </button>
             </div>
