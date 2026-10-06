@@ -93,7 +93,7 @@ async function uniqueSlug(title: string, steamAppId: number) {
 }
 
 /** Procura o mesmo jogo nas outras lojas pelo título normalizado (só onde ainda não foi encontrado). */
-export async function matchOtherStores(game: Pick<Game, "id" | "title">) {
+export async function matchOtherStores(game: Pick<Game, "id" | "title">, { only }: { only?: string[] } = {}) {
   const target = normalizeTitle(game.title);
   const matched: StoreOffer[] = [];
   const [row] = await db.select({ releaseDate: games.releaseDate, platforms: games.platforms }).from(games).where(eq(games.id, game.id));
@@ -108,7 +108,7 @@ export async function matchOtherStores(game: Pick<Game, "id" | "title">) {
   );
 
   for (const collector of Object.values(collectors)) {
-    if (!collector || known.has(collector.store)) continue;
+    if (!collector || known.has(collector.store) || (only && !only.includes(collector.store))) continue;
     try {
       const offers = await collector.findByTitle(game.title);
       // mesmo título não basta: o "Resident Evil 4" de 2005 não é o remake de 2023

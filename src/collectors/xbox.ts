@@ -1,5 +1,5 @@
 import { PLAY_ANYWHERE } from "@/lib/stores";
-import { slugify } from "@/lib/text";
+import { normalizeTitle, slugify } from "@/lib/text";
 import { fetchJson } from "./http";
 import type { OfferPrice, StoreCollector, StoreOffer } from "./types";
 
@@ -93,11 +93,25 @@ export async function fetchXboxProducts(bigIds: string[]): Promise<Map<string, X
   return result;
 }
 
+/** Sugestões da busca da loja (a mesma da Xbox/Microsoft Store): id e título dos produtos que combinam com o texto. */
+async function suggestXboxProducts(query: string): Promise<{ id: string; title: string; type: string }[]> {
+  const res = await fetchJson<{ Results?: { Products?: { ProductId: string; Title: string; Type: string }[] }[] }>(
+    `https://displaycatalog.mp.microsoft.com/v7.0/productFamilies/autosuggest?market=BR&languages=pt-BR&productFamilyNames=Games&query=${encodeURIComponent(query)}`,
+  );
+  return (res.Results ?? []).flatMap((r) => (r.Products ?? []).map((p) => ({ id: p.ProductId, title: p.Title, type: p.Type })));
+}
+
 export const xboxCollector: StoreCollector = {
   store: "xbox",
-  // sem busca por título: os produtos vêm dos ids do IGDB (ver syncConsoleStores)
-  async findByTitle() {
-    return [];
+  // Os produtos normalmente vêm dos ids do IGDB (ver syncConsoleStores). A busca por título cobre o que o IGDB
+  // ainda não cadastrou (lançamentos recentes); só considera produtos de título exatamente igual ao buscado.
+  async findByTitle(title) {
+    const target = normalizeTitle(title);
+    const ids = (await suggestXboxProducts(title)).filter((p) => p.type === "Game" && normalizeTitle(p.title) === target).map((p) => p.id);
+    if (!ids.length) return [];
+    const products = await fetchXboxProducts(ids.slice(0, 5));
+    // preço zero na busca por título não vale: a Microsoft lista R$ 0 em alguns jogos pagos (ex.: Call of Duty MW III)
+    return [...products.values()].flatMap((p) => (p && p.offer.price && p.offer.price.priceCents > 0 ? [p.offer] : []));
   },
   async fetchPrices(productIds) {
     const products = await fetchXboxProducts(productIds);
