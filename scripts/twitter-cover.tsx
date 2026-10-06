@@ -42,17 +42,17 @@ function CoverLogo() {
         <circle cx={1340} cy={150} r={22} fill="none" stroke={C.accent} strokeWidth={2} />
       </svg>
 
-      <div style={{ position: "absolute", left: 470, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 30 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 34 }}>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: 30 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 34, marginLeft: 8 }}>
           <div style={{ width: 150, height: 150, display: "flex", alignItems: "center", justifyContent: "center", background: C.accent, borderRadius: 32 }}>
             <svg width={126} height={126} viewBox={LOGO.viewBox}>
               <path d={LOGO.arrow} fill="none" stroke={C.bg} strokeWidth={LOGO.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
               <path d={LOGO.loot} fill={C.bg} />
             </svg>
           </div>
-          <div style={{ display: "flex", fontSize: 170, lineHeight: 1, textTransform: "uppercase", letterSpacing: 6 }}>{BRAND.name}</div>
+          <div style={{ display: "flex", fontSize: 170, lineHeight: 1, textTransform: "uppercase", letterSpacing: 6, marginRight: -6 }}>{BRAND.name}</div>
         </div>
-        <div style={{ display: "flex", marginTop: 34, fontSize: 56, letterSpacing: 2, textTransform: "uppercase", color: C.accent }}>{BRAND.tagline}</div>
+        <div style={{ display: "flex", marginTop: 34, fontSize: 56, letterSpacing: 2, textTransform: "uppercase", color: C.accent, marginRight: -2 }}>{BRAND.tagline}</div>
       </div>
     </div>
   );
