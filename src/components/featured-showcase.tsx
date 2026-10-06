@@ -6,6 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatCents } from "@/lib/format";
 import { lightImage } from "@/lib/images";
 import { getStore } from "@/lib/stores";
+import { Icon } from "./icon";
 import { StoreLogo } from "./store-logo";
 import { buttonStyles, DiscountBadge, PriceText } from "./ui";
 
@@ -127,7 +128,10 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
       </div>
 
       <div className="flex flex-col rounded-card border border-line bg-surface" {...pause}>
-        <h2 className="border-b border-line px-4 py-3 font-display text-base font-semibold uppercase tracking-wider text-text-2">Drops em destaque</h2>
+        <h2 className="flex items-center gap-2 border-b border-accent-line bg-accent-soft px-4 py-3 font-display text-lg font-bold uppercase tracking-wider text-text">
+          <Icon name="bolt" className="size-5 text-accent" />
+          Drops em destaque
+        </h2>
         <ol className="flex flex-1 flex-col">
           {items.map((d, i) => (
             <li key={d.slug} className="border-b border-line last:border-b-0">
