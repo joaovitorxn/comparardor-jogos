@@ -16,6 +16,7 @@ import { SimilarGames } from "@/components/similar-games";
 import { PlatformFilter } from "@/components/platform-filter";
 import { StoreLogo, StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
+import { ShareButton } from "@/components/share-button";
 import { WishlistButton } from "@/components/wishlist-button";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
@@ -46,8 +47,17 @@ export async function generateMetadata(props: PageProps<"/jogo/[slug]">): Promis
         ? `${data.game.title} a partir de ${formatCents(best)}. Compare preços em ${data.offers.length} lojas.`
         : (data.game.shortDescription ?? undefined),
     alternates: { canonical: `/jogo/${data.game.slug}` },
-    openGraph: { images: data.game.headerUrl ? [data.game.headerUrl] : undefined },
   };
+}
+
+/** Frase que acompanha o link ao compartilhar: jogo, preço e desconto da melhor oferta. */
+function shareText(data: GamePageData): string {
+  const best = data.offers.find((o) => o.snapshot && o.finalCents != null);
+  if (!best?.snapshot) return `${data.game.title} no Dropou`;
+  const store = getStore(best.listing.store)?.name ?? best.listing.store;
+  const price = best.finalCents === 0 ? "de graça" : `por ${formatCents(best.finalCents!)}`;
+  const off = best.snapshot.discountPercent > 0 ? ` (-${best.snapshot.discountPercent}%)` : "";
+  return `${data.game.title} ${price}${off} na ${store}. Dropou:`;
 }
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -349,8 +359,9 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </div>
             <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">{game.title}</h1>
             <p className="mt-3 text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <WishlistButton gameId={game.id} />
+              <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/opengraph-image`} filename={`dropou-${game.slug}.jpg`} />
             </div>
           </div>
         </div>
