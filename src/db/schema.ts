@@ -142,6 +142,14 @@ export const listings = sqliteTable(
     /** Código de voucher exigido pela oferta atual; o preço do snapshot já o inclui. */
     voucher: text("voucher"),
     lastCheckedAt: integer("last_checked_at", { mode: "timestamp" }),
+    // Preço atual, copiado do último snapshot (price_snapshots guarda o histórico). Assim as listas e a busca leem só
+    // esta tabela, em vez de procurar o último snapshot de cada oferta. Nulo = ainda sem preço.
+    priceSnapshotId: integer("price_snapshot_id"),
+    priceCurrency: text("price_currency"),
+    priceCents: integer("price_cents"),
+    priceRegularCents: integer("price_regular_cents"),
+    priceDiscountPercent: integer("price_discount_percent"),
+    priceCapturedAt: integer("price_captured_at", { mode: "timestamp" }),
     ...timestamps,
   },
   (t) => [

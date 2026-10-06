@@ -16,25 +16,29 @@ import { normalizeTitle, slugify } from "@/lib/text";
 /** Grava um snapshot só se o preço mudou desde o último — mantém o histórico enxuto. */
 export async function recordPrice(listingId: number, price: OfferPrice | null) {
   const now = new Date();
-  await db.update(listings).set({ lastCheckedAt: now, updatedAt: now }).where(eq(listings.id, listingId));
+  // o próprio UPDATE devolve o preço atual da oferta (copiado do último snapshot): não precisa de outra consulta
+  const [current] = await db
+    .update(listings)
+    .set({ lastCheckedAt: now, updatedAt: now })
+    .where(eq(listings.id, listingId))
+    .returning({ cents: listings.priceCents, regular: listings.priceRegularCents, currency: listings.priceCurrency });
   if (!price) return false;
 
-  const [last] = await db
-    .select()
-    .from(priceSnapshots)
-    .where(eq(priceSnapshots.listingId, listingId))
-    .orderBy(desc(priceSnapshots.id))
-    .limit(1);
-
-  if (
-    last &&
-    last.priceCents === price.priceCents &&
-    last.regularPriceCents === price.regularPriceCents &&
-    last.currency === price.currency
-  ) {
+  if (current && current.cents === price.priceCents && current.regular === price.regularPriceCents && current.currency === price.currency) {
     return false;
   }
-  await db.insert(priceSnapshots).values({ listingId, ...price, capturedAt: now });
+  const [snapshot] = await db.insert(priceSnapshots).values({ listingId, ...price, capturedAt: now }).returning({ id: priceSnapshots.id });
+  await db
+    .update(listings)
+    .set({
+      priceSnapshotId: snapshot.id,
+      priceCurrency: price.currency,
+      priceCents: price.priceCents,
+      priceRegularCents: price.regularPriceCents,
+      priceDiscountPercent: price.discountPercent,
+      priceCapturedAt: now,
+    })
+    .where(eq(listings.id, listingId));
   return true;
 }
 
@@ -291,8 +295,7 @@ export async function importConsoleExclusive(ex: IgdbExclusive): Promise<Game | 
   const [priced] = await db
     .select({ n: sql<number>`count(*)` })
     .from(listings)
-    .innerJoin(priceSnapshots, eq(priceSnapshots.listingId, listings.id))
-    .where(and(eq(listings.gameId, game.id), eq(listings.available, true)));
+    .where(and(eq(listings.gameId, game.id), eq(listings.available, true), isNotNull(listings.priceSnapshotId)));
   if (priced.n > 0) return game;
 
   await db.delete(games).where(eq(games.id, game.id));

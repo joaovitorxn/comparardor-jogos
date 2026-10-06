@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
@@ -21,19 +21,26 @@ import {
 } from "./schema";
 
 /**
- * Último snapshot de cada oferta (os ids são crescentes, então o maior id é o mais recente).
- * Subconsulta correlacionada de propósito: só olha as ofertas que já passaram pelo filtro. A versão antiga
- * ("id IN (select max(id) ... group by listing)") varria a tabela de preços inteira mesmo para um jogo só,
- * e isso, multiplicado por cada página gerada, consumia a cota de leituras do banco.
+ * Preço atual de cada oferta à venda. Fica na própria linha da oferta (copiado do último snapshot quando o preço
+ * muda), então estas consultas leem uma tabela só, sem juntar com o histórico de preços.
  */
-const latestSnapshotOf = sql`(select max(s2.id) from price_snapshots s2 where s2.listing_id = ${listings.id})`;
-
-async function latestPrices(gameIds?: number[]) {
-  return db
-    .select({ listing: listings, snapshot: priceSnapshots })
+async function latestPrices(gameIds?: number[]): Promise<{ listing: Listing; snapshot: PriceSnapshot }[]> {
+  const rows = await db
+    .select()
     .from(listings)
-    .innerJoin(priceSnapshots, eq(priceSnapshots.id, latestSnapshotOf))
-    .where(and(eq(listings.available, true), gameIds ? inArray(listings.gameId, gameIds) : undefined));
+    .where(and(eq(listings.available, true), isNotNull(listings.priceSnapshotId), gameIds ? inArray(listings.gameId, gameIds) : undefined));
+  return rows.map((listing) => ({
+    listing,
+    snapshot: {
+      id: listing.priceSnapshotId!,
+      listingId: listing.id,
+      currency: listing.priceCurrency!,
+      priceCents: listing.priceCents!,
+      regularPriceCents: listing.priceRegularCents!,
+      discountPercent: listing.priceDiscountPercent ?? 0,
+      capturedAt: listing.priceCapturedAt ?? listing.updatedAt,
+    },
+  }));
 }
 
 export interface GameSummary {
@@ -123,12 +130,11 @@ export async function getDeals({ limit, offset = 0, sort = "desconto" }: { limit
   const perGame = db
     .select({
       gameId: listings.gameId,
-      maxDiscount: sql<number>`max(${priceSnapshots.discountPercent})`.as("max_discount"),
-      bestPrice: sql<number>`min(${priceSnapshots.priceCents})`.as("best_price"),
+      maxDiscount: sql<number>`max(${listings.priceDiscountPercent})`.as("max_discount"),
+      bestPrice: sql<number>`min(${listings.priceCents})`.as("best_price"),
     })
     .from(listings)
-    .innerJoin(priceSnapshots, eq(priceSnapshots.id, latestSnapshotOf))
-    .where(eq(listings.available, true))
+    .where(and(eq(listings.available, true), isNotNull(listings.priceSnapshotId)))
     .groupBy(listings.gameId)
     .as("per_game");
 
