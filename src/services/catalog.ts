@@ -650,21 +650,36 @@ export async function refreshPrices({
       return [s, due.slice(0, cap)];
     }),
   );
-  /** `ms`: quanto a etapa demorou; `partial`: parou por falta de tempo. */
-  const summary: Record<string, { checked: number; changed: number; error?: string; ms?: number; partial?: boolean }> = {};
+  /** `ms`: quanto a etapa demorou. */
+  const summary: Record<string, { checked: number; changed: number; error?: string; ms?: number }> = {};
 
-  for (const [storeId, rows] of byStore) {
+  // a ITAD traz os preços de Epic, Nuuvem, GMG e Microsoft Store e responde o catálogo inteiro em poucas
+  // chamadas, então vem primeiro: é o que mais pesa para o usuário
+  if ((!store || ITAD_STORES.has(store)) && !over()) {
+    const started = Date.now();
+    try {
+      const itad = await syncItad({ historyLimit: maxHistory });
+      if (itad) summary.itad = { checked: itad.games, changed: itad.offers.length, ms: Date.now() - started };
+    } catch (err) {
+      summary.itad = { checked: 0, changed: 0, error: String(err), ms: Date.now() - started };
+    }
+  }
+
+  // as lojas rápidas primeiro; a PS Store (1,5 s de espera por jogo, de propósito) por último e só com o que couber no tempo
+  const PS_SECONDS_PER_GAME = 2.6;
+  const ordered = [...byStore].sort(([x], [y]) => Number(x === "psstore") - Number(y === "psstore"));
+  for (const [storeId, allRows] of ordered) {
     const collector = getCollector(storeId);
     if (!collector || over()) continue;
+    let rows = allRows;
+    if (storeId === "psstore" && deadline != null) rows = rows.slice(0, Math.max(0, Math.floor((deadline - Date.now()) / 1000 / PS_SECONDS_PER_GAME)));
+    if (!rows.length) continue;
     summary[storeId] = { checked: 0, changed: 0 };
     const started = Date.now();
     try {
       const prices = await collector.fetchPrices(rows.map((r) => r.storeProductId));
+      // o que já foi lido é gravado mesmo que o tempo tenha acabado no meio
       for (const row of rows) {
-        if (over()) {
-          summary[storeId].partial = true;
-          break;
-        }
         if (!prices.has(row.storeProductId)) continue;
         summary[storeId].checked++;
         if (await recordPrice(row.id, prices.get(row.storeProductId) ?? null)) summary[storeId].changed++;
@@ -684,18 +699,6 @@ export async function refreshPrices({
       .where(and(isNull(games.enrichedAt), lt(games.createdAt, new Date(Date.now() - 10 * 60_000))));
     for (const game of stuck.slice(0, 20)) await enrichGame(game);
     if (stuck.length) summary.pendentes = { checked: stuck.length, changed: stuck.length, ms: Date.now() - started };
-  }
-
-  // a ITAD responde o catálogo inteiro em poucas chamadas, então sincronizamos tudo de uma vez (vem antes do
-  // IGDB: são os preços das outras lojas, enquanto o IGDB só traz metadados)
-  if ((!store || ITAD_STORES.has(store)) && !over()) {
-    const started = Date.now();
-    try {
-      const itad = await syncItad({ historyLimit: maxHistory });
-      if (itad) summary.itad = { checked: itad.games, changed: itad.offers.length, ms: Date.now() - started };
-    } catch (err) {
-      summary.itad = { checked: 0, changed: 0, error: String(err), ms: Date.now() - started };
-    }
   }
 
   // metadados do IGDB mudam pouco: só jogos sincronizados há mais de uma semana
