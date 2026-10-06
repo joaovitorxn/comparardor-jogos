@@ -13,3 +13,10 @@ const res = new ImageResponse(h("div", { style: { width: "100%", height: "100%",
 });
 await writeFile("public/email/dropou-texto.png", Buffer.from(await res.arrayBuffer()));
 console.log("ok");
+
+// variante horizontal: DROPOU em uma linha
+const one = new ImageResponse(
+  h("div", { style: { width: "100%", height: "100%", display: "flex", alignItems: "center", background: "transparent" } }, h("div", { style: { fontFamily: "Barlow", fontSize: 120, lineHeight: 1, letterSpacing: 120 * 0.05, color: "#111111" } }, "DROPOU")),
+  { width: 480, height: 160, fonts: [{ name: "Barlow", data: barlow, weight: 700, style: "normal" }] },
+);
+await writeFile("public/email/dropou-texto-horizontal.png", Buffer.from(await one.arrayBuffer()));
