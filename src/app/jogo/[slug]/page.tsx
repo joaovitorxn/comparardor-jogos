@@ -7,7 +7,6 @@ import { Icon } from "@/components/icon";
 import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
 import { JsonLd } from "@/components/json-ld";
 import { BackToTop } from "@/components/back-to-top";
-import { RarityInfo } from "@/components/rarity-info";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
 import { MediaGallery } from "@/components/media-gallery";
 import { PriceHistoryChart } from "@/components/price-history-chart";
@@ -23,7 +22,6 @@ import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { lightImage } from "@/lib/images";
 import { allPlatformCombinations, serializePlatforms } from "@/lib/platform-selection";
-import { priceRarity } from "@/lib/rarity";
 import { SITE_URL } from "@/lib/site";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
@@ -127,21 +125,17 @@ function PlatformBests({ offers }: { offers: GamePageData["offers"] }) {
   );
 }
 
-/** Cartão do "Melhor drop" de uma oferta: loja, preço, selo de raridade, botão de compra e alerta. */
+/** Cartão do "Melhor drop" de uma oferta: loja, preço, botão de compra e alerta. */
 function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData["offers"][number] }) {
   const snapshot = best.snapshot!;
-  const rarity = priceRarity(snapshot.discountPercent);
   const storeName = getStore(best.listing.store)?.name ?? best.listing.store;
 
   return (
     <div className="space-y-4 p-5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
-            <Icon name="trophy" className="size-4 text-accent" />
-            Melhor drop
-          </span>
-          {rarity && <RarityInfo rarity={rarity} />}
-        </div>
+        <span className="flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
+          <Icon name="trophy" className="size-4 text-accent" />
+          Melhor drop
+        </span>
         <div className="flex items-center justify-between gap-2">
           <StoreName store={best.listing.store} size={32} />
           <Tag>{PLATFORM_LABELS[best.listing.platform]}</Tag>
@@ -154,19 +148,12 @@ function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData[
             </div>
           )}
           <PriceText cents={best.finalCents!} className="font-display text-5xl font-bold leading-none text-accent" />
-          {best.coupon?.coupon && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-coupon">
-              <Icon name="ticket" className="size-3.5 shrink-0" />
-              Com cupom {best.coupon.coupon.code ?? "automático"} (−{formatCents(best.coupon.savedCents)})
-            </p>
-          )}
           {best.listing.voucher && <p className="mt-2 text-xs text-coupon">Use o código {best.listing.voucher} no checkout</p>}
         </div>
         <div className="space-y-2">
           <a href={best.listing.url} target="_blank" rel="noopener noreferrer sponsored" className={`${buttonStyles.primary} w-full`}>
             Comprar na {storeName} <span aria-hidden>↗</span>
           </a>
-          {/* alertas comparam preço de vitrine (sem cupom), igual ao histórico */}
           <AlertButton gameId={data.game.id} gameTitle={data.game.title} {...alertPrices(data)} />
         </div>
     </div>

@@ -3,12 +3,10 @@ import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { parseReleaseDate } from "@/lib/release-date";
-import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
 import { compareOffers, offerFamilies, PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
 import { db } from ".";
 import {
-  coupons,
   gameMedia,
   games,
   listings,
@@ -317,8 +315,7 @@ export async function getCatalog({ limit, offset = 0, sort = "recentes" }: { lim
 export interface OfferRow {
   listing: Listing;
   snapshot: PriceSnapshot | null;
-  coupon: CouponResult | null;
-  /** Preço final já com o melhor cupom aplicado. */
+  /** Preço de venda (o mesmo da vitrine; já inclui o código da loja, se houver). */
   finalCents: number | null;
 }
 
@@ -359,24 +356,11 @@ async function getGamePageUncached(slug: string) {
   ]);
 
   const stores = [...new Set(gameListings.map((l) => l.store))];
-  const activeCoupons = stores.length
-    ? await db.select().from(coupons).where(and(inArray(coupons.store, stores), eq(coupons.active, true)))
-    : [];
-
   const snapshotByListing = new Map(latest.map((p) => [p.listing.id, p.snapshot]));
-  const now = new Date();
   const offers: OfferRow[] = gameListings
     .map((listing) => {
       const snapshot = snapshotByListing.get(listing.id) ?? null;
-      if (!snapshot) return { listing, snapshot, coupon: null, finalCents: null };
-      // o preço já inclui o voucher da loja; outro cupom por cima seria desconto em dobro
-      if (listing.voucher) return { listing, snapshot, coupon: null, finalCents: snapshot.priceCents };
-      const coupon = applyBestCoupon(
-        { store: listing.store, priceCents: snapshot.priceCents, discountPercent: snapshot.discountPercent },
-        activeCoupons,
-        now,
-      );
-      return { listing, snapshot, coupon: coupon.coupon ? coupon : null, finalCents: coupon.finalCents };
+      return { listing, snapshot, finalCents: snapshot?.priceCents ?? null };
     })
     .sort((a, b) => compareOffers({ cents: a.finalCents ?? Infinity, store: a.listing.store }, { cents: b.finalCents ?? Infinity, store: b.listing.store }));
 
@@ -418,7 +402,7 @@ async function getGamePageUncached(slug: string) {
     series,
     lastChecked,
     /** Momento da renderização — o gráfico estende as linhas até aqui. */
-    generatedAt: now.getTime(),
+    generatedAt: Date.now(),
   };
 }
 

@@ -56,7 +56,6 @@ const sections: LegalSection[] = [
             O histórico de preço mostra o que registramos ou recebemos de parceiros; em lojas de console, ele começa quando passamos a acompanhá-las.
           </li>
           <li>Dados como notas, tempo para zerar, requisitos e descrições vêm de fontes de terceiros e podem estar incompletos ou desatualizados.</li>
-          <li>Os cupons exibidos dependem das regras de cada loja e podem expirar ou não valer para todos os jogos.</li>
         </Ul>
       </>
     ),

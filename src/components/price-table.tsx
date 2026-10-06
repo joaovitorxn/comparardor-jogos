@@ -5,7 +5,7 @@ import { CopyCoupon } from "./copy-coupon";
 import { StoreName } from "./store-logo";
 import { buttonStyles, DiscountBadge, PriceText, Tag } from "./ui";
 
-const COLS = "md:grid-cols-[minmax(0,1.7fr)_56px_minmax(0,1.1fr)_minmax(0,1.3fr)_112px_116px]";
+const COLS = "md:grid-cols-[minmax(0,1.9fr)_56px_minmax(0,1.4fr)_112px_116px]";
 
 export function PriceTable({ offers }: { offers: OfferRow[] }) {
   const best = offers[0]?.finalCents;
@@ -16,12 +16,11 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
         <span>Loja</span>
         <span>Plat.</span>
         <span>Preço</span>
-        <span>Cupom</span>
         <span className="text-right">Final</span>
         <span />
       </div>
 
-      {offers.map(({ listing, snapshot, coupon, finalCents }) => {
+      {offers.map(({ listing, snapshot, finalCents }) => {
         const isBest = finalCents != null && finalCents === best;
         return (
           <div
@@ -45,6 +44,12 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
                 {listing.isKey && <Tag>Chave</Tag>}
                 {listing.edition !== "Padrão" && <Tag>{listing.edition === PLAY_ANYWHERE ? "Play Anywhere (inclui PC)" : listing.edition}</Tag>}
               </div>
+              {listing.voucher && (
+                <div className="flex flex-wrap items-center gap-1.5 pl-[38px] text-xs">
+                  <CopyCoupon code={listing.voucher} />
+                  <span className="text-muted">já incluído no preço</span>
+                </div>
+              )}
             </div>
 
             <span className="hidden text-text-2 md:block">{PLATFORM_LABELS[listing.platform]}</span>
@@ -60,25 +65,6 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
                 </span>
               ) : (
                 <span className="text-muted">Indisponível</span>
-              )}
-            </div>
-
-            <div className="col-span-2 row-start-2 min-w-0 text-xs md:col-span-1 md:row-start-auto">
-              {listing.voucher ? (
-                <span className="flex flex-wrap items-center gap-1.5">
-                  <CopyCoupon code={listing.voucher} />
-                  <span className="text-muted">já incluído no preço</span>
-                </span>
-              ) : coupon?.coupon ? (
-                <span className="flex flex-wrap items-center gap-1.5">
-                  {coupon.coupon.code ? <CopyCoupon code={coupon.coupon.code} /> : <Tag tone="coupon">Automático</Tag>}
-                  <span className="tabular font-medium text-coupon">−{formatCents(coupon.savedCents)}</span>
-                  <span className="w-full truncate text-muted" title={coupon.coupon.description}>
-                    {coupon.coupon.description}
-                  </span>
-                </span>
-              ) : (
-                <span className="hidden text-muted md:inline">—</span>
               )}
             </div>
 

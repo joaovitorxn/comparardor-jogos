@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { formatCents } from "@/lib/format";
 import type { ListItem } from "@/lib/list-items";
-import { priceRarity } from "@/lib/rarity";
 import { getStore, PLATFORM_FAMILIES, PLATFORM_LABELS } from "@/lib/stores";
 import { CoverImage } from "./cover-image";
 import { PlatformIcon, StoreLogo } from "./store-logo";
-import { DiscountBadge, MetacriticBadge, PriceText, RarityTag } from "./ui";
+import { DiscountBadge, MetacriticBadge, PriceText } from "./ui";
 
 const familyLabel = (id: string) => PLATFORM_FAMILIES.find((f) => f.id === id)?.label ?? id;
 
@@ -39,7 +38,6 @@ export function OfferList({ items }: { items: ListItem[] }) {
   return (
     <ul className="overflow-hidden rounded-card border border-line bg-surface">
       {items.map((item) => {
-        const rarity = priceRarity(item.maxDiscount);
         const store = item.bestStore ? getStore(item.bestStore)?.name : null;
         return (
           <li key={item.game.id} className="border-b border-line last:border-b-0">
@@ -60,11 +58,6 @@ export function OfferList({ items }: { items: ListItem[] }) {
                   )}
                 </span>
               </span>
-              {rarity && (
-                <span className="hidden md:block">
-                  <RarityTag rarity={rarity} />
-                </span>
-              )}
               {item.maxDiscount > 0 && (
                 <span className="hidden sm:block">
                   <DiscountBadge percent={item.maxDiscount} size="lg" />
@@ -109,7 +102,6 @@ export function OfferTable({ items, firstRank }: { items: ListItem[]; firstRank:
         <tbody>
           {items.map((item, i) => {
             const rating = item.rating;
-            const rarity = priceRarity(item.maxDiscount);
             const atLow =
               item.bestPriceCents != null && item.historyLowCents != null && item.historyLowCents > 0 && item.bestPriceCents <= item.historyLowCents;
             const discounted = item.regularPriceCents != null && item.bestPriceCents != null && item.regularPriceCents > item.bestPriceCents;
@@ -153,7 +145,6 @@ export function OfferTable({ items, firstRank }: { items: ListItem[]; firstRank:
                 </td>
                 <td className="hidden px-3 py-2 xl:table-cell">
                   <span className="flex flex-wrap items-center gap-1.5">
-                    {rarity && <RarityTag rarity={rarity} />}
                     {atLow && (
                       <span className="rounded-[3px] border border-accent-line bg-accent-soft px-1.5 py-px text-[11px] font-semibold uppercase leading-4 tracking-wider text-accent">Preço histórico</span>
                     )}

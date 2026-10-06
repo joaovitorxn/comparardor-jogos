@@ -1,6 +1,6 @@
 # Dropou
 
-Comparador de preços de jogos entre lojas digitais e de console, com cupons aplicados no preço final — [dropou.com.br](https://dropou.com.br).
+Comparador de preços de jogos entre lojas digitais e de console, com histórico e alertas de preço — [dropou.com.br](https://dropou.com.br).
 
 **Stack:** Next.js 16 (App Router) · TypeScript · Tailwind 4 · Drizzle ORM · SQLite/libsql (Turso em produção)
 
@@ -11,7 +11,6 @@ npm install
 cp .env.example .env
 npm run db:push                     # cria as tabelas em data/app.db
 npm run import -- "hollow knight"   # importa jogos (por nome ou appid da Steam)
-npm run seed:coupons                # cupons de EXEMPLO para testar a interface
 npm run dev                         # http://localhost:3000
 ```
 
@@ -28,7 +27,7 @@ A busca do site também encontra jogos fora do catálogo (pela Steam). Ao abrir 
 | `npm run refresh` | Atualiza preços não verificados há mais de 60 min, sincroniza a ITAD e os metadados do IGDB com mais de 7 dias (`--all` para todos, `--store gog` para uma loja) |
 | `npm run db:studio` | Abre o Drizzle Studio para ver/editar o banco |
 | `npm run alerts:test` | Envia uma notificação de teste para o aparelho que criou o alerta mais recente |
-| `npm test` | Testes (cupons, alertas, requisitos, formatação…) |
+| `npm test` | Testes (alertas, requisitos, formatação…) |
 | `npm run typecheck` / `npm run lint` | Verificações estáticas |
 
 ## Busca
