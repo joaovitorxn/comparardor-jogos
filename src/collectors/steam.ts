@@ -1,7 +1,7 @@
 import type { PcRequirements } from "@/db/schema";
 import { parsePcRequirements } from "@/lib/requirements";
 import { decodeHtmlEntities } from "@/lib/text";
-import { fetchJson } from "./http";
+import { fetchJson, HttpError } from "./http";
 import type { OfferPrice, StoreCollector, StoreOffer } from "./types";
 
 // API pública (não documentada) da loja. Não precisa de chave, mas limita ~200 req / 5 min.
@@ -190,6 +190,30 @@ export async function fetchPreorderDealAppIds(limit = 50): Promise<number[]> {
     if (id && discount > 0) ids.push(Number(id));
   }
   return ids;
+}
+
+/**
+ * Os `count` jogos mais vendidos da Steam, do mais ao menos vendido (a própria busca da loja, filtro
+ * "mais vendidos", só jogos). Serve para pré-carregar o catálogo com o que as pessoas mais compram.
+ */
+export async function fetchTopSellerAppIds(count: number): Promise<number[]> {
+  const ids: number[] = [];
+  for (let start = 0; ids.length < count; start += 100) {
+    const qs = new URLSearchParams({ query: "", start: String(start), count: "100", filter: "topsellers", category1: "998", cc: "br", l: "brazilian", infinite: "1" });
+    let res: { results_html: string };
+    try {
+      res = await fetchJson<{ results_html: string }>(`https://store.steampowered.com/search/results/?${qs}`, { retries: 4 });
+    } catch (err) {
+      // limite da Steam: devolve o que já foi coletado em vez de perder tudo
+      if (err instanceof HttpError && err.status === 429 && ids.length) break;
+      throw err;
+    }
+    const page = [...res.results_html.matchAll(/data-ds-appid="(\d+)"/g)].map((m) => Number(m[1]));
+    if (!page.length) break;
+    ids.push(...page);
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  return [...new Set(ids)].slice(0, count);
 }
 
 /** Detalhes completos de um app — é a nossa fonte principal de metadados e mídia por enquanto. */

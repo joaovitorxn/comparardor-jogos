@@ -79,7 +79,7 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
 
       {cheapest.length > 0 && (
         <section>
-          <SectionHeader id="menores-precos" title="Quase de graça" icon="coin" aside={<SeeAll href="/ofertas" label="Ver todas as ofertas" />} />
+          <SectionHeader id="menores-precos" title="Quase de graça" icon="coin" aside={<SeeAll href="/ofertas?ordem=preco" label="Ver todas as ofertas" />} />
           <GameGrid games={cheapest} />
         </section>
       )}

@@ -5,6 +5,7 @@
  *
  *   npm run seed                  (até 500 jogos)
  *   npm run seed -- --limit 3000
+ *   npm run seed -- --topsellers 2000     (os 2.000 mais vendidos da Steam que ainda não estão no catálogo)
  *
  * A Steam aceita ~200 consultas de detalhes a cada 5 minutos, então o ritmo é de
  * ~35 jogos/minuto: 3.000 jogos levam cerca de 1h30.
@@ -13,7 +14,7 @@ import "dotenv/config";
 import { inArray } from "drizzle-orm";
 import { HttpError } from "@/collectors/http";
 import { fetchPopularSteamAppIds, isItadConfigured } from "@/collectors/itad";
-import { fetchMostPlayedAppIds, getSteamStoreItems } from "@/collectors/steam";
+import { fetchMostPlayedAppIds, fetchTopSellerAppIds, getSteamStoreItems } from "@/collectors/steam";
 import { db } from "@/db";
 import { games, type Game } from "@/db/schema";
 import { enrichGames, importSteamGameBasic, NotAGameError } from "@/services/catalog";
@@ -21,6 +22,8 @@ import { enrichGames, importSteamGameBasic, NotAGameError } from "@/services/cat
 const args = process.argv.slice(2);
 const limitIdx = args.indexOf("--limit");
 const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : 500;
+const topIdx = args.indexOf("--topsellers");
+const topSellers = topIdx >= 0 ? Number(args[topIdx + 1]) : 0;
 
 const STEAM_INTERVAL_MS = 1600; // ~187 consultas a cada 5 min, abaixo do limite da Steam
 const BATCH = 25; // a cada 25 jogos importados, completa o lote com as outras lojas
@@ -29,11 +32,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // 1. candidatos: populares na ITAD + mais jogados agora na Steam, sem repetir
 console.log("Montando a lista de jogos populares…");
-const [popular, mostPlayed] = await Promise.all([
-  isItadConfigured() ? fetchPopularSteamAppIds(limit) : Promise.resolve([]),
+const [popular, mostPlayed, sellers] = await Promise.all([
+  isItadConfigured() && !topSellers ? fetchPopularSteamAppIds(limit) : Promise.resolve([]),
   fetchMostPlayedAppIds().catch(() => [] as number[]),
+  topSellers ? fetchTopSellerAppIds(topSellers) : Promise.resolve([]),
 ]);
-const candidates = [...new Set([...mostPlayed, ...popular])];
+const candidates = [...new Set([...mostPlayed, ...sellers, ...popular])];
 
 // 2. tira o que já está no catálogo
 const existing = new Set<number | null>();
@@ -45,7 +49,8 @@ let pending = candidates.filter((id) => !existing.has(id));
 
 // 3. só jogos (a lista de "mais jogados" inclui programas como o Wallpaper Engine)
 const items = await getSteamStoreItems(pending);
-pending = pending.filter((id) => items.get(id)?.isGame).slice(0, Math.max(0, limit - existing.size));
+// com --topsellers, importa todos os que faltam; sem ele, completa até `limit`
+pending = pending.filter((id) => items.get(id)?.isGame).slice(0, topSellers ? pending.length : Math.max(0, limit - existing.size));
 
 console.log(`${candidates.length} candidatos, ${existing.size} já no catálogo, ${pending.length} para importar.`);
 
