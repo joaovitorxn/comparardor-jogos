@@ -1,13 +1,12 @@
-# Atualiza os preços do site de hora em hora chamando /api/cron/refresh.
+# Atualização manual dos preços (botão "Run workflow" na aba Actions), chamando /api/cron/refresh.
+# O agendamento de hora em hora é feito pelo cron-job.org (o agendador do GitHub atrasava e pulava execuções).
 # Configure em Settings → Secrets and variables → Actions:
 #   SITE_URL     ex.: https://dropou.com.br (sem barra no fim)
 #   CRON_SECRET  o mesmo valor configurado na hospedagem
 name: Atualizar preços
 
 on:
-  schedule:
-    - cron: "17 * * * *" # minuto 17 de toda hora (fora do pico do minuto 0 no GitHub)
-  workflow_dispatch: # permite rodar na mão pela aba Actions
+  workflow_dispatch: # só roda na mão pela aba Actions
 
 concurrency:
   group: refresh-prices
