@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { OPEN_FEEDBACK_EVENT } from "./beta-notice";
 
 const KINDS = [
   { id: "bug", label: "Bug" },
@@ -21,6 +22,13 @@ export function FeedbackButton() {
   const [contact, setContact] = useState("");
   const [website, setWebsite] = useState(""); // armadilha para robôs
   const [status, setStatus] = useState<Status>({ type: "idle" });
+
+  // o aviso de beta (e qualquer outro lugar) pode pedir para abrir o formulário
+  useEffect(() => {
+    const show = () => dialogRef.current?.showModal();
+    window.addEventListener(OPEN_FEEDBACK_EVENT, show);
+    return () => window.removeEventListener(OPEN_FEEDBACK_EVENT, show);
+  }, []);
 
   function open() {
     if (status.type === "sent") setStatus({ type: "idle" });

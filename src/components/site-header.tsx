@@ -28,6 +28,12 @@ export function SiteHeader() {
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={`${BRAND.name} — início`}>
           <LogoMark />
           <span className="font-display text-2xl font-bold uppercase leading-none tracking-wide">{BRAND.name}</span>
+          <span
+            title="O Dropou está em beta: pode ter bugs. Conte pra gente pelo botão de feedback."
+            className="-ml-0.5 -mt-3 rounded-[3px] border border-accent-line bg-accent-soft px-1 py-px font-display text-[10px] font-bold uppercase leading-none tracking-widest text-accent"
+          >
+            Beta
+          </span>
         </Link>
         <nav className="hidden items-center gap-5 md:flex">
           {NAV.map((item) => (

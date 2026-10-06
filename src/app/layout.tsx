@@ -2,6 +2,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
+import { BetaNotice } from "@/components/beta-notice";
 import { FeedbackButton } from "@/components/feedback-button";
 import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </p>
         </footer>
         <FeedbackButton />
+        <BetaNotice />
         <Analytics />
       </body>
     </html>
