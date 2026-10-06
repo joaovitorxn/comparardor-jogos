@@ -99,6 +99,7 @@ export const games = sqliteTable(
     uniqueIndex("games_slug_idx").on(t.slug),
     uniqueIndex("games_steam_app_id_idx").on(t.steamAppId),
     index("games_normalized_title_idx").on(t.normalizedTitle),
+    index("games_igdb_id_idx").on(t.igdbId),
   ],
 );
 

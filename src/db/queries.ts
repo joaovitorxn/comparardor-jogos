@@ -19,24 +19,20 @@ import {
   type SimilarGame,
 } from "./schema";
 
-/** Último snapshot de cada listagem (os ids são crescentes, então o maior id é o mais recente). */
-const latestSnapshotIds = db
-  .select({ id: sql<number>`max(${priceSnapshots.id})`.as("id") })
-  .from(priceSnapshots)
-  .groupBy(priceSnapshots.listingId);
+/**
+ * Último snapshot de cada oferta (os ids são crescentes, então o maior id é o mais recente).
+ * Subconsulta correlacionada de propósito: só olha as ofertas que já passaram pelo filtro. A versão antiga
+ * ("id IN (select max(id) ... group by listing)") varria a tabela de preços inteira mesmo para um jogo só,
+ * e isso, multiplicado por cada página gerada, consumia a cota de leituras do banco.
+ */
+const latestSnapshotOf = sql`(select max(s2.id) from price_snapshots s2 where s2.listing_id = ${listings.id})`;
 
 async function latestPrices(gameIds?: number[]) {
   return db
     .select({ listing: listings, snapshot: priceSnapshots })
-    .from(priceSnapshots)
-    .innerJoin(listings, eq(listings.id, priceSnapshots.listingId))
-    .where(
-      and(
-        inArray(priceSnapshots.id, latestSnapshotIds),
-        eq(listings.available, true),
-        gameIds ? inArray(listings.gameId, gameIds) : undefined,
-      ),
-    );
+    .from(listings)
+    .innerJoin(priceSnapshots, eq(priceSnapshots.id, latestSnapshotOf))
+    .where(and(eq(listings.available, true), gameIds ? inArray(listings.gameId, gameIds) : undefined));
 }
 
 export interface GameSummary {
@@ -129,9 +125,9 @@ export async function getDeals({ limit, offset = 0, sort = "desconto" }: { limit
       maxDiscount: sql<number>`max(${priceSnapshots.discountPercent})`.as("max_discount"),
       bestPrice: sql<number>`min(${priceSnapshots.priceCents})`.as("best_price"),
     })
-    .from(priceSnapshots)
-    .innerJoin(listings, eq(listings.id, priceSnapshots.listingId))
-    .where(and(inArray(priceSnapshots.id, latestSnapshotIds), eq(listings.available, true)))
+    .from(listings)
+    .innerJoin(priceSnapshots, eq(priceSnapshots.id, latestSnapshotOf))
+    .where(eq(listings.available, true))
     .groupBy(listings.gameId)
     .as("per_game");
 
