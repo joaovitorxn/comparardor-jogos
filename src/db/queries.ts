@@ -54,6 +54,8 @@ export interface GameSummary {
   /** Plataforma da melhor oferta e plataformas em que o jogo está à venda (dentro do recorte pedido). */
   bestPlatform: Platform | null;
   families: PlatformFamilyId[];
+  /** Lojas com oferta do jogo (para o filtro de loja). */
+  stores: string[];
 }
 
 /** Famílias de plataforma (PC, PlayStation…) das ofertas, na ordem de sempre. */
@@ -81,6 +83,7 @@ async function summarize(rows: Game[]): Promise<GameSummary[]> {
       bestStore: best?.listing.store ?? null,
       bestPlatform: best?.listing.platform ?? null,
       families: familiesOf(offers),
+      stores: [...new Set(offers.map((o) => o.listing.store))],
     };
   });
 }
@@ -244,6 +247,7 @@ async function getPlatformDeals(platforms: PlatformFamilyId[]): Promise<GameSumm
         bestStore: best.listing.store,
         bestPlatform: best.listing.platform,
         families: familiesOf(offers),
+        stores: [...new Set(offers.map((o) => o.listing.store))],
       },
     ];
   });

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { GameSummary } from "@/db/queries";
 import { formatCents } from "@/lib/format";
+import type { ListItem } from "@/lib/list-items";
 import { priceRarity } from "@/lib/rarity";
 import { getStore, PLATFORM_FAMILIES, PLATFORM_LABELS } from "@/lib/stores";
 import { CoverImage } from "./cover-image";
@@ -9,7 +9,7 @@ import { DiscountBadge, MetacriticBadge, PriceText, RarityTag } from "./ui";
 
 const familyLabel = (id: string) => PLATFORM_FAMILIES.find((f) => f.id === id)?.label ?? id;
 
-function Platforms({ item }: { item: GameSummary }) {
+function Platforms({ item }: { item: ListItem }) {
   return (
     <span className="flex items-center gap-1.5 text-text-2" title={item.families.map(familyLabel).join(", ")}>
       {item.families.map((id) => (
@@ -19,7 +19,7 @@ function Platforms({ item }: { item: GameSummary }) {
   );
 }
 
-function Prices({ item }: { item: GameSummary }) {
+function Prices({ item }: { item: ListItem }) {
   const discounted = item.regularPriceCents != null && item.bestPriceCents != null && item.regularPriceCents > item.bestPriceCents;
   return (
     <span className="flex flex-col items-end">
@@ -35,7 +35,7 @@ function Prices({ item }: { item: GameSummary }) {
 }
 
 /** Uma linha por jogo: capa pequena, nome, plataformas e loja, selos e preço. */
-export function OfferList({ items }: { items: GameSummary[] }) {
+export function OfferList({ items }: { items: ListItem[] }) {
   return (
     <ul className="overflow-hidden rounded-card border border-line bg-surface">
       {items.map((item) => {
@@ -88,7 +88,7 @@ export function OfferList({ items }: { items: GameSummary[] }) {
 }
 
 /** Tabela detalhada: tudo lado a lado para comparar jogos rapidamente. */
-export function OfferTable({ items, firstRank }: { items: GameSummary[]; firstRank: number }) {
+export function OfferTable({ items, firstRank }: { items: ListItem[]; firstRank: number }) {
   const head = "px-3 py-2.5 text-left font-display text-xs font-semibold uppercase tracking-wider text-muted";
   return (
     <div className="overflow-x-auto rounded-card border border-line bg-surface">
@@ -108,10 +108,10 @@ export function OfferTable({ items, firstRank }: { items: GameSummary[]; firstRa
         </thead>
         <tbody>
           {items.map((item, i) => {
-            const rating = item.game.criticRating ?? item.game.metacritic;
+            const rating = item.rating;
             const rarity = priceRarity(item.maxDiscount);
             const atLow =
-              item.bestPriceCents != null && item.game.historyLowCents != null && item.game.historyLowCents > 0 && item.bestPriceCents <= item.game.historyLowCents;
+              item.bestPriceCents != null && item.historyLowCents != null && item.historyLowCents > 0 && item.bestPriceCents <= item.historyLowCents;
             const discounted = item.regularPriceCents != null && item.bestPriceCents != null && item.regularPriceCents > item.bestPriceCents;
             return (
               <tr key={item.game.id} className="group border-b border-line transition last:border-b-0 hover:bg-surface-2">

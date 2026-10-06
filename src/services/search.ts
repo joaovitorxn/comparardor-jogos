@@ -26,6 +26,8 @@ export interface SearchDoc {
   /** Menor preço atual por plataforma ("all" = qualquer uma). */
   prices: Partial<Record<FamilyKey, BestPrice>>;
   rating: number | null;
+  /** Menor preço já registrado (centavos), para a etiqueta "Piso histórico". */
+  historyLowCents: number | null;
   createdAt: number;
 }
 
@@ -71,6 +73,7 @@ async function build(): Promise<IndexState> {
         genres: games.genres,
         criticRating: games.criticRating,
         metacritic: games.metacritic,
+        historyLowCents: games.historyLowCents,
         createdAt: games.createdAt,
       })
       .from(games),
@@ -95,6 +98,7 @@ async function build(): Promise<IndexState> {
       stores: [...new Set((storesByGame.get(r.id) ?? []).map((s) => s.store))],
       prices: Object.fromEntries(best.get(r.id) ?? []),
       rating: r.criticRating ?? r.metacritic ?? null,
+      historyLowCents: r.historyLowCents,
       createdAt: r.createdAt.getTime(),
     });
   }
