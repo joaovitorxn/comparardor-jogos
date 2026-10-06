@@ -21,7 +21,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <P>
-          O {BRAND.name} ({BRAND.domain}) é um site que compara preços de jogos em várias lojas. O {BRAND.name} é mantido por uma única pessoa, e o responsável pelo tratamento dos dados descritos aqui é o próprio criador do site, Berk.
+          O {BRAND.name} ({BRAND.domain}) é um site que compara preços de jogos em várias lojas. O {BRAND.name} é mantido por uma única pessoa, e o responsável pelo tratamento dos dados descritos aqui é a pessoa que o mantém.
         </P>
         <P>Você não precisa criar conta, informar nome, CPF ou e-mail para usar o site. Só trato o mínimo para ele funcionar.</P>
       </>
