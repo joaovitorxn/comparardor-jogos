@@ -203,7 +203,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
             <dt className="flex items-center gap-1.5 text-muted">
               <Icon name="floor" className="size-4" />
-              Piso histórico
+              Preço histórico
             </dt>
             <dd className="text-right">
               <PriceText cents={low.cents} className="font-semibold" />
