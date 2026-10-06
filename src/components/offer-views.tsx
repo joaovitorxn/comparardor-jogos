@@ -155,7 +155,7 @@ export function OfferTable({ items, firstRank }: { items: ListItem[]; firstRank:
                   <span className="flex flex-wrap items-center gap-1.5">
                     {rarity && <RarityTag rarity={rarity} />}
                     {atLow && (
-                      <span className="rounded-[3px] border border-accent-line bg-accent-soft px-1.5 py-px text-[11px] font-semibold uppercase leading-4 tracking-wider text-accent">Piso histórico</span>
+                      <span className="rounded-[3px] border border-accent-line bg-accent-soft px-1.5 py-px text-[11px] font-semibold uppercase leading-4 tracking-wider text-accent">Preço histórico</span>
                     )}
                   </span>
                 </td>

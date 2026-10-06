@@ -27,7 +27,7 @@
   --coupon: #5aa9ff;
   --coupon-soft: rgb(90 169 255 / 0.1);
 
-  /* raridade do preço, como nos jogos: azul, roxo, dourado, vermelho */
+  /* raridade do desconto, como nos jogos: azul, roxo, dourado, vermelho */
   --rarity-rare: #5aa9ff;
   --rarity-epic: #b27cf5;
   --rarity-legendary: #f5b83d;

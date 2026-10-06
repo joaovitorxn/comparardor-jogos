@@ -26,7 +26,7 @@ export interface SearchDoc {
   /** Menor preço atual por plataforma ("all" = qualquer uma). */
   prices: Partial<Record<FamilyKey, BestPrice>>;
   rating: number | null;
-  /** Menor preço já registrado (centavos), para a etiqueta "Piso histórico". */
+  /** Menor preço já registrado (centavos), para a etiqueta "Preço histórico". */
   historyLowCents: number | null;
   createdAt: number;
 }

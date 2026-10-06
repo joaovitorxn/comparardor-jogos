@@ -24,7 +24,7 @@ export function DiscountBadge({ percent, size = "md", className = "" }: { percen
   );
 }
 
-/** Selo de raridade do preço (raro, épico, lendário, mítico), pela cor do tier. */
+/** Selo de raridade do desconto (raro, épico, lendário, mítico), pela cor do tier. */
 export function RarityTag({ rarity }: { rarity: Rarity }) {
   const color = `var(--rarity-${rarity.id})`;
   return (

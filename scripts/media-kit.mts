@@ -173,7 +173,7 @@ ${BRAND.tagline} · ${BRAND.domain}
 
 ## Voz
 Informal, de gamer, sem exagero. Gírias do jogo quando soam naturais: "drop", "promo", "wishlist", "dropar".
-Exemplos: "Me avisa quando dropar", "Preço lendário", "Quase de graça".
+Exemplos: "Me avisa quando dropar", "Desconto lendário", "Quase de graça".
 
 ## Cuidados
 - Não deformar nem recolorir o símbolo; não colocar o verde sobre fundo claro sem o quadrado escuro.

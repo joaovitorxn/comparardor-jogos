@@ -5,7 +5,7 @@ import { RARITY_TIERS, type Rarity } from "@/lib/rarity";
 import { RarityTag } from "./ui";
 
 /**
- * Selo de raridade do preço com um "i" ao lado: ao passar o mouse (ou tocar), explica os níveis
+ * Selo de raridade do desconto com um "i" ao lado: ao passar o mouse (ou tocar), explica os níveis
  * e as cores. O nível do jogo atual aparece destacado na lista.
  */
 export function RarityInfo({ rarity }: { rarity: Rarity }) {
@@ -35,7 +35,7 @@ export function RarityInfo({ rarity }: { rarity: Rarity }) {
       <button
         type="button"
         onClick={() => setPinned((p) => !p)}
-        aria-label="Entenda os níveis de preço"
+        aria-label="Entenda os níveis de desconto"
         aria-expanded={open}
         aria-controls="rarity-tiers"
         className="flex size-5 items-center justify-center rounded-full text-muted transition hover:text-text focus-visible:text-text"
@@ -54,8 +54,8 @@ export function RarityInfo({ rarity }: { rarity: Rarity }) {
           className="absolute right-0 top-full z-50 pt-2"
         >
           <div className="w-64 rounded-[6px] border border-line-strong bg-surface-2 p-3 shadow-2xl shadow-black/60">
-            <p className="font-display text-sm font-semibold uppercase tracking-wider text-text">Nível do preço</p>
-            <p className="mt-0.5 text-xs leading-snug text-text-2">Quanto maior o desconto da melhor oferta, mais raro o preço.</p>
+            <p className="font-display text-sm font-semibold uppercase tracking-wider text-text">Nível do desconto</p>
+            <p className="mt-0.5 text-xs leading-snug text-text-2">Quanto maior o desconto da melhor oferta, mais raro ele é.</p>
             <ul className="mt-2.5 space-y-1.5">
               {[...RARITY_TIERS].reverse().map((t) => {
                 const current = t.id === rarity.id;
