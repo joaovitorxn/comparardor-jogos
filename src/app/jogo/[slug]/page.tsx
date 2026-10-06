@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
 import { Icon } from "@/components/icon";
+import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
 import { JsonLd } from "@/components/json-ld";
 import { BackToTop } from "@/components/back-to-top";
 import { RarityInfo } from "@/components/rarity-info";
@@ -20,6 +21,7 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
+import { allPlatformCombinations, serializePlatforms } from "@/lib/platform-selection";
 import { priceRarity } from "@/lib/rarity";
 import { SITE_URL } from "@/lib/site";
 import { formatCents, formatRelative } from "@/lib/format";
@@ -123,20 +125,14 @@ function PlatformBests({ offers }: { offers: GamePageData["offers"] }) {
   );
 }
 
-function BestOfferPanel({ data }: { data: GamePageData }) {
-  const best = data.offers[0];
-  const low = data.historicLow;
-  if (!best?.snapshot || best.finalCents == null) {
-    return (
-      <div className="rounded-card border border-line bg-surface p-5 text-sm text-text-2">Ainda não encontramos este jogo à venda.</div>
-    );
-  }
-  const rarity = priceRarity(best.snapshot.discountPercent);
+/** Cartão do "Melhor drop" de uma oferta: loja, preço, selo de raridade, botão de compra e alerta. */
+function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData["offers"][number] }) {
+  const snapshot = best.snapshot!;
+  const rarity = priceRarity(snapshot.discountPercent);
   const storeName = getStore(best.listing.store)?.name ?? best.listing.store;
 
   return (
-    <div className="overflow-hidden rounded-card border border-line bg-surface">
-      <div className="space-y-4 p-5">
+    <div className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
             <Icon name="trophy" className="size-4 text-accent" />
@@ -149,13 +145,13 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           <Tag>{PLATFORM_LABELS[best.listing.platform]}</Tag>
         </div>
         <div>
-          {best.snapshot.discountPercent > 0 && (
+          {snapshot.discountPercent > 0 && (
             <div className="mb-1 flex items-center gap-2">
-              <DiscountBadge percent={best.snapshot.discountPercent} />
-              <span className="tabular text-sm text-muted line-through">{formatCents(best.snapshot.regularPriceCents)}</span>
+              <DiscountBadge percent={snapshot.discountPercent} />
+              <span className="tabular text-sm text-muted line-through">{formatCents(snapshot.regularPriceCents)}</span>
             </div>
           )}
-          <PriceText cents={best.finalCents} className="font-display text-5xl font-bold leading-none text-accent" />
+          <PriceText cents={best.finalCents!} className="font-display text-5xl font-bold leading-none text-accent" />
           {best.coupon?.coupon && (
             <p className="mt-2 flex items-center gap-1.5 text-xs text-coupon">
               <Icon name="ticket" className="size-3.5 shrink-0" />
@@ -171,7 +167,34 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           {/* alertas comparam preço de vitrine (sem cupom), igual ao histórico */}
           <AlertButton gameId={data.game.id} gameTitle={data.game.title} {...alertPrices(data)} />
         </div>
-      </div>
+    </div>
+  );
+}
+
+function BestOfferPanel({ data }: { data: GamePageData }) {
+  const low = data.historicLow;
+  const overall = data.offers.find((o) => o.snapshot && o.finalCents != null);
+  if (!overall) {
+    return (
+      <div className="rounded-card border border-line bg-surface p-5 text-sm text-text-2">Ainda não encontramos este jogo à venda.</div>
+    );
+  }
+
+  // O "Melhor drop" muda conforme as plataformas escolhidas no cabeçalho. Preparamos o cartão da melhor oferta de
+  // cada combinação possível (as ofertas já vêm da mais barata para a mais cara) e o cliente só escolhe qual mostrar.
+  const choices: Record<string, BestOfferChoice> = {};
+  const used = new Map<number, GamePageData["offers"][number]>();
+  for (const combo of [[], ...allPlatformCombinations()]) {
+    const mine = combo.length ? data.offers.find((o) => o.snapshot && o.finalCents != null && offerFamilies(o.listing).some((f) => combo.includes(f))) : overall;
+    const chosen = mine ?? overall;
+    choices[serializePlatforms(combo)] = { offerId: chosen.listing.id, fallback: !mine };
+    used.set(chosen.listing.id, chosen);
+  }
+  const options = Object.fromEntries([...used].map(([id, offer]) => [id, <BestOfferCard key={id} data={data} best={offer} />]));
+
+  return (
+    <div className="overflow-hidden rounded-card border border-line bg-surface">
+      <BestOfferSwitch choices={choices} options={options} />
       <PlatformBests offers={data.offers} />
       <dl className="divide-y divide-line border-t border-line text-sm">
         {low && (
