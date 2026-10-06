@@ -5,6 +5,8 @@ export const BRAND = {
   /** Frase das prévias de link e do Google. */
   description: "Compare preços de jogos em PC, PlayStation, Xbox e Nintendo, veja o histórico e receba alerta quando o jogo dropar.",
   domain: "dropou.com.br",
+  /** E-mail público para pedidos de privacidade e contato; enquanto for null, as páginas só indicam o botão de feedback. */
+  contactEmail: null as string | null,
 } as const;
 
 /**
