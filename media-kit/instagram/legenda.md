@@ -1,6 +1,6 @@
 # Primeiro post do Instagram (@dropou.br)
 
-Carrossel de 6 slides (1080×1350, 4:5): `slide-1.png` a `slide-6.png`. Para gerar de novo: `npx tsx scripts/instagram-post.tsx`.
+Carrossel de 6 slides (1080×1350, 4:5): `slide-1.png` a `slide-6.png`. Para gerar de novo: `DOTENV_CONFIG_PATH=.env.turso npx tsx scripts/instagram-post.tsx` (o slide 3 usa preços reais do banco).
 
 ## Legenda
 
