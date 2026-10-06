@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/json-ld";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { StoreLogo } from "@/components/store-logo";
 import { SectionHeader } from "@/components/ui";
-import { getDealPool, pickCheapestDeals, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
+import { getDealPool, getShowcaseImages, pickCheapestDeals, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
 import { BRAND } from "@/lib/brand";
 import { SITE_URL } from "@/lib/site";
 import { STORES, type PlatformFamilyId } from "@/lib/stores";
@@ -26,11 +26,12 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
   const preorders = pickPreorderDeals(pool, 6);
   const preorderDates = new Map(preorders.map((s) => [s.game.id, s.game.releaseDate?.replace(/\./g, "")]));
   // o banner rotativo e a lista "Drops em destaque" usam os 6 primeiros
+  const images = await getShowcaseImages(featuredDeals.slice(0, 6).map((d) => d.game.id));
   const showcase: ShowcaseItem[] = featuredDeals.slice(0, 6).map((d) => ({
     slug: d.game.slug,
     title: d.game.title,
-    headerUrl: d.game.headerUrl,
-    backgroundUrl: d.game.backgroundUrl,
+    headerUrl: images.get(d.game.id)?.headerUrl ?? null,
+    backgroundUrl: images.get(d.game.id)?.backgroundUrl ?? null,
     bestPriceCents: d.bestPriceCents,
     regularPriceCents: d.regularPriceCents,
     maxDiscount: d.maxDiscount,

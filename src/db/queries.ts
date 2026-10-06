@@ -43,8 +43,29 @@ async function latestPrices(gameIds?: number[]): Promise<{ listing: Listing; sna
   }));
 }
 
+/**
+ * Só o que as vitrines usam de cada jogo (cartões, filtros, ranking). A lista de promoções fica na memória e
+ * poderá ir para um cache compartilhado, então carrega estas colunas em vez da linha inteira (requisitos,
+ * descrições e jogos parecidos pesam MBs). As imagens de cabeçalho e fundo só o banner usa: `getShowcaseImages`.
+ */
+const dealGameColumns = {
+  id: games.id,
+  slug: games.slug,
+  title: games.title,
+  coverUrl: games.coverUrl,
+  releaseDate: games.releaseDate,
+  criticRating: games.criticRating,
+  criticRatingCount: games.criticRatingCount,
+  metacritic: games.metacritic,
+  historyLowCents: games.historyLowCents,
+  developers: games.developers,
+  publishers: games.publishers,
+  genres: games.genres,
+};
+export type DealGame = Pick<Game, keyof typeof dealGameColumns>;
+
 export interface GameSummary {
-  game: Game;
+  game: DealGame;
   bestPriceCents: number | null;
   regularPriceCents: number | null;
   maxDiscount: number;
@@ -63,7 +84,7 @@ function familiesOf(offers: { listing: Listing }[]): PlatformFamilyId[] {
   return PLATFORM_FAMILIES.map((f) => f.id).filter((id) => found.has(id));
 }
 
-async function summarize(rows: Game[]): Promise<GameSummary[]> {
+async function summarize(rows: DealGame[]): Promise<GameSummary[]> {
   if (!rows.length) return [];
   const offers: Awaited<ReturnType<typeof latestPrices>> = [];
   for (let i = 0; i < rows.length; i += 500) offers.push(...(await latestPrices(rows.slice(i, i + 500).map((g) => g.id))));
@@ -167,9 +188,9 @@ export async function getDeals({ limit, offset = 0, sort = "desconto" }: { limit
   ]);
   if (!ranked.length) return { items: [], total };
 
-  const rows: Game[] = [];
+  const rows: DealGame[] = [];
   for (let i = 0; i < ranked.length; i += 500) {
-    rows.push(...(await db.select().from(games).where(inArray(games.id, ranked.slice(i, i + 500).map((r) => r.gameId)))));
+    rows.push(...(await db.select(dealGameColumns).from(games).where(inArray(games.id, ranked.slice(i, i + 500).map((r) => r.gameId)))));
   }
   const byId = new Map(rows.map((g) => [g.id, g]));
   return { items: await summarize(ranked.flatMap((r) => byId.get(r.gameId) ?? [])), total };
@@ -182,7 +203,7 @@ function releaseYear(text: string | null): number | null {
 }
 
 /** Qualidade do jogo (0-100): nota da crítica; com pouca crítica a nota é puxada para 60, e sem nota fica em 55. */
-function qualityOf(game: Game): number {
+function qualityOf(game: DealGame): number {
   const rating = game.criticRating ?? game.metacritic;
   const trust = Math.min(1, (game.criticRatingCount ?? (game.metacritic ? 5 : 0)) / 5);
   return rating != null ? 60 + (rating - 60) * trust : 55;
@@ -212,9 +233,16 @@ function featuredScore(s: GameSummary, year: number): number {
 }
 
 /** Ainda não lançado (o dia do lançamento já conta como lançado). */
-function isUnreleased(game: Game, now: Date): boolean {
+function isUnreleased(game: DealGame, now: Date): boolean {
   const date = parseReleaseDate(game.releaseDate);
   return date != null && date > now;
+}
+
+/** Imagens grandes (cabeçalho e fundo) dos jogos do banner da home, que não vêm na lista de promoções. */
+export async function getShowcaseImages(ids: number[]): Promise<Map<number, { headerUrl: string | null; backgroundUrl: string | null }>> {
+  if (!ids.length) return new Map();
+  const rows = await db.select({ id: games.id, headerUrl: games.headerUrl, backgroundUrl: games.backgroundUrl }).from(games).where(inArray(games.id, ids));
+  return new Map(rows.map((r) => [r.id, r]));
 }
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
@@ -246,9 +274,9 @@ async function getPlatformDeals(platforms: PlatformFamilyId[]): Promise<GameSumm
     (p) => p.listing.gameId,
   );
   const onSale = [...mine].filter(([, offers]) => offers.some((o) => o.snapshot.discountPercent > 0));
-  const rows: Game[] = [];
+  const rows: DealGame[] = [];
   for (let i = 0; i < onSale.length; i += 500) {
-    rows.push(...(await db.select().from(games).where(inArray(games.id, onSale.slice(i, i + 500).map(([id]) => id)))));
+    rows.push(...(await db.select(dealGameColumns).from(games).where(inArray(games.id, onSale.slice(i, i + 500).map(([id]) => id)))));
   }
   const byId = new Map(rows.map((g) => [g.id, g]));
   return onSale.flatMap(([id, offers]) => {
