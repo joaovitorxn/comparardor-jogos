@@ -74,6 +74,11 @@ const sections: LegalSection[] = [
             Ordeno as ofertas pelo menor preço, sempre. A única preferência que existe é de desempate: se duas lojas estiverem com exatamente o mesmo preço, mostro primeiro a de uma loja parceira. Priorizo as lojas parceiras só nesse empate: uma loja parceira nunca aparece na frente de uma mais barata.
           </p>
         </Callout>
+        <P>
+          Os botões de <strong className="font-semibold text-text">Gift Card</strong> levam ao Mercado Livre e também são links de afiliado: se você comprar depois de clicar neles, o{" "}
+          {BRAND.name} pode receber uma comissão, sem custo extra para você. Os Gift Cards são vendidos no Mercado Livre, que é o responsável pela compra, pela entrega do código e
+          pelo suporte.
+        </P>
         <P>As comissões ajudam a manter o site no ar e gratuito.</P>
       </>
     ),

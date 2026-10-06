@@ -7,6 +7,7 @@ import { Icon } from "@/components/icon";
 import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
 import { JsonLd } from "@/components/json-ld";
 import { BackToTop } from "@/components/back-to-top";
+import { GiftCardHint } from "@/components/gift-card-hint";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
 import { MediaGallery } from "@/components/media-gallery";
 import { PriceHistoryChart } from "@/components/price-history-chart";
@@ -386,6 +387,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             {offers.length ? (
               <PlatformFilter counts={familyCounts(offers)} total={offers.length}>
                 <PriceTable offers={offers} />
+                <GiftCardHint families={[...new Set(offers.flatMap((o) => offerFamilies(o.listing)))]} />
               </PlatformFilter>
             ) : (
               <p className="text-text-2">Este jogo ainda não foi encontrado em nenhuma loja.</p>
