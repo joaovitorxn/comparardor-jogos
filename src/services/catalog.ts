@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, like, lt, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, isNull, like, lt, notInArray, or, sql } from "drizzle-orm";
 import { collectors, getCollector } from "@/collectors";
 import { getGogOfferById } from "@/collectors/gog";
 import { HttpError } from "@/collectors/http";
