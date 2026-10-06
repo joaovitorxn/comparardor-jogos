@@ -114,3 +114,29 @@ body {
 [data-filter="nintendo"] [data-family]:not([data-family~="nintendo"]) {
   display: none;
 }
+
+/* Esqueletos de carregamento: um brilho que desliza (só transform, que roda na GPU e fica fluido) */
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+  animation: skeleton-shimmer 1.5s linear infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}

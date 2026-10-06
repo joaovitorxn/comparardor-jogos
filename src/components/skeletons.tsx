@@ -1,6 +1,6 @@
 /** Esqueletos de carregamento: aparecem na hora ao trocar de página e dão lugar ao conteúdo real quando ele chega. */
 
-const block = "animate-pulse rounded-[4px] bg-surface-2";
+const block = "skeleton rounded-[4px]";
 
 function Bar({ className = "" }: { className?: string }) {
   return <div aria-hidden className={`${block} ${className}`} />;
@@ -17,7 +17,7 @@ function Busy({ children }: { children: React.ReactNode }) {
 function CardSkeleton() {
   return (
     <div aria-hidden className="overflow-hidden rounded-card border border-line bg-surface">
-      <div className="aspect-[2/3] animate-pulse bg-surface-2" />
+      <div className="aspect-[2/3] skeleton" />
       <div className="space-y-2 p-3">
         <Bar className="h-4 w-4/5" />
         <Bar className="h-5 w-2/5" />
@@ -69,7 +69,7 @@ export function HomeSkeleton() {
   return (
     <Busy>
       <div className="mx-auto max-w-7xl space-y-14 px-4 py-8 lg:px-6">
-        <div aria-hidden className="h-72 animate-pulse rounded-card bg-surface-2 sm:h-96" />
+        <div aria-hidden className="h-72 skeleton rounded-card sm:h-96" />
         <section>
           <SectionTitleSkeleton />
           <CardGridSkeleton count={12} />
@@ -87,14 +87,14 @@ export function GamePageSkeleton() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="space-y-6">
             <Bar className="h-9 w-3/5" />
-            <div aria-hidden className="aspect-video animate-pulse rounded-card bg-surface-2" />
+            <div aria-hidden className="aspect-video skeleton rounded-card" />
             <div className="space-y-3">
               {Array.from({ length: 4 }, (_, i) => (
                 <Bar key={i} className="h-16 w-full" />
               ))}
             </div>
           </div>
-          <div aria-hidden className="h-96 animate-pulse rounded-card bg-surface-2" />
+          <div aria-hidden className="h-96 skeleton rounded-card" />
         </div>
       </div>
     </Busy>
