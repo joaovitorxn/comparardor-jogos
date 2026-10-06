@@ -66,7 +66,9 @@ function familiesOf(offers: { listing: Listing }[]): PlatformFamilyId[] {
 
 async function summarize(rows: Game[]): Promise<GameSummary[]> {
   if (!rows.length) return [];
-  const prices = Map.groupBy(await latestPrices(rows.map((g) => g.id)), (p) => p.listing.gameId);
+  const offers: Awaited<ReturnType<typeof latestPrices>> = [];
+  for (let i = 0; i < rows.length; i += 500) offers.push(...(await latestPrices(rows.slice(i, i + 500).map((g) => g.id))));
+  const prices = Map.groupBy(offers, (p) => p.listing.gameId);
   return rows.map((game) => {
     const offers = prices.get(game.id) ?? [];
     const best = offers.reduce<(typeof offers)[number] | null>(
@@ -166,7 +168,10 @@ export async function getDeals({ limit, offset = 0, sort = "desconto" }: { limit
   ]);
   if (!ranked.length) return { items: [], total };
 
-  const rows = await db.select().from(games).where(inArray(games.id, ranked.map((r) => r.gameId)));
+  const rows: Game[] = [];
+  for (let i = 0; i < ranked.length; i += 500) {
+    rows.push(...(await db.select().from(games).where(inArray(games.id, ranked.slice(i, i + 500).map((r) => r.gameId)))));
+  }
   const byId = new Map(rows.map((g) => [g.id, g]));
   return { items: await summarize(ranked.flatMap((r) => byId.get(r.gameId) ?? [])), total };
 }
@@ -213,7 +218,7 @@ export function getDealPool(platforms: PlatformFamilyId[] = []): Promise<GameSum
   const key = platforms.join("-");
   const cached = poolCache.get(key);
   if (cached && Date.now() - cached.at < POOL_TTL_MS) return cached.pool;
-  const pool = platforms.length ? getPlatformDeals(platforms) : getDeals({ limit: 2000 }).then((r) => r.items);
+  const pool = platforms.length ? getPlatformDeals(platforms) : getDeals({ limit: 100_000 }).then((r) => r.items);
   poolCache.set(key, { at: Date.now(), pool });
   pool.catch(() => {
     if (poolCache.get(key)?.pool === pool) poolCache.delete(key);
