@@ -28,7 +28,7 @@ jobs:
             exit 1
           fi
           status=$(curl -sS -o response.json -w "%{http_code}" --max-time 300 \
-            -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/refresh")
+            -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/refresh?wait=1")
           cat response.json; echo
           if [ "$status" != "200" ]; then
             echo "::error::A atualização respondeu HTTP $status"

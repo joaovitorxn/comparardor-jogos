@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { DEAL_POOL_TAG } from "@/db/queries";
 import { checkPriceAlerts } from "@/services/alerts";
 import { refreshPrices, syncExclusives, syncPreorders } from "@/services/catalog";
@@ -20,11 +20,7 @@ function authorized(header: string | null, secret: string | undefined) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-export async function GET(request: NextRequest) {
-  if (!authorized(request.headers.get("authorization"), process.env.CRON_SECRET)) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+async function run() {
   const startedAt = Date.now();
   // limites por execução: com o agendador rodando de hora em hora, o catálogo inteiro roda em rodízio
   // a função serverless morre aos 300s e, se isso acontecer, nada depois dela roda (nem a limpeza de cache):
@@ -43,5 +39,26 @@ export async function GET(request: NextRequest) {
   revalidateTag(DEAL_POOL_TAG, "max");
   revalidatePath("/jogo/[slug]", "page");
 
-  return Response.json({ ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, alerts });
+  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, alerts };
+}
+
+/**
+ * Sem parâmetro, responde na hora (202) e faz a atualização em segundo plano: serviços de agendamento
+ * externos (cron-job.org) desistem de esperar em ~30s. Com `?wait=1` espera terminar e devolve o resultado
+ * (é o que o workflow do GitHub usa, para o status do run refletir o resultado).
+ */
+export async function GET(request: NextRequest) {
+  if (!authorized(request.headers.get("authorization"), process.env.CRON_SECRET)) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (request.nextUrl.searchParams.get("wait") === "1") return Response.json(await run());
+
+  after(async () => {
+    try {
+      console.log("[cron] atualização concluída", JSON.stringify(await run()));
+    } catch (err) {
+      console.error("[cron] atualização falhou", err);
+    }
+  });
+  return Response.json({ ok: true, started: true }, { status: 202 });
 }
