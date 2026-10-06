@@ -11,7 +11,7 @@ import { usePlatforms } from "@/lib/use-platforms";
  * descontos dessas plataformas. Sem nada marcado, mostra tudo.
  */
 export function PlatformSelector() {
-  const { platforms, setPlatforms } = usePlatforms();
+  const { platforms, setPlatforms, pending } = usePlatforms();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,6 +41,7 @@ export function PlatformSelector() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="true"
+        aria-busy={pending}
         aria-label={active ? `Minhas plataformas: ${platforms.map((id) => PLATFORM_FAMILIES.find((f) => f.id === id)!.label).join(", ")}` : "Minhas plataformas: todas"}
         className={`flex h-10 items-center gap-2 rounded-[4px] border px-2.5 font-display text-sm font-semibold uppercase tracking-wider transition sm:px-3 ${
           active ? "border-accent-line bg-accent-soft text-accent" : "border-line text-text-2 hover:border-line-strong hover:text-text"
@@ -56,9 +57,16 @@ export function PlatformSelector() {
           <Icon name="controller" className="size-5" />
         )}
         <span className="hidden lg:inline">{active ? "Minhas plataformas" : "Plataformas"}</span>
-        <svg viewBox="0 0 24 24" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        {pending ? (
+          <svg viewBox="0 0 24 24" aria-hidden className="size-3.5 animate-spin" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round">
+            <circle cx="12" cy="12" r="9" className="opacity-25" />
+            <path d="M21 12a9 9 0 0 0-9-9" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        )}
       </button>
 
       {open && (
@@ -104,6 +112,9 @@ export function PlatformSelector() {
           >
             Mostrar todas as plataformas
           </button>
+          <p role="status" className={`mt-2 flex items-center justify-center gap-1.5 text-xs text-muted transition-opacity ${pending ? "opacity-100" : "opacity-0"}`}>
+            Atualizando as ofertas…
+          </p>
         </div>
       )}
     </div>

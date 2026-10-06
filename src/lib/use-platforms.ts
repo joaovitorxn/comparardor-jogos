@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useTransition } from "react";
 import { setCookie } from "./cookie";
 import { parsePlatforms, PLATFORMS_COOKIE, serializePlatforms } from "./platform-selection";
 import type { PlatformFamilyId } from "./stores";
@@ -24,10 +24,11 @@ function subscribe(onChange: () => void) {
 
 /**
  * Plataformas escolhidas pela pessoa. Vazio = todas. Ao mudar, grava o cookie e recarrega os dados
- * da página atual (o servidor lê o cookie para filtrar).
+ * da página atual (o servidor lê o cookie para filtrar); `pending` indica que isso está em andamento.
  */
 export function usePlatforms() {
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const raw = useSyncExternalStore(subscribe, readCookie, () => "");
   const platforms = parsePlatforms(raw);
 
@@ -36,8 +37,9 @@ export function usePlatforms() {
     const oneYear = 60 * 60 * 24 * 365;
     setCookie(PLATFORMS_COOKIE, value, value ? oneYear : 0);
     window.dispatchEvent(new Event(EVENT));
-    router.refresh();
+    // em transição, `pending` fica ligado até a página recarregar com os dados novos
+    startTransition(() => router.refresh());
   }
 
-  return { platforms, setPlatforms };
+  return { platforms, setPlatforms, pending };
 }
