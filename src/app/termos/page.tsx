@@ -73,7 +73,7 @@ const sections: LegalSection[] = [
         <Callout title="Como isso afeta a ordem das ofertas">
           <p>
             Ordenamos as ofertas pelo menor preço, sempre. A única preferência que existe é de desempate: se duas lojas estiverem com exatamente o mesmo preço, mostramos
-            primeiro a de uma loja parceira (hoje, a Nuuvem). Uma loja parceira nunca aparece na frente de uma mais barata.
+            primeiro a de uma loja parceira. Priorizamos as lojas parceiras só nesse empate: uma loja parceira nunca aparece na frente de uma mais barata.
           </p>
         </Callout>
         <P>As comissões ajudam a manter o site no ar e gratuito.</P>
@@ -113,8 +113,8 @@ const sections: LegalSection[] = [
       <>
         <P>
           Nomes de jogos, capas, imagens, logotipos e marcas das lojas e dos desenvolvedores pertencem aos seus respectivos donos, e aparecem no site só para identificar
-          cada jogo e cada loja. O {BRAND.name} não é afiliado a Steam, Epic, GOG, Nuuvem, Green Man Gaming, Microsoft, Sony, Nintendo nem às demais lojas e empresas citadas, e
-          nenhuma delas patrocina ou endossa o site.
+          cada jogo e cada loja. O {BRAND.name} é um projeto independente: não pertence às lojas e empresas citadas e nenhuma delas patrocina ou endossa o site. Algumas
+          podem ser parceiras do programa de afiliados, como explicado acima.
         </P>
         <P>
           O nome e a marca {BRAND.name}, o visual do site e o seu código são do projeto e não podem ser copiados ou usados como se fossem de outra pessoa sem autorização. Se
@@ -187,7 +187,7 @@ export default function TermsPage() {
         "Os preços são coletados com cuidado, mas podem mudar: o que vale é o preço da loja na hora de comprar.",
         "Alguns links podem ser de afiliado (sem custo extra para você), e isso nunca muda a ordem pelo menor preço.",
         "O site está em beta: pode ter erros, e seu feedback é muito bem-vindo.",
-        "Marcas e imagens são dos seus donos, e o Dropou não tem vínculo com as lojas citadas.",
+        "Marcas e imagens são dos seus donos, e o Dropou é um projeto independente: nenhuma loja o patrocina.",
       ]}
       sections={sections}
       other={{ href: "/privacidade", label: "Ler a Política de Privacidade" }}
