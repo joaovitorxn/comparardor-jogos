@@ -70,9 +70,9 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
   );
 }
 
-export function GameGrid({ games, releaseLabel }: { games: CardData[]; releaseLabel?: (game: CardData) => string | undefined }) {
+export function GameGrid({ games, releaseLabel, dense = false }: { games: CardData[]; releaseLabel?: (game: CardData) => string | undefined; dense?: boolean }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4 xl:grid-cols-6">
+    <div className={dense ? "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8" : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4 xl:grid-cols-6"}>
       {games.map((s) => (
         <GameCard key={s.game.id} summary={s} releaseLabel={releaseLabel?.(s)} />
       ))}

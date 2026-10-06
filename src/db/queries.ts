@@ -4,7 +4,7 @@ import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { parseReleaseDate } from "@/lib/release-date";
 import { applyBestCoupon, type CouponResult } from "@/lib/pricing";
-import { compareOffers, offerFamilies, type PlatformFamilyId } from "@/lib/stores";
+import { compareOffers, offerFamilies, PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
 import { db } from ".";
 import {
@@ -15,6 +15,7 @@ import {
   priceHistory,
   priceSnapshots,
   type Game,
+  type Platform,
   type Listing,
   type PriceSnapshot,
   type SimilarGame,
@@ -50,6 +51,15 @@ export interface GameSummary {
   maxDiscount: number;
   storeCount: number;
   bestStore: string | null;
+  /** Plataforma da melhor oferta e plataformas em que o jogo está à venda (dentro do recorte pedido). */
+  bestPlatform: Platform | null;
+  families: PlatformFamilyId[];
+}
+
+/** Famílias de plataforma (PC, PlayStation…) das ofertas, na ordem de sempre. */
+function familiesOf(offers: { listing: Listing }[]): PlatformFamilyId[] {
+  const found = new Set(offers.flatMap((o) => offerFamilies(o.listing)));
+  return PLATFORM_FAMILIES.map((f) => f.id).filter((id) => found.has(id));
 }
 
 async function summarize(rows: Game[]): Promise<GameSummary[]> {
@@ -69,6 +79,8 @@ async function summarize(rows: Game[]): Promise<GameSummary[]> {
       maxDiscount: Math.max(0, ...offers.map((o) => o.snapshot.discountPercent)),
       storeCount: offers.length,
       bestStore: best?.listing.store ?? null,
+      bestPlatform: best?.listing.platform ?? null,
+      families: familiesOf(offers),
     };
   });
 }
@@ -230,6 +242,8 @@ async function getPlatformDeals(platforms: PlatformFamilyId[]): Promise<GameSumm
         maxDiscount: Math.max(...offers.map((o) => o.snapshot.discountPercent)),
         storeCount: offers.length,
         bestStore: best.listing.store,
+        bestPlatform: best.listing.platform,
+        families: familiesOf(offers),
       },
     ];
   });

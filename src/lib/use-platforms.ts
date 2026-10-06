@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
+import { setCookie } from "./cookie";
 import { parsePlatforms, PLATFORMS_COOKIE, serializePlatforms } from "./platform-selection";
 import type { PlatformFamilyId } from "./stores";
 
@@ -33,7 +34,7 @@ export function usePlatforms() {
   function setPlatforms(next: PlatformFamilyId[]) {
     const value = serializePlatforms(next);
     const oneYear = 60 * 60 * 24 * 365;
-    document.cookie = `${PLATFORMS_COOKIE}=${value}; path=/; max-age=${value ? oneYear : 0}; samesite=lax`;
+    setCookie(PLATFORMS_COOKIE, value, value ? oneYear : 0);
     window.dispatchEvent(new Event(EVENT));
     router.refresh();
   }
