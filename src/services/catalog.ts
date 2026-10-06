@@ -610,6 +610,8 @@ export interface RefreshLimits {
   maxHistory?: number;
   /** Máximo de jogos com metadados do IGDB atualizados nesta execução. */
   maxIgdb?: number;
+  /** Instante (ms) a partir do qual não se começa mais nada: a função serverless tem tempo máximo e, se estourar, nada depois roda. */
+  deadline?: number;
 }
 
 /**
@@ -623,7 +625,9 @@ export async function refreshPrices({
   maxPerStore,
   maxHistory,
   maxIgdb,
+  deadline,
 }: { olderThanMinutes?: number; store?: string } & RefreshLimits = {}) {
+  const over = () => deadline != null && Date.now() > deadline;
   const cutoff = new Date(Date.now() - olderThanMinutes * 60_000);
   const stale = await db
     .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId, lastCheckedAt: listings.lastCheckedAt })
@@ -646,15 +650,21 @@ export async function refreshPrices({
       return [s, due.slice(0, cap)];
     }),
   );
-  const summary: Record<string, { checked: number; changed: number; error?: string }> = {};
+  /** `ms`: quanto a etapa demorou; `partial`: parou por falta de tempo. */
+  const summary: Record<string, { checked: number; changed: number; error?: string; ms?: number; partial?: boolean }> = {};
 
   for (const [storeId, rows] of byStore) {
     const collector = getCollector(storeId);
-    if (!collector) continue;
+    if (!collector || over()) continue;
     summary[storeId] = { checked: 0, changed: 0 };
+    const started = Date.now();
     try {
       const prices = await collector.fetchPrices(rows.map((r) => r.storeProductId));
       for (const row of rows) {
+        if (over()) {
+          summary[storeId].partial = true;
+          break;
+        }
         if (!prices.has(row.storeProductId)) continue;
         summary[storeId].checked++;
         if (await recordPrice(row.id, prices.get(row.storeProductId) ?? null)) summary[storeId].changed++;
@@ -662,36 +672,42 @@ export async function refreshPrices({
     } catch (err) {
       summary[storeId].error = String(err);
     }
+    summary[storeId].ms = Date.now() - started;
   }
 
   // jogos importados pela busca cujo complemento em segundo plano não terminou (ex.: servidor reiniciou)
-  if (!store) {
+  if (!store && !over()) {
+    const started = Date.now();
     const stuck = await db
       .select({ id: games.id, title: games.title })
       .from(games)
       .where(and(isNull(games.enrichedAt), lt(games.createdAt, new Date(Date.now() - 10 * 60_000))));
     for (const game of stuck.slice(0, 20)) await enrichGame(game);
-    if (stuck.length) summary.pendentes = { checked: stuck.length, changed: stuck.length };
+    if (stuck.length) summary.pendentes = { checked: stuck.length, changed: stuck.length, ms: Date.now() - started };
+  }
+
+  // a ITAD responde o catálogo inteiro em poucas chamadas, então sincronizamos tudo de uma vez (vem antes do
+  // IGDB: são os preços das outras lojas, enquanto o IGDB só traz metadados)
+  if ((!store || ITAD_STORES.has(store)) && !over()) {
+    const started = Date.now();
+    try {
+      const itad = await syncItad({ historyLimit: maxHistory });
+      if (itad) summary.itad = { checked: itad.games, changed: itad.offers.length, ms: Date.now() - started };
+    } catch (err) {
+      summary.itad = { checked: 0, changed: 0, error: String(err), ms: Date.now() - started };
+    }
   }
 
   // metadados do IGDB mudam pouco: só jogos sincronizados há mais de uma semana
-  if (!store) {
+  if (!store && !over()) {
+    const started = Date.now();
     try {
       const igdb = await syncIgdb({ limit: maxIgdb });
-      if (igdb) summary.igdb = { checked: igdb.games, changed: igdb.offers.length };
+      if (igdb) summary.igdb = { checked: igdb.games, changed: igdb.offers.length, ms: Date.now() - started };
     } catch (err) {
-      summary.igdb = { checked: 0, changed: 0, error: String(err) };
+      summary.igdb = { checked: 0, changed: 0, error: String(err), ms: Date.now() - started };
     }
   }
 
-  // a ITAD responde o catálogo inteiro em poucas chamadas, então sincronizamos tudo de uma vez
-  if (!store || ITAD_STORES.has(store)) {
-    try {
-      const itad = await syncItad({ historyLimit: maxHistory });
-      if (itad) summary.itad = { checked: itad.games, changed: itad.offers.length };
-    } catch (err) {
-      summary.itad = { checked: 0, changed: 0, error: String(err) };
-    }
-  }
   return summary;
 }

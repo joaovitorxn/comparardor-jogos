@@ -27,11 +27,14 @@ export async function GET(request: NextRequest) {
 
   const startedAt = Date.now();
   // limites por execução: com o agendador rodando de hora em hora, o catálogo inteiro roda em rodízio
-  const summary = await refreshPrices({ maxPerStore: 800, maxHistory: 150, maxIgdb: 300 });
+  // a função serverless morre aos 300s e, se isso acontecer, nada depois dela roda (nem a limpeza de cache):
+  // por isso as etapas só começam enquanto houver folga, e os alertas e a limpeza de cache ficam sempre garantidos
+  const budget = (seconds: number) => Date.now() < startedAt + seconds * 1000;
+  const summary = await refreshPrices({ maxPerStore: 800, maxHistory: 150, maxIgdb: 300, deadline: startedAt + 200_000 });
   // pré-vendas com desconto entram no catálogo; uma falha aqui não derruba a atualização
-  const preorders = await syncPreorders().catch(() => -1);
+  const preorders = budget(215) ? await syncPreorders().catch(() => -1) : null;
   // exclusivos de PlayStation e Nintendo entram aos poucos (poucos por execução)
-  const exclusives = await syncExclusives({ limit: 6 }).catch(() => null);
+  const exclusives = budget(240) ? await syncExclusives({ limit: 6 }).catch(() => null) : null;
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
   // preços novos: descarta o cache da home e de todas as páginas de jogo
