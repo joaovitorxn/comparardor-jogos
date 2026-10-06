@@ -180,20 +180,34 @@ function releaseYear(text: string | null): number | null {
   return m ? Number(m[0]) : null;
 }
 
+/** Qualidade do jogo (0-100): nota da crítica; com pouca crítica a nota é puxada para 60, e sem nota fica em 55. */
+function qualityOf(game: Game): number {
+  const rating = game.criticRating ?? game.metacritic;
+  const trust = Math.min(1, (game.criticRatingCount ?? (game.metacritic ? 5 : 0)) / 5);
+  return rating != null ? 60 + (rating - 60) * trust : 55;
+}
+
+/** Nota mínima para um jogo contar como "bom" nos destaques. */
+const MIN_QUALITY = 70;
+
 /**
- * Pontuação de destaque: jogos recentes e bem avaliados com desconto de verdade. O desconto só
- * desempata — o objetivo é mostrar o que vale a pena, não só o que está mais barato.
+ * Pontuação de destaque: jogo bom em ótimo preço. O que mais pesa é o preço estar perto do menor já
+ * registrado (até 50 pontos); depois a qualidade (até ~35), o tamanho do desconto (até 15) e, de leve,
+ * ser recente (até 10). Sem o menor preço histórico, vale só o desconto.
  */
 function featuredScore(s: GameSummary, year: number): number {
   const { game } = s;
-  const rating = game.criticRating ?? game.metacritic;
-  // nota com pouca crítica pesa menos; sem nota, fica abaixo da média
-  const trust = Math.min(1, (game.criticRatingCount ?? (game.metacritic ? 5 : 0)) / 5);
-  const quality = rating != null ? 60 + (rating - 60) * trust : 55;
+  const quality = Math.max(0, qualityOf(game) - 60);
+  const discount = Math.min(s.maxDiscount, 80) / 80;
+  const low = game.historyLowCents;
+  const best = s.bestPriceCents;
+  // 1 = no menor preço de sempre; cai conforme o preço fica acima dele
+  const nearLow = low != null && low > 0 && best != null && best > 0 ? Math.min(1, low / best) : null;
+  const value = nearLow != null ? 50 * nearLow * nearLow : 30 * discount;
   const released = releaseYear(game.releaseDate);
   const age = released == null ? 8 : Math.max(0, year - released);
-  const recency = age <= 1 ? 45 : age <= 2 ? 32 : age <= 4 ? 16 : age <= 7 ? 6 : 0;
-  return quality + recency + Math.min(s.maxDiscount, 80) / 10;
+  const recency = age <= 1 ? 10 : age <= 2 ? 7 : age <= 4 ? 4 : age <= 7 ? 1 : 0;
+  return quality + value + 15 * discount + recency;
 }
 
 /** Ainda não lançado (o dia do lançamento já conta como lançado). */
@@ -265,25 +279,37 @@ export function pickPreorderDeals(pool: GameSummary[], limit: number): GameSumma
     .slice(0, limit);
 }
 
-/** Os jogos em promoção de menor preço (sem os grátis), do mais barato para o mais caro. */
+/** Preço original mínimo (R$ 30) para um jogo contar como "quase de graça": evita o que já era barato. */
+const MIN_REGULAR_CENTS = 3000;
+
+/**
+ * Jogos bons em promoção de menor preço (sem os grátis): nota mínima e preço original de pelo menos R$ 30,
+ * do mais barato para o mais caro. Se faltarem jogos assim (poucas plataformas escolhidas), completa com os demais.
+ */
 export function pickCheapestDeals(pool: GameSummary[], limit: number): GameSummary[] {
-  return pool
-    .filter((s) => s.maxDiscount > 0 && (s.bestPriceCents ?? 0) > 0)
-    .sort((a, b) => a.bestPriceCents! - b.bestPriceCents! || b.maxDiscount - a.maxDiscount)
-    .slice(0, limit);
+  const onSale = pool.filter((s) => s.maxDiscount > 0 && (s.bestPriceCents ?? 0) > 0);
+  const byPrice = (a: GameSummary, b: GameSummary) => a.bestPriceCents! - b.bestPriceCents! || b.maxDiscount - a.maxDiscount;
+  const good = (s: GameSummary) => qualityOf(s.game) >= MIN_QUALITY && (s.regularPriceCents ?? 0) >= MIN_REGULAR_CENTS;
+  const picked = onSale.filter(good).sort(byPrice).slice(0, limit);
+  if (picked.length >= limit) return picked;
+  const rest = onSale.filter((s) => !good(s)).sort(byPrice);
+  return [...picked, ...rest.slice(0, limit - picked.length)];
 }
 
-/** Jogos recentes e relevantes com desconto (a partir de 20%), do mais ao menos "vale a pena". */
+/**
+ * "Jogo bom em ótimo preço": desconto de 30% ou mais, nota mínima e a melhor pontuação (preço perto do menor
+ * histórico, qualidade, desconto, recência). Se faltarem jogos assim (poucas plataformas escolhidas), completa
+ * com descontos a partir de 20%.
+ */
 export function pickFeaturedDeals(pool: GameSummary[], limit: number): GameSummary[] {
   const year = new Date().getFullYear();
   const now = new Date();
-  return pool
+  const ranked = pool
     // pré-vendas têm seção própria
     .filter((s) => s.maxDiscount >= 20 && s.bestPriceCents !== 0 && !isUnreleased(s.game, now))
-    .map((s) => ({ s, score: featuredScore(s, year) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((x) => x.s);
+    .map((s) => ({ s, strong: s.maxDiscount >= 30 && qualityOf(s.game) >= MIN_QUALITY, score: featuredScore(s, year) }))
+    .sort((a, b) => Number(b.strong) - Number(a.strong) || b.score - a.score || a.s.game.id - b.s.game.id);
+  return ranked.slice(0, limit).map((x) => x.s);
 }
 
 /**
