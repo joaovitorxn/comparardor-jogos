@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { lightImage } from "@/lib/images";
 
 interface Props {
   src: string | null;
@@ -11,7 +11,11 @@ interface Props {
   className?: string;
 }
 
-/** Capa do jogo com placeholder (título sobre fundo neutro) se a imagem não existir ou falhar. */
+/**
+ * Capa do jogo com placeholder (título sobre fundo neutro) se a imagem não existir ou falhar.
+ * Para as capas da Steam oferece duas versões (300 e 600 px de largura) e o navegador escolhe pela tela:
+ * telas comuns baixam a leve (um terço do peso), telas de alta densidade (retina) baixam a nítida.
+ */
 export function CoverImage({ src, title, sizes, priority, className = "" }: Props) {
   const [failed, setFailed] = useState(false);
 
@@ -23,15 +27,20 @@ export function CoverImage({ src, title, sizes, priority, className = "" }: Prop
     );
   }
 
+  const light = lightImage(src);
   return (
-    <Image
+    // <img> comum (e não next/image): as imagens já vêm prontas das lojas, e aqui precisamos do srcset com as duas versões
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={src}
+      srcSet={light !== src ? `${light} 300w, ${src} 600w` : undefined}
+      sizes={light !== src ? sizes : undefined}
       alt={`Capa de ${title}`}
-      fill
-      sizes={sizes}
-      priority={priority}
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
+      decoding="async"
       onError={() => setFailed(true)}
-      className={`object-cover ${className}`}
+      className={`absolute inset-0 size-full object-cover ${className}`}
     />
   );
 }

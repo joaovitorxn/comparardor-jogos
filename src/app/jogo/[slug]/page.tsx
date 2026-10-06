@@ -21,13 +21,15 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
+import { lightImage } from "@/lib/images";
 import { allPlatformCombinations, serializePlatforms } from "@/lib/platform-selection";
 import { priceRarity } from "@/lib/rarity";
 import { SITE_URL } from "@/lib/site";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
-export const revalidate = 300;
+// o robô de coleta já descarta o cache de todas as páginas de jogo a cada atualização de preços (de hora em hora)
+export const revalidate = 1800;
 
 // Array vazio = nenhuma página gerada no build; cada jogo é gerado na primeira visita e revalidado a cada 5 min (ISR)
 export async function generateStaticParams() {
@@ -343,7 +345,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
       <JsonLd data={productJsonLd(data)} />
       <header className="relative overflow-hidden border-b border-line">
         {game.backgroundUrl && (
-          <Image src={game.backgroundUrl} alt="" fill priority sizes="100vw" className="object-cover object-center opacity-80" />
+          <Image src={lightImage(game.backgroundUrl)} alt="" fill priority sizes="100vw" className="object-cover object-center opacity-80" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-bg/80 via-bg/20 to-transparent" />

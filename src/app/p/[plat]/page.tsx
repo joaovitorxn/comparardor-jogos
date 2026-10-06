@@ -5,7 +5,7 @@ import { HomeView } from "../../home-view";
 
 // Home personalizada por plataforma: o proxy reescreve "/" para cá quando a pessoa escolheu plataformas.
 // Uma página por combinação, em cache (ISR) — nada de render por visita.
-export const revalidate = 300;
+export const revalidate = 900;
 
 export function generateStaticParams() {
   return allPlatformCombinations().map((p) => ({ plat: serializePlatforms(p) }));

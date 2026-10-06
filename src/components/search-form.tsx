@@ -1,5 +1,6 @@
 "use client";
 
+import { lightImage } from "@/lib/images";
 import Form from "next/form";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -141,7 +142,7 @@ export function SearchForm({ defaultValue, className = "", size = "md", autoFocu
               className={`flex cursor-pointer items-center gap-3 px-3 py-2 ${active === i ? "bg-surface-3" : ""}`}
             >
               <span className="relative h-12 w-9 shrink-0 overflow-hidden rounded-[3px] bg-surface-3">
-                {s.coverUrl && <Image src={s.coverUrl} alt="" fill sizes="36px" className="object-cover" />}
+                {s.coverUrl && <Image src={lightImage(s.coverUrl)} alt="" fill sizes="36px" className="object-cover" />}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.title}</span>
               {s.price && (

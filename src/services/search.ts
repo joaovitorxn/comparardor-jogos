@@ -48,7 +48,8 @@ export interface Facet {
   count: number;
 }
 
-const TTL_MS = 5 * 60_000;
+// o índice só precisa refletir os preços da última coleta (de hora em hora); montá-lo custa uma leitura grande do banco
+const TTL_MS = 15 * 60_000;
 interface IndexState {
   index: MiniSearch<SearchDoc>;
   docs: Map<number, SearchDoc>;

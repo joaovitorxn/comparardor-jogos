@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatCents } from "@/lib/format";
+import { lightImage } from "@/lib/images";
 import { getStore } from "@/lib/stores";
 import { StoreLogo } from "./store-logo";
 import { buttonStyles, DiscountBadge, PriceText } from "./ui";
@@ -44,7 +45,7 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
     const next = items[(active + 1) % items.length];
     const wide = window.matchMedia("(min-width: 1024px)").matches;
     const url = wide ? (next.backgroundUrl ?? next.headerUrl) : (next.headerUrl ?? next.backgroundUrl);
-    if (url) new window.Image().src = url;
+    if (url) new window.Image().src = lightImage(url);
   }, [active, items]);
 
   const deal = items[active];
@@ -60,11 +61,11 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
           {/* celular: a capa em formato banner (460x215) em cima, inteira, e o texto embaixo; no desktop, o texto por cima da arte larga */}
           <div key={deal.slug} className="relative aspect-[460/215] animate-[showcase-in_500ms_ease-out] overflow-hidden lg:absolute lg:inset-0 lg:aspect-auto">
             {(deal.headerUrl ?? deal.backgroundUrl) && (
-              <Image src={(deal.headerUrl ?? deal.backgroundUrl)!} alt="" fill priority={active === 0} sizes="(min-width: 1024px) 0px, 100vw" className="object-cover lg:hidden" />
+              <Image src={lightImage(deal.headerUrl ?? deal.backgroundUrl)!} alt="" fill priority={active === 0} sizes="(min-width: 1024px) 0px, 100vw" className="object-cover lg:hidden" />
             )}
             {(deal.backgroundUrl ?? deal.headerUrl) && (
               <Image
-                src={(deal.backgroundUrl ?? deal.headerUrl)!}
+                src={lightImage(deal.backgroundUrl ?? deal.headerUrl)!}
                 alt=""
                 fill
                 sizes="(min-width: 1024px) 66vw, 0px"

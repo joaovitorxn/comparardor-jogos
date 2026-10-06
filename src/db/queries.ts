@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { parseReleaseDate } from "@/lib/release-date";
@@ -179,7 +180,8 @@ function isUnreleased(game: Game, now: Date): boolean {
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
 const poolCache = new Map<string, { at: number; pool: Promise<GameSummary[]> }>();
-const POOL_TTL_MS = 5 * 60_000;
+// os preços só mudam quando o robô de coleta roda (de hora em hora), então 15 min não se nota
+const POOL_TTL_MS = 15 * 60_000;
 
 /**
  * Todos os jogos em promoção. Com `platforms`, só contam as ofertas das plataformas escolhidas (o
@@ -305,7 +307,10 @@ export interface PriceSeries {
   trackedSince: number | null;
 }
 
-export async function getGamePage(slug: string) {
+// `cache` do React: generateMetadata e a página pedem o mesmo jogo na mesma requisição e só uma consulta roda
+export const getGamePage = cache(getGamePageUncached);
+
+async function getGamePageUncached(slug: string) {
   const [game] = await db.select().from(games).where(eq(games.slug, slug));
   if (!game) return null;
 

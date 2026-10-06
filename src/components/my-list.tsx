@@ -1,5 +1,6 @@
 "use client";
 
+import { lightImage } from "@/lib/images";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -124,7 +125,7 @@ export function MyList() {
           return (
             <li key={g.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 p-3 sm:flex-nowrap">
               <Link href={`/jogo/${g.slug}`} className="relative aspect-[2/3] w-14 shrink-0 overflow-hidden rounded-[3px] bg-surface-2">
-                {g.coverUrl && <Image src={g.coverUrl} alt="" fill sizes="56px" className="object-cover" />}
+                {g.coverUrl && <Image src={lightImage(g.coverUrl)} alt="" fill sizes="56px" className="object-cover" />}
               </Link>
               <div className="min-w-0 flex-1">
                 <Link href={`/jogo/${g.slug}`} className="block truncate font-medium hover:text-accent">
