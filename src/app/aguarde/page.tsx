@@ -15,7 +15,7 @@ export default async function WaitPage(props: PageProps<"/aguarde">) {
       <p className="mb-8 text-text-2">
         {erro
           ? "Não conseguimos consultar a Steam agora. Tente de novo em alguns segundos."
-          : "Para não sobrecarregar as lojas, limitamos quantos jogos novos podem ser consultados por vez. Tente de novo em alguns minutos — os jogos que já estão no catálogo continuam disponíveis."}
+          : "Para não sobrecarregar as lojas, o site limita quantos jogos novos podem ser consultados por vez. Tente de novo em alguns minutos — os jogos que já estão no catálogo continuam disponíveis."}
       </p>
       <SearchForm size="lg" />
       <Link href="/" className="mt-6 inline-block text-sm text-text-2 underline-offset-4 hover:text-accent hover:underline">

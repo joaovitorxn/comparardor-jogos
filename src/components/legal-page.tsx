@@ -146,7 +146,7 @@ export function LegalPage({
 
           <p className="px-1 text-xs leading-relaxed text-muted">
             Este texto explica, em linguagem simples, como o {BRAND.name} funciona hoje. Se algo estiver diferente do que você vê no site, ou se ficar
-            alguma dúvida, fale com a gente pelo botão de feedback.
+            alguma dúvida, fale comigo pelo botão de feedback.
           </p>
         </div>
       </div>

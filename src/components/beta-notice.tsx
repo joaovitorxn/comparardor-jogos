@@ -51,8 +51,8 @@ export function BetaNotice() {
             O Dropou está em <span className="text-accent">beta</span>
           </p>
           <p className="mt-1 text-sm leading-snug text-text-2">
-            Ainda estamos em desenvolvimento, então podem aparecer bugs ou preços fora do lugar. Achou algo estranho ou tem uma ideia? Use o botão de
-            feedback (o bichinho no canto da tela) e conte pra gente.
+            O site ainda está em desenvolvimento, então podem aparecer bugs ou preços fora do lugar. Achou algo estranho ou tem uma ideia? Use o botão de
+            feedback (o bichinho no canto da tela) e conte pra mim.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button

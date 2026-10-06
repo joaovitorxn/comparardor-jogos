@@ -83,7 +83,7 @@ export function FeedbackButton() {
         {status.type === "sent" ? (
           <div className="space-y-4 p-6 text-center">
             <p className="font-display text-2xl font-bold uppercase text-accent">Valeu!</p>
-            <p className="text-sm text-text-2">Recebemos seu feedback e vamos ler com carinho.</p>
+            <p className="text-sm text-text-2">Recebi seu feedback e vou ler com carinho.</p>
             <button type="button" onClick={() => dialogRef.current?.close()} className="h-9 rounded-[4px] border border-line px-4 text-sm font-medium hover:border-accent hover:text-accent">
               Fechar
             </button>
@@ -93,7 +93,7 @@ export function FeedbackButton() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="font-display text-xl font-bold uppercase">Feedback</h2>
-                <p className="text-xs text-text-2">Achou um bug ou tem uma ideia? Conta pra gente.</p>
+                <p className="text-xs text-text-2">Achou um bug ou tem uma ideia? Conta pra mim.</p>
               </div>
               <button type="button" onClick={() => dialogRef.current?.close()} aria-label="Fechar" className="text-xl leading-none text-muted hover:text-text">
                 ×

@@ -165,7 +165,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
   const overall = data.offers.find((o) => o.snapshot && o.finalCents != null);
   if (!overall) {
     return (
-      <div className="rounded-card border border-line bg-surface p-5 text-sm text-text-2">Ainda não encontramos este jogo à venda.</div>
+      <div className="rounded-card border border-line bg-surface p-5 text-sm text-text-2">Este jogo ainda não foi encontrado à venda.</div>
     );
   }
 
@@ -377,7 +377,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
                 <PriceTable offers={offers} />
               </PlatformFilter>
             ) : (
-              <p className="text-text-2">Ainda não encontramos este jogo em nenhuma loja.</p>
+              <p className="text-text-2">Este jogo ainda não foi encontrado em nenhuma loja.</p>
             )}
             {missingStores.length > 0 && (
               <p className="mt-3 text-xs text-muted">Ainda não comparado em: {missingStores.map((s) => s.name).join(", ")}.</p>

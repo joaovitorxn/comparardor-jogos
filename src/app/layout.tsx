@@ -86,6 +86,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/termos" className="hover:text-accent">
                 Termos de uso
               </Link>
+              {BRAND.contactEmail && (
+                <a href={`mailto:${BRAND.contactEmail}`} className="hover:text-accent">
+                  {BRAND.contactEmail}
+                </a>
+              )}
             </p>
             <p className="flex items-center gap-1.5">
               Desenvolvido por Berk

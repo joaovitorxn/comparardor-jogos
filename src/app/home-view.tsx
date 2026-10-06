@@ -64,7 +64,7 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
           <h1 className="font-display text-3xl font-bold uppercase">{BRAND.tagline}</h1>
           <p className="mt-2 text-text-2">
             {platforms.length
-              ? "Não encontramos promoções para as plataformas escolhidas agora. Volte mais tarde ou escolha outras no topo da página."
+              ? "Não há promoções para as plataformas escolhidas agora. Volte mais tarde ou escolha outras no topo da página."
               : "Busque um jogo no topo da página para adicioná-lo ao catálogo."}
           </p>
         </section>

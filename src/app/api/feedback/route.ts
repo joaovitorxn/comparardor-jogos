@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const kind = body?.kind;
   const message = typeof body?.message === "string" ? body.message.trim() : "";
   if (!isFeedbackKind(kind)) return bad("Escolha o tipo do feedback.");
-  if (message.length < 5) return bad("Escreva um pouco mais para a gente entender.");
+  if (message.length < 5) return bad("Escreva um pouco mais para eu entender.");
   if (message.length > 1500) return bad("Mensagem muito longa (máximo de 1500 caracteres).");
 
   const contact = typeof body?.contact === "string" ? body.contact.trim().slice(0, 120) || null : null;

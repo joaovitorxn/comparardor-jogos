@@ -64,7 +64,7 @@ export function PlatformSelector() {
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[6px] border border-line-strong bg-surface-2 p-3 shadow-2xl shadow-black/60">
           <p className="font-display text-sm font-semibold uppercase tracking-wider text-text">Minhas plataformas</p>
-          <p className="mt-0.5 text-xs leading-snug text-text-2">Marque o que você joga e mostramos só os jogos e os descontos dessas plataformas.</p>
+          <p className="mt-0.5 text-xs leading-snug text-text-2">Marque o que você joga e o site mostra só os jogos e os descontos dessas plataformas.</p>
           <ul className="mt-2.5 space-y-1">
             {PLATFORM_FAMILIES.map((f) => {
               const checked = platforms.includes(f.id);

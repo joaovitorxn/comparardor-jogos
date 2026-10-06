@@ -35,7 +35,7 @@ const sections: LegalSection[] = [
     body: (
       <P>
         O {BRAND.name} ainda está em desenvolvimento. Funções podem mudar, sumir ou ficar fora do ar por um tempo, e podem aparecer erros. Se você achar algum, o botão de
-        feedback é a melhor forma de nos avisar, e a gente agradece.
+        feedback é a melhor forma de me avisar, e eu agradeço.
       </P>
     ),
   },
@@ -45,7 +45,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <P>
-          Coletamos os preços diretamente das lojas e de serviços parceiros, em reais, e fazemos o possível para mantê-los atualizados. Mas eles podem mudar a qualquer momento,
+          Coleto os preços diretamente das lojas e de serviços parceiros, em reais, e faço o possível para mantê-los atualizados. Mas eles podem mudar a qualquer momento,
           e pode haver atraso, diferença de região ou erro.
         </P>
         <Ul>
@@ -53,7 +53,7 @@ const sections: LegalSection[] = [
             <strong className="font-semibold text-text">O preço válido é sempre o da loja</strong> na hora da compra. Confira antes de pagar.
           </li>
           <li>
-            O histórico de preço mostra o que registramos ou recebemos de parceiros; em lojas de console, ele começa quando passamos a acompanhá-las.
+            O histórico de preço mostra o que registrei ou recebi de parceiros; em lojas de console, ele começa quando passei a acompanhá-las.
           </li>
           <li>Dados como notas, tempo para zerar, requisitos e descrições vêm de fontes de terceiros e podem estar incompletos ou desatualizados.</li>
         </Ul>
@@ -71,8 +71,7 @@ const sections: LegalSection[] = [
         </P>
         <Callout title="Como isso afeta a ordem das ofertas">
           <p>
-            Ordenamos as ofertas pelo menor preço, sempre. A única preferência que existe é de desempate: se duas lojas estiverem com exatamente o mesmo preço, mostramos
-            primeiro a de uma loja parceira. Priorizamos as lojas parceiras só nesse empate: uma loja parceira nunca aparece na frente de uma mais barata.
+            Ordeno as ofertas pelo menor preço, sempre. A única preferência que existe é de desempate: se duas lojas estiverem com exatamente o mesmo preço, mostro primeiro a de uma loja parceira. Priorizo as lojas parceiras só nesse empate: uma loja parceira nunca aparece na frente de uma mais barata.
           </p>
         </Callout>
         <P>As comissões ajudam a manter o site no ar e gratuito.</P>
@@ -84,7 +83,7 @@ const sections: LegalSection[] = [
     title: "Alertas de preço",
     body: (
       <P>
-        Os alertas são um recurso de melhor esforço: enviamos a notificação quando nossas coletas detectam o preço combinado, mas não garantimos que ela chegue, nem que
+        Os alertas são um recurso de melhor esforço: envio a notificação quando minhas coletas detectam o preço combinado, mas não garanto que ela chegue, nem que
         chegue na hora, nem que o preço ainda esteja disponível quando você abrir a loja. Notificações dependem do navegador, do aparelho e das suas permissões.
       </P>
     ),
@@ -112,12 +111,12 @@ const sections: LegalSection[] = [
       <>
         <P>
           Nomes de jogos, capas, imagens, logotipos e marcas das lojas e dos desenvolvedores pertencem aos seus respectivos donos, e aparecem no site só para identificar
-          cada jogo e cada loja. O {BRAND.name} é um projeto independente: não pertence às lojas e empresas citadas e nenhuma delas patrocina ou endossa o site. Algumas
+          cada jogo e cada loja. O {BRAND.name} é um projeto independente, mantido por uma só pessoa: não pertence às lojas e empresas citadas e nenhuma delas patrocina ou endossa o site. Algumas
           podem ser parceiras do programa de afiliados, como explicado acima.
         </P>
         <P>
           O nome e a marca {BRAND.name}, o visual do site e o seu código são do projeto e não podem ser copiados ou usados como se fossem de outra pessoa sem autorização. Se
-          você é dono de algum conteúdo exibido e quiser que seja ajustado ou removido, fale com a gente.
+          você é dono de algum conteúdo exibido e quiser que seja ajustado ou removido, fale comigo.
         </P>
       </>
     ),
@@ -128,7 +127,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <P>
-          Oferecemos o site &ldquo;como está&rdquo;, sem garantia de que ficará sempre disponível ou sem erros. O {BRAND.name} não se responsabiliza por compras feitas nas lojas, por
+          Ofereço o site &ldquo;como está&rdquo;, sem garantia de que ficará sempre disponível ou sem erros. O {BRAND.name} não se responsabiliza por compras feitas nas lojas, por
           diferenças entre o preço exibido e o preço cobrado, por problemas com chaves, contas ou entrega, nem por decisões de compra tomadas com base apenas nas informações do
           site.
         </P>
@@ -155,7 +154,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <P>
-          Podemos atualizar estes termos quando o site mudar, e a data no topo da página mostra a última atualização. Continuar usando o site depois de uma mudança significa
+          Posso atualizar estes termos quando o site mudar, e a data no topo da página mostra a última atualização. Continuar usando o site depois de uma mudança significa
           que você concorda com a nova versão.
         </P>
         <P>
