@@ -79,6 +79,12 @@ const sections: LegalSection[] = [
           {BRAND.name} pode receber uma comissão, sem custo extra para você. Os Gift Cards são vendidos no Mercado Livre, que é o responsável pela compra, pela entrega do código e
           pelo suporte.
         </P>
+        <P>
+          A página <strong className="font-semibold text-text">Setup</strong> reúne recomendações de produtos (controles, mouses, teclados, monitores e áudio) escolhidas por mim, com links
+          de afiliado do Mercado Livre e da Amazon. Comprando por esses links, o {BRAND.name} pode receber uma comissão, sem custo extra para você. A compra, a entrega, os preços e o
+          suporte são da loja onde você comprar, e os preços podem mudar a qualquer momento.
+        </P>
+        <P>Como Associado da Amazon, eu ganho com compras qualificadas.</P>
         <P>As comissões ajudam a manter o site no ar e gratuito.</P>
       </>
     ),
@@ -105,7 +111,7 @@ const sections: LegalSection[] = [
           <li>tentar invadir, atrapalhar ou explorar falhas do site ou dos serviços que ele usa;</li>
           <li>enviar, pelo formulário de feedback, conteúdo ofensivo, ilegal ou que não seja seu.</li>
         </Ul>
-        <P>Se você achar uma falha de segurança, por favor nos avise pelo feedback em vez de divulgá-la.</P>
+        <P>Se você achar uma falha de segurança, por favor me avise pelo feedback em vez de divulgá-la.</P>
       </>
     ),
   },

@@ -115,7 +115,7 @@ const sections: LegalSection[] = [
           </li>
         </Ul>
         <P>
-          Os links de compra levam a lojas de terceiros (Steam, Nuuvem, PlayStation Store, Mercado Livre e outras). Ao entrar nelas, valem a política e os cookies de cada loja,
+          Os links de compra levam a lojas de terceiros (Steam, Nuuvem, PlayStation Store, Mercado Livre, Amazon e outras). Ao entrar nelas, valem a política e os cookies de cada loja,
           que não controlo. Alguns desses links podem ser de afiliados (veja os Termos de Uso).
         </P>
         <P>Alguns desses serviços ficam em outros países, então seus dados podem ser processados fora do Brasil, com as garantias previstas na LGPD.</P>
@@ -182,7 +182,7 @@ const sections: LegalSection[] = [
     title: "Crianças e adolescentes",
     body: (
       <P>
-        O {BRAND.name} é um site de consulta de preços e não pede dados pessoais, mas não é voltado a crianças. Se você é responsável por um menor e acha que ele nos enviou
+        O {BRAND.name} é um site de consulta de preços e não pede dados pessoais, mas não é voltado a crianças. Se você é responsável por um menor e acha que ele me enviou
         algum dado, fale comigo para eu apagar.
       </P>
     ),

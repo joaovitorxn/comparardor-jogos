@@ -15,16 +15,16 @@ export function LogoMark({ className = "size-7" }: { className?: string }) {
   );
 }
 
-const NAV: { href: string; label: string; icon: IconName }[] = [
+const NAV: { href: string; label: string; icon: IconName; highlight?: boolean }[] = [
   { href: "/ofertas", label: "Ofertas", icon: "tag" },
   { href: "/busca", label: "Explorar", icon: "compass" },
-  { href: "/#lojas", label: "Lojas", icon: "store" },
+  { href: "/setup", label: "Setup", icon: "mouse", highlight: true },
 ];
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-6 lg:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 min-[400px]:gap-3 sm:gap-6 lg:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={`${BRAND.name} — início`}>
           <LogoMark />
           <span className="font-display text-2xl font-bold uppercase leading-none tracking-wide">{BRAND.name}</span>
@@ -37,18 +37,24 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-5 md:flex">
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-text">
+            <Link
+              key={item.href}
+              href={item.href}
+              className={
+                item.highlight
+                  ? "flex items-center gap-1.5 rounded-[4px] border border-accent-line bg-accent-soft px-2.5 py-1 font-display text-sm font-semibold uppercase tracking-wider text-accent transition hover:bg-accent hover:text-accent-ink"
+                  : "flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-text"
+              }
+            >
               <Icon name={item.icon} className="size-4" />
               {item.label}
+              {item.highlight && <span className="rounded-[3px] bg-accent px-1 text-[10px] font-bold leading-4 tracking-wider text-accent-ink">NOVO</span>}
             </Link>
           ))}
         </nav>
         <SearchForm className="ml-auto hidden w-full max-w-sm sm:block" />
         <MobileSearch />
         <PlatformSelector />
-        <Link href="/ofertas" aria-label="Ofertas" className="flex shrink-0 text-text-2 transition hover:text-accent md:hidden">
-          <Icon name="tag" className="size-5" />
-        </Link>
         <Link
           href="/minha-lista"
           aria-label="Wishlist"
@@ -60,6 +66,22 @@ export function SiteHeader() {
           <span className="hidden lg:inline">Wishlist</span>
         </Link>
       </div>
+      {/* no celular o menu vira uma segunda linha, também fixa no topo: dá para trocar de página sem voltar ao começo */}
+      <nav aria-label="Menu" className="grid grid-cols-3 gap-1 border-t border-line px-3 py-1.5 md:hidden">
+      {NAV.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`flex items-center justify-center gap-1.5 rounded-[4px] border py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition ${
+            item.highlight ? "border-accent-line bg-accent-soft text-accent" : "border-transparent text-text-2 hover:text-text"
+          }`}
+        >
+          <Icon name={item.icon} className="size-4" />
+          {item.label}
+          {item.highlight && <span className="rounded-[3px] bg-accent px-1 text-[10px] font-bold leading-4 tracking-wider text-accent-ink">NOVO</span>}
+        </Link>
+      ))}
+      </nav>
     </header>
   );
 }
