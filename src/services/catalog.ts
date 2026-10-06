@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, isNotNull, isNull, like, lt, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, isNull, like, lt, or, sql } from "drizzle-orm";
 import { collectors, getCollector } from "@/collectors";
 import { getGogOfferById } from "@/collectors/gog";
 import { HttpError } from "@/collectors/http";
@@ -40,6 +40,24 @@ export async function recordPrice(listingId: number, price: OfferPrice | null) {
     })
     .where(eq(listings.id, listingId));
   return true;
+}
+
+/** A oferta já gravada é igual à que a ITAD trouxe agora (nada a regravar)? */
+function sameOffer(l: typeof listings.$inferSelect, o: StoreOffer, title: string): boolean {
+  return (
+    l.available &&
+    o.price != null &&
+    l.title === title &&
+    l.platform === o.platform &&
+    l.edition === (o.edition ?? "Padrão") &&
+    l.drm === o.drm &&
+    l.isKey === o.isKey &&
+    l.url === o.url &&
+    l.voucher === (o.voucher ?? null) &&
+    l.priceCents === o.price.priceCents &&
+    l.priceRegularCents === o.price.regularPriceCents &&
+    l.priceCurrency === o.price.currency
+  );
 }
 
 export async function saveOffer(gameId: number, offer: StoreOffer) {
@@ -364,13 +382,13 @@ export async function syncPreorders(): Promise<number> {
  * Busca na IsThereAnyDeal as ofertas das lojas sem coletor próprio (Epic, Nuuvem, GMG,
  * Microsoft Store) e o menor preço histórico. Sem `gameIds`, sincroniza o catálogo todo.
  */
-export async function syncItad({ gameIds, historyLimit }: { gameIds?: number[]; historyLimit?: number } = {}) {
+export async function syncItad({ gameIds: only, historyLimit, deadline }: { gameIds?: number[]; historyLimit?: number; deadline?: number } = {}) {
   if (!isItadConfigured()) return null;
 
   const rows = await db
-    .select({ id: games.id, title: games.title, steamAppId: games.steamAppId, itadId: games.itadId })
+    .select({ id: games.id, title: games.title, steamAppId: games.steamAppId, itadId: games.itadId, historyLowCents: games.historyLowCents })
     .from(games)
-    .where(gameIds ? inArray(games.id, gameIds) : undefined);
+    .where(only ? inArray(games.id, only) : undefined);
 
   // jogos novos: descobre o id da ITAD pelo appid da Steam (casamento exato, sem depender do título)
   const missing = rows.filter((r) => !r.itadId && r.steamAppId != null);
@@ -402,33 +420,56 @@ export async function syncItad({ gameIds, historyLimit }: { gameIds?: number[]; 
     ).map((r) => r.gameId),
   );
 
+  // O catálogo tem milhares de jogos e quase nada muda entre uma coleta e outra. Em vez de gravar tudo jogo a jogo
+  // (dezenas de milhares de consultas em sequência), lê o que já existe e só grava o que mudou.
+  const gameIds = [...byItadId.values()].map((g) => g.id);
+  const existing = new Map<string, typeof listings.$inferSelect>();
+  for (let i = 0; i < gameIds.length; i += 500) {
+    for (const l of await db
+      .select()
+      .from(listings)
+      .where(and(inArray(listings.gameId, gameIds.slice(i, i + 500)), like(listings.storeProductId, "itad:%")))) {
+      existing.set(`${l.store}|${l.storeProductId}`, l);
+    }
+  }
+  const previousLow = new Map(rows.map((r) => [r.id, r.historyLowCents]));
+
   const offers: StoreOffer[] = [];
+  const touched: number[] = [];
+  const gone: number[] = [];
   for (const prices of await fetchItadPrices([...byItadId.keys()])) {
     const game = byItadId.get(prices.itadId);
     if (!game) continue;
 
-    await db.update(games).set({ historyLowCents: prices.historyLowCents }).where(eq(games.id, game.id));
+    if (prices.historyLowCents !== previousLow.get(game.id)) {
+      await db.update(games).set({ historyLowCents: prices.historyLowCents }).where(eq(games.id, game.id));
+    }
     const kept = prices.offers.filter((o) => !(o.store === "msstore" && playAnywhere.has(game.id)));
     for (const offer of kept) {
-      await saveOffer(game.id, { ...offer, title: game.title });
+      const current = existing.get(`${offer.store}|${offer.storeProductId}`);
+      if (current && sameOffer(current, offer, game.title)) {
+        touched.push(current.id);
+      } else {
+        await saveOffer(game.id, { ...offer, title: game.title });
+      }
       offers.push(offer);
     }
 
     // lojas que pararam de vender o jogo saem da comparação (o histórico fica) — só ofertas vindas da ITAD
-    const seen = kept.map((o) => o.store);
-    await db
-      .update(listings)
-      .set({ available: false, updatedAt: new Date() })
-      .where(
-        and(
-          eq(listings.gameId, game.id),
-          inArray(listings.store, [...ITAD_STORES]),
-          like(listings.storeProductId, "itad:%"),
-          seen.length ? notInArray(listings.store, seen) : undefined,
-        ),
-      );
+    const seen = new Set<string>(kept.map((o) => o.store));
+    for (const l of existing.values()) {
+      if (l.gameId === game.id && l.available && !seen.has(l.store) && ITAD_STORES.has(l.store)) gone.push(l.id);
+    }
   }
-  await syncItadHistory({ gameIds: [...byItadId.values()].map((g) => g.id), limit: historyLimit });
+  // as ofertas que continuam iguais só ganham a data da última checagem, em lote
+  const now = new Date();
+  for (let i = 0; i < touched.length; i += 500) {
+    await db.update(listings).set({ lastCheckedAt: now, updatedAt: now }).where(inArray(listings.id, touched.slice(i, i + 500)));
+  }
+  for (let i = 0; i < gone.length; i += 500) {
+    await db.update(listings).set({ available: false, updatedAt: now }).where(inArray(listings.id, gone.slice(i, i + 500)));
+  }
+  await syncItadHistory({ gameIds, limit: historyLimit, deadline });
   return { games: byItadId.size, offers };
 }
 
@@ -559,7 +600,7 @@ const HISTORY_YEARS = 5;
  * Importa o histórico de preços da ITAD (uma chamada por jogo). Jogos sincronizados há
  * menos de `maxAgeHours` são pulados; os demais buscam só o que mudou desde a última vez.
  */
-export async function syncItadHistory({ gameIds, maxAgeHours = 24, limit }: { gameIds?: number[]; maxAgeHours?: number; limit?: number } = {}) {
+export async function syncItadHistory({ gameIds, maxAgeHours = 24, limit, deadline }: { gameIds?: number[]; maxAgeHours?: number; limit?: number; deadline?: number } = {}) {
   if (!isItadConfigured()) return 0;
   const cutoff = new Date(Date.now() - maxAgeHours * 3_600_000);
   const rows = await db
@@ -577,6 +618,8 @@ export async function syncItadHistory({ gameIds, maxAgeHours = 24, limit }: { ga
 
   let inserted = 0;
   for (const game of rows) {
+    // um jogo por vez, cada um uma chamada à ITAD: sem limite de tempo, a rodada inteira estourava os 300s da função
+    if (deadline != null && Date.now() > deadline) break;
     const since = game.historySyncedAt
       ? new Date(game.historySyncedAt.getTime() - 86_400_000) // 1 dia de folga
       : new Date(Date.now() - HISTORY_YEARS * 365 * 86_400_000);
@@ -592,6 +635,8 @@ export async function syncItadHistory({ gameIds, maxAgeHours = 24, limit }: { ga
       }
       await db.update(games).set({ historySyncedAt: new Date() }).where(eq(games.id, game.id));
     } catch (err) {
+      // a ITAD limitou as chamadas: insistir só gasta tempo; o resto fica para a próxima rodada
+      if (err instanceof HttpError && err.status === 429) break;
       console.warn(`[itad] falha no histórico do jogo ${game.id}:`, err);
     }
   }
@@ -658,7 +703,8 @@ export async function refreshPrices({
   if ((!store || ITAD_STORES.has(store)) && !over()) {
     const started = Date.now();
     try {
-      const itad = await syncItad({ historyLimit: maxHistory });
+      // o histórico (uma chamada por jogo) pode usar até 60s, e nunca passa do prazo da execução
+      const itad = await syncItad({ historyLimit: maxHistory, deadline: Math.min(deadline ?? Infinity, Date.now() + 60_000) });
       if (itad) summary.itad = { checked: itad.games, changed: itad.offers.length, ms: Date.now() - started };
     } catch (err) {
       summary.itad = { checked: 0, changed: 0, error: String(err), ms: Date.now() - started };
