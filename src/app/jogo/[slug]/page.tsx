@@ -361,7 +361,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             <p className="mt-3 text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <WishlistButton gameId={game.id} />
-              <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/opengraph-image`} filename={`dropou-${game.slug}.jpg`} />
+              <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/cartao`} filename={`dropou-${game.slug}.jpg`} />
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // API, importação sob demanda (um robô não deve disparar importações) e páginas sem valor para a busca
-      disallow: ["/api/", "/steam/", "/busca", "/minha-lista", "/aguarde"],
+      disallow: ["/api/", "/steam/", "/busca", "/minha-lista", "/aguarde", "/jogo/*/cartao"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
