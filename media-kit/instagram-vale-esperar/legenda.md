@@ -1,6 +1,6 @@
 # Post do Instagram: novidade "Vale esperar?" (@dropou.br)
 
-Carrossel de 6 slides (1080×1350, 4:5): `slide-1.png` a `slide-6.png`. Para gerar de novo: `DOTENV_CONFIG_PATH=.env.turso npx tsx scripts/instagram-vale-esperar.tsx` (os cartões dos slides 3 e 4 usam preços reais do banco; os jogos de exemplo ficam no topo do script).
+Carrossel de 4 slides (1080×1350, 4:5): `slide-1.png` a `slide-4.png`. Para gerar de novo: `DOTENV_CONFIG_PATH=.env.turso npx tsx scripts/instagram-vale-esperar.tsx` (os cartões dos slides 2 e 3 são réplicas do cartão do site, com preços reais do banco; os jogos de exemplo ficam no topo do script).
 
 Os números dos slides são de 7/10/2026. Se o post demorar para sair, gere de novo para atualizar preços e a contagem de dias até a Black Friday.
 
@@ -8,14 +8,14 @@ Os números dos slides são de 7/10/2026. Se o post demorar para sair, gere de n
 
 Novidade no Dropou: agora ele diz se vale esperar ou comprar agora 👀
 
-Nem todo desconto é um bom desconto. Em cada jogo, o site olha o histórico de preços dos últimos 12 meses e mostra:
-⏳ quando costuma ficar mais barato (e quanto você economizaria esperando)
+Em cada jogo, o site olha o histórico de preços dos últimos 12 meses e mostra:
+⏳ quando costuma ficar mais barato
 ✅ quando já está no menor preço ou perto dele
 📉 o preço histórico, a média do ano e quanto falta pra próxima grande promoção
 
-E muda conforme o que você joga: marque suas plataformas no site e o veredito considera só as lojas que importam pra você 🎮
+E muda conforme as plataformas que você marcar 🎮
 
-É uma estimativa pelo histórico, não uma garantia, mas ajuda a não comprar caro à toa. Testa com o seu próximo jogo e me conta o que achou 💚
+É uma estimativa pelo histórico, não uma garantia. Testa com o seu próximo jogo e me conta o que achou 💚
 
 Link na bio → dropou.com.br
 

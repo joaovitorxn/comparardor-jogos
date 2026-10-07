@@ -14,11 +14,11 @@ import { getStore } from "../src/lib/stores";
 import type { Verdict } from "../src/lib/verdict";
 import { buildVerdictViews } from "../src/lib/verdict-variants";
 
-const C = { bg: "#0b0d12", surface: "#12151c", surface2: "#181c25", line: "#242a36", text: "#e8eaef", text2: "#a5acba", muted: "#727b8c", accent: "#b6f03c", warn: "#f5b83d", ink: "#0b0d12" };
+const C = { bg: "#0b0d12", surface: "#12151c", line: "#242a36", text: "#e8eaef", text2: "#a5acba", muted: "#727b8c", accent: "#b6f03c", warn: "#f5b83d", ink: "#0b0d12" };
 const W = 1080;
 const H = 1350;
 const OUT = "media-kit/instagram-vale-esperar";
-const TOTAL = 6;
+const TOTAL = 4;
 
 // jogos de exemplo: um em que vale esperar e um em que é bom comprar (os vereditos vêm do banco, na hora)
 const WAIT_SLUG = "age-of-empires-ii-definitive-edition";
@@ -68,6 +68,14 @@ const Sub = ({ children, size = 46 }: { children: ReactNode; size?: number }) =>
   <div style={{ display: "flex", marginTop: 36, fontSize: size, lineHeight: 1.15, color: C.text2 }}>{children}</div>
 );
 
+/** Título de uma linha com um trecho em destaque. */
+const Head = ({ before, lime, size = 88 }: { before: string; lime: string; size?: number }) => (
+  <div style={{ display: "flex", fontSize: size, lineHeight: 0.94, textTransform: "uppercase", letterSpacing: 1 }}>
+    <span style={{ color: C.text }}>{before}</span>
+    <span style={{ color: C.accent, marginLeft: size * 0.22 }}>{lime}</span>
+  </div>
+);
+
 /** Ícones do site (mesmos traços de src/components/icon.tsx). */
 const ICONS = {
   hourglass: ["M6 3h12", "M6 21h12", "M7 3v3a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v3", "M17 3v3a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v3"],
@@ -77,7 +85,7 @@ const ICONS = {
   calendar: ["M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M4 10h16", "M8 3v4", "M16 3v4"],
   clock: ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z", "M12 7v5l3 3"],
 } as const;
-const Ico = ({ name, size = 36, color = C.muted }: { name: keyof typeof ICONS; size?: number; color?: string }) => (
+const Ico = ({ name, size, color = C.muted }: { name: keyof typeof ICONS; size: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
     {ICONS[name].map((d) => (
       <path key={d} d={d} />
@@ -107,76 +115,83 @@ async function load(slug: string): Promise<Example> {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+/** As mesmas frases do cartão do site (src/components/buy-verdict.tsx). */
 function notesOf(v: Verdict): { icon: keyof typeof ICONS; text: string }[] {
   const notes: { icon: keyof typeof ICONS; text: string }[] = [];
   if (v.kind === "wait") notes.push({ icon: "floor", text: `No último ano já custou ${formatCents(v.lowCents)}, ${formatCents(v.currentCents - v.lowCents)} a menos que hoje.` });
-  if (v.kind === "wait" && v.nearLowCount > 0) notes.push({ icon: "chart", text: `Chegou perto desse preço ${plural(v.nearLowCount, "vez", "vezes")} em 12 meses.` });
+  if (v.kind === "wait" && v.nearLowCount > 0) notes.push({ icon: "chart", text: `Chegou perto desse preço ${plural(v.nearLowCount, "vez", "vezes")} nos últimos 12 meses.` });
   if (v.kind === "buy") {
     if (v.daysAtCurrent != null) notes.push({ icon: "clock", text: v.daysAtCurrent < 1 ? "Esse preço começou hoje." : `Esse preço está valendo há ${plural(v.daysAtCurrent, "dia", "dias")}.` });
-    if (v.nearLowCount > 1) notes.push({ icon: "chart", text: `Já chegou perto dele ${plural(v.nearLowCount, "vez", "vezes")} em 12 meses.` });
+    if (v.nearLowCount > 1) notes.push({ icon: "chart", text: `Já chegou perto dele ${plural(v.nearLowCount, "vez", "vezes")} nos últimos 12 meses.` });
   }
-  if (v.sale) notes.push({ icon: "calendar", text: `${v.sale.name}: ${v.sale.approx ? "por volta de " : ""}em ${v.sale.days} dias.` });
+  if (v.sale) {
+    const when = v.sale.days === 0 ? "começa hoje" : v.sale.days === 1 ? "começa amanhã" : `${v.sale.approx ? "por volta de " : ""}em ${v.sale.days} dias`;
+    notes.push({ icon: "calendar", text: `${v.sale.name}: ${when}. Costuma ter descontos maiores.` });
+  }
   return notes;
 }
 
-/** Réplica do cartão "Vale esperar?" do site, com os dados reais do exemplo. */
+/**
+ * Réplica do cartão "Vale esperar?" da página do jogo (src/components/buy-verdict.tsx), com os dados reais do exemplo.
+ * Todas as medidas são as do site (em px) multiplicadas por S, para o cartão ficar legível no celular.
+ */
+const S = 2.0;
+const px = (n: number) => n * S;
+const SANS = "Geist";
+
 function VerdictCard({ ex }: { ex: Example }) {
   const v = ex.verdict;
   const wait = v.kind === "wait";
   const tone = wait ? C.warn : C.accent;
-  const rows: [string, string, string?][] = [];
-  if (ex.historic) rows.push(["Preço histórico", formatCents(ex.historic.cents), [ex.historic.when, ex.historic.store].filter(Boolean).join(" · ")]);
-  if (!ex.historic || ex.historic.cents !== v.lowCents) rows.push(["Menor em 12 meses", formatCents(v.lowCents)]);
-  rows.push(["Média em 12 meses", formatCents(v.avgCents)]);
+  const rows: { label: string; value: string; hint?: string; icon?: keyof typeof ICONS }[] = [];
+  if (ex.historic) rows.push({ label: "Preço histórico", value: formatCents(ex.historic.cents), hint: [ex.historic.when, ex.historic.store].filter(Boolean).join(" · "), icon: "floor" });
+  if (!ex.historic || ex.historic.cents !== v.lowCents) rows.push({ label: "Menor em 12 meses", value: formatCents(v.lowCents) });
+  rows.push({ label: "Média em 12 meses", value: formatCents(v.avgCents) });
+  const notes = notesOf(v);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", border: `2px solid ${C.line}`, borderRadius: 22, background: C.surface, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "22px 34px", borderBottom: `2px solid ${C.line}`, fontSize: 30, letterSpacing: 5, textTransform: "uppercase", color: C.text2 }}>
-        <Ico name={wait ? "hourglass" : "check"} size={34} color={tone} />
+    <div style={{ display: "flex", flexDirection: "column", width: 920, border: `${px(1)}px solid ${C.line}`, borderRadius: px(6), background: C.surface, overflow: "hidden" }}>
+      {/* título: h2 em caixa alta com ícone */}
+      <div style={{ display: "flex", alignItems: "center", gap: px(8), padding: `${px(12)}px ${px(20)}px`, borderBottom: `${px(1)}px solid ${C.line}`, fontFamily: "Barlow", fontSize: px(14), letterSpacing: px(2.1), textTransform: "uppercase", color: C.text2 }}>
+        <Ico name={wait ? "hourglass" : "check"} size={px(16)} color={tone} />
         Vale esperar?
       </div>
-      <div style={{ display: "flex", flexDirection: "column", padding: "28px 34px 12px" }}>
-        <div style={{ display: "flex", alignSelf: "flex-start", fontSize: 26, letterSpacing: 3, textTransform: "uppercase", color: tone, border: `2px solid ${wait ? "rgba(245,184,61,0.45)" : "rgba(182,240,60,0.4)"}`, background: wait ? "rgba(245,184,61,0.10)" : "rgba(182,240,60,0.08)", borderRadius: 6, padding: "2px 12px" }}>
+      {/* selo + título do veredito */}
+      <div style={{ display: "flex", flexDirection: "column", gap: px(8), padding: `${px(16)}px ${px(20)}px` }}>
+        <div style={{ display: "flex", alignSelf: "flex-start", fontFamily: SANS, fontSize: px(11), lineHeight: `${px(16)}px`, letterSpacing: px(0.55), textTransform: "uppercase", color: tone, border: `${px(1)}px solid ${wait ? "rgba(245,184,61,0.4)" : "rgba(182,240,60,0.35)"}`, background: wait ? "rgba(245,184,61,0.1)" : "rgba(182,240,60,0.08)", borderRadius: px(3), padding: `${px(1)}px ${px(6)}px` }}>
           {wait ? "Vale esperar" : "Bom momento"}
         </div>
-        <div style={{ display: "flex", marginTop: 16, fontSize: 68, lineHeight: 1, textTransform: "uppercase" }}>{v.title}</div>
-        <div style={{ display: "flex", marginTop: 14, fontSize: 32, color: C.muted }}>{`${ex.title} · hoje ${formatCents(v.currentCents)}`}</div>
+        <div style={{ display: "flex", fontFamily: "Barlow", fontSize: px(24), lineHeight: 1.25, color: C.text }}>{v.title}</div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "10px 34px 26px" }}>
-        {notesOf(v).map((n) => (
-          <div key={n.text} style={{ display: "flex", alignItems: "flex-start", gap: 16, fontSize: 34, lineHeight: 1.1, color: C.text2 }}>
-            <div style={{ display: "flex", marginTop: 2 }}>
-              <Ico name={n.icon} size={34} />
+      {/* notas com ícone */}
+      {notes.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: px(8), padding: `0 ${px(20)}px ${px(16)}px` }}>
+          {notes.map((n) => (
+            <div key={n.text} style={{ display: "flex", alignItems: "flex-start", gap: px(10), fontFamily: SANS, fontSize: px(14), lineHeight: `${px(20)}px`, color: C.text2 }}>
+              <div style={{ display: "flex", marginTop: px(2) }}>
+                <Ico name={n.icon} size={px(16)} />
+              </div>
+              <div style={{ display: "flex", flex: 1 }}>{n.text}</div>
             </div>
-            <div style={{ display: "flex", flex: 1 }}>{n.text}</div>
+          ))}
+        </div>
+      )}
+      {/* preço histórico, menor e média */}
+      {rows.map((r) => (
+        <div key={r.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: px(12), padding: `${px(10)}px ${px(20)}px`, borderTop: `${px(1)}px solid ${C.line}`, fontFamily: SANS, fontSize: px(14) }}>
+          <div style={{ display: "flex", alignItems: "center", gap: px(6), color: C.muted }}>
+            {r.icon && <Ico name={r.icon} size={px(16)} />}
+            {r.label}
           </div>
-        ))}
-      </div>
-      {rows.map(([label, value, hint]) => (
-        <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 34px", borderTop: `2px solid ${C.line}` }}>
-          <div style={{ display: "flex", fontSize: 32, color: C.muted }}>{label}</div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <div style={{ display: "flex", fontSize: 40, color: C.text }}>{value}</div>
-            {hint && <div style={{ display: "flex", fontSize: 24, color: C.muted }}>{hint}</div>}
+            <div style={{ display: "flex", fontFamily: "Barlow", fontSize: px(17), color: C.text }}>{r.value}</div>
+            {r.hint && <div style={{ display: "flex", fontSize: px(12), color: C.muted }}>{r.hint}</div>}
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-/** Seletor de plataformas do cabeçalho, com uma marcada, para o slide "muda conforme o que você joga". */
-function PlatformChips({ active }: { active: string }) {
-  const items = ["PC", "PlayStation", "Xbox", "Nintendo"];
-  return (
-    <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-      {items.map((p) => {
-        const on = p === active;
-        return (
-          <div key={p} style={{ display: "flex", fontSize: 42, letterSpacing: 2, textTransform: "uppercase", padding: "12px 30px", borderRadius: 12, border: `2px solid ${on ? C.accent : C.line}`, background: on ? C.accent : C.surface, color: on ? C.ink : C.text2 }}>
-            {p}
-          </div>
-        );
-      })}
+      <div style={{ display: "flex", padding: `${px(8)}px ${px(20)}px`, borderTop: `${px(1)}px solid ${C.line}`, fontFamily: SANS, fontSize: px(11), color: C.muted }}>
+        Estimativa pelo histórico de preços. Não é garantia de que o preço vai cair.
+      </div>
     </div>
   );
 }
@@ -195,40 +210,25 @@ const buildSlides = (wait: Example, buy: Example): ReactNode[] => [
   </Frame>,
 
   <Frame key="2" n={2}>
-    <Big size={118} lines={[["Todo desconto"], ["é um bom"], ["desconto?", true]]} />
-    <Sub size={50}>Nem sempre. Tem jogo que já ficou muito mais barato, e tem jogo que está no menor preço agora.</Sub>
-    <Sub size={50}>Saber a diferença pode te poupar vários reais.</Sub>
-  </Frame>,
-
-  <Frame key="3" n={3}>
-    <Big size={92} lines={[["Quando vale"], ["esperar", true]]} />
-    <div style={{ display: "flex", flexDirection: "column", marginTop: 34 }}>
+    <Head before="Quando vale" lime="esperar" />
+    <div style={{ display: "flex", marginTop: 40 }}>
       <VerdictCard ex={wait} />
     </div>
   </Frame>,
 
-  <Frame key="4" n={4}>
-    <Big size={92} lines={[["Quando é bom"], ["comprar", true]]} />
-    <div style={{ display: "flex", flexDirection: "column", marginTop: 34 }}>
+  <Frame key="3" n={3}>
+    <Head before="Quando é bom" lime="comprar" />
+    <div style={{ display: "flex", marginTop: 40 }}>
       <VerdictCard ex={buy} />
     </div>
   </Frame>,
 
-  <Frame key="5" n={5}>
-    <Big size={112} lines={[["Muda conforme"], ["o que você joga", true]]} />
-    <div style={{ display: "flex", marginTop: 56 }}>
-      <PlatformChips active="PlayStation" />
-    </div>
-    <Sub size={48}>Marque suas plataformas no site e o veredito considera só as lojas que importam pra você.</Sub>
-    <Sub size={36}>Baseado no histórico de preços dos últimos 12 meses. É uma estimativa, não uma garantia.</Sub>
-  </Frame>,
-
-  <Frame key="6" n={6} footer={false}>
+  <Frame key="4" n={4} footer={false}>
     <Lockup size={110} />
     <div style={{ display: "flex", marginTop: 64 }}>
-      <Big size={140} lines={[["Teste agora."], ["É de graça.", true]]} />
+      <Big size={130} lines={[["Teste no seu"], ["próximo jogo", true]]} />
     </div>
-    <Sub size={44}>Abra um jogo no site e veja se vale esperar.</Sub>
+    <Sub size={44}>Grátis, sem cadastro, e muda conforme as plataformas que você marcar.</Sub>
     <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 70 }}>
       <div style={{ display: "flex", fontSize: 70, background: C.accent, color: C.ink, borderRadius: 14, padding: "10px 34px", letterSpacing: 1 }}>{BRAND.domain}</div>
       <div style={{ display: "flex", fontSize: 32, letterSpacing: 3, textTransform: "uppercase", border: `2px solid ${C.accent}`, color: C.accent, borderRadius: 10, padding: "4px 16px" }}>beta</div>
@@ -240,9 +240,18 @@ async function main() {
   const [wait, buy] = await Promise.all([load(WAIT_SLUG), load(BUY_SLUG)]);
   console.log("exemplos:", wait.title, wait.verdict.kind, "|", buy.title, buy.verdict.kind);
   const barlow = await readFile("src/assets/BarlowCondensed-Bold.ttf");
+  // o site usa Inter no texto corrido; o Geist (já incluído no Next) é o mais parecido que temos em arquivo
+  const geist = await readFile("node_modules/next/dist/compiled/@vercel/og/Geist-Regular.ttf");
   await mkdir(OUT, { recursive: true });
   for (const [i, slide] of buildSlides(wait, buy).entries()) {
-    const res = new ImageResponse(slide as React.ReactElement, { width: W, height: H, fonts: [{ name: "Barlow", data: barlow, weight: 700, style: "normal" }] });
+    const res = new ImageResponse(slide as React.ReactElement, {
+      width: W,
+      height: H,
+      fonts: [
+        { name: "Barlow", data: barlow, weight: 700, style: "normal" },
+        { name: "Geist", data: geist, weight: 400, style: "normal" },
+      ],
+    });
     await writeFile(`${OUT}/slide-${i + 1}.png`, Buffer.from(await res.arrayBuffer()));
     console.log("✓ slide", i + 1);
   }
