@@ -12,15 +12,14 @@ export const metadata: Metadata = {
 };
 
 const storeButton =
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[4px] border border-line-strong bg-surface-2 px-2 py-1.5 text-xs font-medium text-text transition hover:border-accent hover:text-accent";
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[4px] border border-line-strong bg-surface-2 px-3 py-2 text-xs font-medium text-text transition hover:border-accent hover:text-accent";
 
 /** Botão de uma loja, com a logo dela em uma cor só (a do texto). */
 function StoreButton({ store, href, product }: { store: "mercadolivre" | "amazon"; href: string; product: string }) {
   return (
     <a href={href} data-track="setup" data-store={store} data-target={product} target="_blank" rel="noopener noreferrer sponsored" className={storeButton}>
-      {store === "amazon" ? <AmazonIcon className="size-4 shrink-0" /> : <MercadoLivreIcon className="size-[18px] shrink-0" />}
+      {store === "amazon" ? <AmazonIcon className="size-4 shrink-0" /> : <MercadoLivreIcon className="size-4 shrink-0" />}
       {store === "amazon" ? "Amazon" : "Mercado Livre"}
-      <span aria-hidden>↗</span>
     </a>
   );
 }
@@ -37,8 +36,8 @@ function ProductPhoto({ product, fallback }: { product: SetupProduct; fallback: 
   }
   const large = image.replace(/-O\.webp$/, "-F.webp");
   return (
-    // fundo branco: as fotos dos anúncios são sobre branco
-    <div className="flex aspect-[4/3] items-center justify-center bg-white p-3">
+    // moldura de proporção fixa (4:3) e fundo branco: as fotos dos anúncios têm formatos e tamanhos diferentes
+    <div className="relative aspect-[4/3] overflow-hidden bg-white">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image}
@@ -47,7 +46,7 @@ function ProductPhoto({ product, fallback }: { product: SetupProduct; fallback: 
         alt={product.name}
         loading="lazy"
         decoding="async"
-        className="size-full object-contain"
+        className="absolute inset-0 size-full object-contain p-3"
       />
     </div>
   );
@@ -60,7 +59,7 @@ function ProductCard({ product, fallback }: { product: SetupProduct; fallback: I
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h3 className="font-medium leading-snug">{product.name}</h3>
         <p className="flex-1 text-sm leading-relaxed text-text-2">{product.why}</p>
-        <div className="mt-1 grid grid-cols-2 gap-2">
+        <div className="mt-1 grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
           {product.mercadoLivre && <StoreButton store="mercadolivre" href={product.mercadoLivre} product={product.name} />}
           {product.amazon && <StoreButton store="amazon" href={product.amazon} product={product.name} />}
         </div>
