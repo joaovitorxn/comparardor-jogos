@@ -29,6 +29,9 @@
 
   /* raridade do desconto, como nos jogos: azul, roxo, dourado, vermelho */
   --danger: #f2706b;
+  --warn: #f5b83d;
+  --warn-soft: rgb(245 184 61 / 0.1);
+  --warn-line: rgb(245 184 61 / 0.4);
 
   /* série do gráfico por loja — paleta categórica validada (CVD + contraste) no --surface */
   --series-steam: #3987e5;
@@ -78,6 +81,9 @@
   --color-coupon: var(--coupon);
   --color-coupon-soft: var(--coupon-soft);
   --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-line: var(--warn-line);
 
   --font-sans: var(--font-inter);
   --font-display: var(--font-barlow);

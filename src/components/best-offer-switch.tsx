@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Icon } from "@/components/icon";
 import { serializePlatforms } from "@/lib/platform-selection";
 import { usePlatforms } from "@/lib/use-platforms";
 
@@ -22,8 +23,9 @@ export function BestOfferSwitch({ choices, options }: { choices: Record<string, 
   return (
     <>
       {choice.fallback && (
-        <p className="border-b border-line bg-surface-2 px-5 py-2 text-xs leading-snug text-text-2">
-          Este jogo não está à venda nas plataformas que você escolheu. Mostrando a melhor oferta entre todas.
+        <p role="status" className="flex items-start gap-2.5 border-b border-warn-line bg-warn-soft px-5 py-3 text-xs leading-snug text-text">
+          <Icon name="alert" className="mt-px size-4 shrink-0 text-warn" />
+          <span>Este jogo não está à venda nas plataformas que você escolheu. Mostrando a melhor oferta entre todas.</span>
         </p>
       )}
       {options[choice.offerId]}
