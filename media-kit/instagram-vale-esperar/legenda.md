@@ -1,12 +1,12 @@
 # Post do Instagram: novidade "Vale esperar?" (@dropou.br)
 
-Carrossel de 4 slides (1080×1350, 4:5): `slide-1.png` a `slide-4.png`. Para gerar de novo: `DOTENV_CONFIG_PATH=.env.turso npx tsx scripts/instagram-vale-esperar.tsx` (os cartões dos slides 2 e 3 são réplicas do cartão do site, com preços reais do banco; os jogos de exemplo ficam no topo do script).
+Carrossel de 3 slides (1080×1350, 4:5): `slide-1.png` a `slide-3.png`. Para gerar de novo: `DOTENV_CONFIG_PATH=.env.turso npx tsx scripts/instagram-vale-esperar.tsx` (o slide 2 traz duas réplicas do cartão do site, com preços reais do banco; os jogos de exemplo ficam no topo do script).
 
 Os números dos slides são de 7/10/2026. Se o post demorar para sair, gere de novo para atualizar preços e a contagem de dias até a Black Friday.
 
 ## Legenda
 
-Novidade no Dropou: agora ele diz se vale esperar ou comprar agora 👀
+Nova funcionalidade no Dropou: agora ele diz se vale esperar ou comprar agora 👀
 
 Em cada jogo, o site olha o histórico de preços dos últimos 12 meses e mostra:
 ⏳ quando costuma ficar mais barato
@@ -15,7 +15,7 @@ Em cada jogo, o site olha o histórico de preços dos últimos 12 meses e mostra
 
 E muda conforme as plataformas que você marcar 🎮
 
-É uma estimativa pelo histórico, não uma garantia. Testa com o seu próximo jogo e me conta o que achou 💚
+É uma estimativa pelo histórico, não uma garantia. Entra no site, abre o seu próximo jogo e testa a nova funcionalidade. Me conta o que achou 💚
 
 Link na bio → dropou.com.br
 

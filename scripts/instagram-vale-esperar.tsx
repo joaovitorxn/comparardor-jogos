@@ -18,7 +18,7 @@ const C = { bg: "#0b0d12", surface: "#12151c", line: "#242a36", text: "#e8eaef",
 const W = 1080;
 const H = 1350;
 const OUT = "media-kit/instagram-vale-esperar";
-const TOTAL = 4;
+const TOTAL = 3;
 
 // jogos de exemplo: um em que vale esperar e um em que é bom comprar (os vereditos vêm do banco, na hora)
 const WAIT_SLUG = "age-of-empires-ii-definitive-edition";
@@ -136,18 +136,18 @@ function notesOf(v: Verdict): { icon: keyof typeof ICONS; text: string }[] {
  * Todas as medidas são as do site (em px) multiplicadas por S, para o cartão ficar legível no celular.
  */
 const S = 2.0;
-const px = (n: number) => n * S;
 const SANS = "Geist";
 
-function VerdictCard({ ex }: { ex: Example }) {
+function VerdictCard({ ex, s = S, compact = false }: { ex: Example; s?: number; compact?: boolean }) {
   const v = ex.verdict;
   const wait = v.kind === "wait";
   const tone = wait ? C.warn : C.accent;
   const rows: { label: string; value: string; hint?: string; icon?: keyof typeof ICONS }[] = [];
   if (ex.historic) rows.push({ label: "Preço histórico", value: formatCents(ex.historic.cents), hint: [ex.historic.when, ex.historic.store].filter(Boolean).join(" · "), icon: "floor" });
-  if (!ex.historic || ex.historic.cents !== v.lowCents) rows.push({ label: "Menor em 12 meses", value: formatCents(v.lowCents) });
+  if (!compact && (!ex.historic || ex.historic.cents !== v.lowCents)) rows.push({ label: "Menor em 12 meses", value: formatCents(v.lowCents) });
   rows.push({ label: "Média em 12 meses", value: formatCents(v.avgCents) });
   const notes = notesOf(v);
+  const px = (n: number) => n * s;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: 920, border: `${px(1)}px solid ${C.line}`, borderRadius: px(6), background: C.surface, overflow: "hidden" }}>
@@ -189,9 +189,11 @@ function VerdictCard({ ex }: { ex: Example }) {
           </div>
         </div>
       ))}
-      <div style={{ display: "flex", padding: `${px(8)}px ${px(20)}px`, borderTop: `${px(1)}px solid ${C.line}`, fontFamily: SANS, fontSize: px(11), color: C.muted }}>
-        Estimativa pelo histórico de preços. Não é garantia de que o preço vai cair.
-      </div>
+      {!compact && (
+        <div style={{ display: "flex", padding: `${px(8)}px ${px(20)}px`, borderTop: `${px(1)}px solid ${C.line}`, fontFamily: SANS, fontSize: px(11), color: C.muted }}>
+          Estimativa pelo histórico de preços. Não é garantia de que o preço vai cair.
+        </div>
+      )}
     </div>
   );
 }
@@ -199,42 +201,48 @@ function VerdictCard({ ex }: { ex: Example }) {
 const buildSlides = (wait: Example, buy: Example): ReactNode[] => [
   <Frame key="1" n={1} footer={false}>
     <Lockup size={130} />
-    <div style={{ display: "flex", marginTop: 40, alignSelf: "flex-start", fontSize: 36, letterSpacing: 5, textTransform: "uppercase", color: C.ink, background: C.accent, borderRadius: 8, padding: "4px 18px" }}>Novidade</div>
+    <div style={{ display: "flex", marginTop: 40, alignSelf: "flex-start", fontSize: 36, letterSpacing: 5, textTransform: "uppercase", color: C.ink, background: C.accent, borderRadius: 8, padding: "4px 18px" }}>Nova funcionalidade</div>
     <div style={{ display: "flex", marginTop: 34 }}>
       <Big size={150} lines={[["Vale esperar"], ["ou comprar", true], ["agora?"]]} />
     </div>
     <Sub>O Dropou agora responde isso pra você.</Sub>
     <div style={{ display: "flex", marginTop: 70, alignItems: "center", gap: 18, fontSize: 40, color: C.accent, letterSpacing: 3, textTransform: "uppercase" }}>
-      Arrasta pro lado <span style={{ fontSize: 54 }}>→</span>
+      Arrasta pro lado pra entender <span style={{ fontSize: 54 }}>→</span>
     </div>
   </Frame>,
 
   <Frame key="2" n={2}>
-    <Head before="Quando vale" lime="esperar" />
-    <div style={{ display: "flex", marginTop: 40 }}>
-      <VerdictCard ex={wait} />
+    <Head before="Veja na" lime="prática" size={84} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 28, marginTop: 34 }}>
+      <VerdictCard ex={wait} s={1.5} compact />
+      <VerdictCard ex={buy} s={1.5} compact />
     </div>
   </Frame>,
 
-  <Frame key="3" n={3}>
-    <Head before="Quando é bom" lime="comprar" />
-    <div style={{ display: "flex", marginTop: 40 }}>
-      <VerdictCard ex={buy} />
-    </div>
-  </Frame>,
-
-  <Frame key="4" n={4} footer={false}>
+  <Frame key="3" n={3} footer={false}>
     <Lockup size={110} />
     <div style={{ display: "flex", marginTop: 64 }}>
-      <Big size={130} lines={[["Teste no seu"], ["próximo jogo", true]]} />
+      <Big size={130} lines={[["Descubra agora"], ["se vale esperar", true]]} />
     </div>
-    <Sub size={44}>Grátis, sem cadastro, e muda conforme as plataformas que você marcar.</Sub>
+    <Sub size={44}>Entra no site, abre o seu próximo jogo e testa a nova funcionalidade. É grátis e sem cadastro.</Sub>
     <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 70 }}>
       <div style={{ display: "flex", fontSize: 70, background: C.accent, color: C.ink, borderRadius: 14, padding: "10px 34px", letterSpacing: 1 }}>{BRAND.domain}</div>
       <div style={{ display: "flex", fontSize: 32, letterSpacing: 3, textTransform: "uppercase", border: `2px solid ${C.accent}`, color: C.accent, borderRadius: 10, padding: "4px 16px" }}>beta</div>
     </div>
   </Frame>,
 ];
+
+/** No Windows o arquivo pode ficar preso por um instante (antivírus, visualizador): tenta de novo. */
+async function save(path: string, data: Buffer) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await writeFile(path, data);
+    } catch (err) {
+      if (attempt >= 6) throw err;
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+    }
+  }
+}
 
 async function main() {
   const [wait, buy] = await Promise.all([load(WAIT_SLUG), load(BUY_SLUG)]);
@@ -252,7 +260,7 @@ async function main() {
         { name: "Geist", data: geist, weight: 400, style: "normal" },
       ],
     });
-    await writeFile(`${OUT}/slide-${i + 1}.png`, Buffer.from(await res.arrayBuffer()));
+    await save(`${OUT}/slide-${i + 1}.png`, Buffer.from(await res.arrayBuffer()));
     console.log("✓ slide", i + 1);
   }
   process.exit(0);
