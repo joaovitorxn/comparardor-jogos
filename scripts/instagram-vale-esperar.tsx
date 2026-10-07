@@ -236,7 +236,7 @@ const buildSlides = (wait: Example, buy: Example): ReactNode[] => [
     <div style={{ display: "flex", marginTop: 64 }}>
       <Big size={130} lines={[["Descubra agora"], ["se vale esperar", true]]} />
     </div>
-    <Sub size={52}>Abre um jogo e vê o veredito na hora.</Sub>
+    <Sub size={52}>Teste no seu próximo jogo</Sub>
     <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 70 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 22, fontSize: 70, background: C.accent, color: C.ink, borderRadius: 14, padding: "10px 34px", letterSpacing: 1 }}>
         {BRAND.domain}
