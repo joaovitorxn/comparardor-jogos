@@ -6,7 +6,7 @@ import { fetchPsConcept, psOffer } from "@/collectors/psstore";
 import { fetchXboxProducts } from "@/collectors/xbox";
 import { fetchConsoleExclusives, fetchIgdbDetails, igdbImageUrl, isIgdbConfigured, lookupIgdbIds, type IgdbExclusive } from "@/collectors/igdb";
 import { fetchItadHistory, fetchItadPrices, isItadConfigured, ITAD_STORES, lookupItadIds } from "@/collectors/itad";
-import { fetchPreorderDealAppIds, getSteamGameDetails } from "@/collectors/steam";
+import { fetchDeckStatus, fetchPreorderDealAppIds, getSteamGameDetails } from "@/collectors/steam";
 import type { OfferPrice, StoreOffer } from "@/collectors/types";
 import { db } from "@/db";
 import { gameMedia, games, listings, priceHistory, priceSnapshots, skippedGames, type Game } from "@/db/schema";
@@ -759,4 +759,34 @@ export async function refreshPrices({
   }
 
   return summary;
+}
+
+/**
+ * Atualiza o status do Steam Deck dos jogos da Steam: primeiro os nunca consultados, depois os consultados há mais
+ * de 30 dias (a Valve vai verificando jogos novos). Poucos por rodada e devagar, para não sobrecarregar a loja.
+ */
+export async function syncDeckStatus({ limit = 60, deadline }: { limit?: number; deadline?: number } = {}) {
+  const cutoff = new Date(Date.now() - 30 * 86_400_000);
+  const rows = await db
+    .select({ id: games.id, steamAppId: games.steamAppId })
+    .from(games)
+    .where(and(isNotNull(games.steamAppId), or(isNull(games.deckCheckedAt), lt(games.deckCheckedAt, cutoff))))
+    .orderBy(asc(games.deckCheckedAt))
+    .limit(limit);
+  let checked = 0;
+  for (const g of rows) {
+    if (deadline != null && Date.now() > deadline) break;
+    try {
+      const status = await fetchDeckStatus(g.steamAppId!);
+      if (status != null) {
+        await db.update(games).set({ deckStatus: status, deckCheckedAt: new Date() }).where(eq(games.id, g.id));
+        checked++;
+      }
+    } catch (err) {
+      // bloqueio da loja: para a rodada e tenta de novo na próxima
+      if (err instanceof HttpError && (err.status === 403 || err.status === 429)) break;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return checked;
 }

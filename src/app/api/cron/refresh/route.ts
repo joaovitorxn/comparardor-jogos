@@ -3,7 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { after, type NextRequest } from "next/server";
 import { DEAL_POOL_TAG } from "@/db/queries";
 import { checkPriceAlerts } from "@/services/alerts";
-import { refreshPrices, syncExclusives, syncPreorders } from "@/services/catalog";
+import { refreshPrices, syncDeckStatus, syncExclusives, syncPreorders } from "@/services/catalog";
 
 // atualizar o catálogo inteiro pode levar alguns minutos
 export const maxDuration = 300;
@@ -31,6 +31,8 @@ async function run() {
   const preorders = budget(215) ? await syncPreorders().catch(() => -1) : null;
   // exclusivos de PlayStation e Nintendo entram aos poucos (poucos por execução)
   const exclusives = budget(240) ? await syncExclusives({ limit: 6 }).catch(() => null) : null;
+  // status do Steam Deck dos jogos (poucos por rodada, só se sobrar tempo)
+  const deck = budget(235) ? await syncDeckStatus({ limit: 40, deadline: startedAt + 255_000 }).catch(() => -1) : null;
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
   // preços novos: descarta o cache da home e de todas as páginas de jogo
@@ -39,7 +41,7 @@ async function run() {
   revalidateTag(DEAL_POOL_TAG, "max");
   revalidatePath("/jogo/[slug]", "page");
 
-  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, alerts };
+  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, deck, alerts };
 }
 
 /**

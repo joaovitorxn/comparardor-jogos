@@ -302,3 +302,15 @@ export const steamCollector: StoreCollector = {
     return result;
   },
 };
+
+/**
+ * Compatibilidade com o Steam Deck, segundo a Valve (a mesma consulta que a loja usa): 3 = Verificado,
+ * 2 = Jogável, 1 = Não suportado, 0 = ainda sem análise. Devolve null se a consulta falhar.
+ */
+export async function fetchDeckStatus(appId: number): Promise<number | null> {
+  const res = await fetchJson<{ success?: number; results?: { resolved_category?: number } }>(
+    `https://store.steampowered.com/saleaction/ajaxgetdeckappcompatibilityreport?nAppID=${appId}`,
+  );
+  const category = res.results?.resolved_category;
+  return res.success === 1 && typeof category === "number" && category >= 0 && category <= 3 ? category : null;
+}

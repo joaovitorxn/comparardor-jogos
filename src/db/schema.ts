@@ -78,6 +78,9 @@ export const games = sqliteTable(
     requirements: text("requirements", { mode: "json" }).$type<PcRequirements | null>(),
     // --- IGDB ---
     igdbSyncedAt: integer("igdb_synced_at", { mode: "timestamp" }),
+    /** Steam Deck, segundo a Valve: 3 = Verificado, 2 = Jogável, 1 = Não suportado, 0 = ainda sem análise. Null = não consultado. */
+    deckStatus: integer("deck_status"),
+    deckCheckedAt: integer("deck_checked_at", { mode: "timestamp" }),
     platforms: text("platforms", { mode: "json" }).$type<string[]>().notNull().default([]),
     gameModes: text("game_modes", { mode: "json" }).$type<string[]>().notNull().default([]),
     themes: text("themes", { mode: "json" }).$type<string[]>().notNull().default([]),

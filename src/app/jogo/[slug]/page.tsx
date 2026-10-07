@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
+import { DeckBadge } from "@/components/deck-badge";
 import { Icon } from "@/components/icon";
 import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
 import { JsonLd } from "@/components/json-ld";
@@ -365,6 +366,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           </div>
           <div className="min-w-0 pb-1">
             <div className="mb-3 flex flex-wrap gap-1.5">
+              <DeckBadge status={game.deckStatus} />
               {game.genres.slice(0, 4).map((g) => (
                 <Tag key={g}>{g}</Tag>
               ))}
