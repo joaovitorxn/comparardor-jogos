@@ -95,6 +95,8 @@ const Ico = ({ name, size, color = C.muted }: { name: keyof typeof ICONS; size: 
 
 interface Example {
   title: string;
+  /** Capa do jogo como data URI (o gerador de imagem não busca endereços sozinho). */
+  cover: string | null;
   verdict: Verdict;
   historic: { cents: number; when: string; store: string } | null;
 }
@@ -106,8 +108,10 @@ async function load(slug: string): Promise<Example> {
   const view = views[choices[""]];
   if (!view?.verdict) throw new Error(`sem veredito para ${slug}`);
   const low = view.historicLow;
+  const cover = data.game.coverUrl ? await fetch(data.game.coverUrl).then(async (r) => `data:${r.headers.get("content-type")};base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`) : null;
   return {
     title: data.game.title,
+    cover,
     verdict: view.verdict,
     historic: low && { cents: low.cents, when: low.date ? low.date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "", store: low.store ? (getStore(low.store)?.name ?? low.store) : "" },
   };
@@ -148,6 +152,7 @@ function VerdictCard({ ex, s = S, compact = false }: { ex: Example; s?: number; 
   rows.push({ label: "Média em 12 meses", value: formatCents(v.avgCents) });
   const notes = notesOf(v);
   const px = (n: number) => n * s;
+  const cover = compact ? ex.cover : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: 920, border: `${px(1)}px solid ${C.line}`, borderRadius: px(6), background: C.surface, overflow: "hidden" }}>
@@ -156,12 +161,19 @@ function VerdictCard({ ex, s = S, compact = false }: { ex: Example; s?: number; 
         <Ico name={wait ? "hourglass" : "check"} size={px(16)} color={tone} />
         Vale esperar?
       </div>
-      {/* selo + título do veredito */}
-      <div style={{ display: "flex", flexDirection: "column", gap: px(8), padding: `${px(16)}px ${px(20)}px` }}>
+      {/* (capa e nome do jogo só no slide: o cartão do site fica na página do próprio jogo) */}
+      <div style={{ display: "flex", gap: px(16), padding: `${px(16)}px ${px(20)}px` }}>
+        {cover && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cover} alt="" width={px(76)} height={px(114)} style={{ width: px(76), height: px(114), objectFit: "cover", borderRadius: px(4), border: `${px(1)}px solid ${C.line}` }} />
+        )}
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: px(8) }}>
         <div style={{ display: "flex", alignSelf: "flex-start", fontFamily: SANS, fontSize: px(11), lineHeight: `${px(16)}px`, letterSpacing: px(0.55), textTransform: "uppercase", color: tone, border: `${px(1)}px solid ${wait ? "rgba(245,184,61,0.4)" : "rgba(182,240,60,0.35)"}`, background: wait ? "rgba(245,184,61,0.1)" : "rgba(182,240,60,0.08)", borderRadius: px(3), padding: `${px(1)}px ${px(6)}px` }}>
           {wait ? "Vale esperar" : "Bom momento"}
         </div>
         <div style={{ display: "flex", fontFamily: "Barlow", fontSize: px(24), lineHeight: 1.25, color: C.text }}>{v.title}</div>
+        {cover && <div style={{ display: "flex", fontFamily: SANS, fontSize: px(13), color: C.muted }}>{`${ex.title} · hoje ${formatCents(v.currentCents)}`}</div>}
+        </div>
       </div>
       {/* notas com ícone */}
       {notes.length > 0 && (
@@ -211,9 +223,9 @@ const buildSlides = (wait: Example, buy: Example): ReactNode[] => [
     </div>
   </Frame>,
 
-  <Frame key="2" n={2}>
+  <Frame key="2" n={2} footer={false}>
     <Head before="Veja na" lime="prática" size={84} />
-    <div style={{ display: "flex", flexDirection: "column", gap: 28, marginTop: 34 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 20 }}>
       <VerdictCard ex={wait} s={1.5} compact />
       <VerdictCard ex={buy} s={1.5} compact />
     </div>
