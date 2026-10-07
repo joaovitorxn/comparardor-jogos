@@ -93,6 +93,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   {BRAND.contactEmail}
                 </a>
               )}
+              <a
+                href={BRAND.instagram.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 hover:text-accent"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+                </svg>
+                @{BRAND.instagram.handle}
+              </a>
             </p>
             <p className="flex items-center gap-1.5">
               Desenvolvido por Berk

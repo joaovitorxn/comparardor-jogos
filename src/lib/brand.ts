@@ -7,6 +7,7 @@ export const BRAND = {
   domain: "dropou.com.br",
   /** E-mail público para pedidos de privacidade e contato; enquanto for null, as páginas só indicam o botão de feedback. */
   contactEmail: "berk@dropou.com.br" as string | null,
+  instagram: { handle: "dropou.br", url: "https://www.instagram.com/dropou.br/" },
 } as const;
 
 /**
