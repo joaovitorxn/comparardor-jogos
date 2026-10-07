@@ -11,7 +11,7 @@ import { getStore } from "@/lib/stores";
 export const alt = `Preço do jogo no ${BRAND.name}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/jpeg";
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 const C = { bg: "#0b0d12", text: "#e8eaef", text2: "#a5acba", muted: "#727b8c", accent: "#b6f03c", ink: "#0b0d12" };
 
@@ -104,5 +104,5 @@ export default async function GameOpengraphImage(props: { params: Promise<{ slug
   );
   // o ImageResponse só gera PNG, que com foto passa de 1 MB; o WhatsApp e outros ignoram prévias grandes (~300 KB). Em JPEG fica em ~100 KB
   const jpeg = await sharp(Buffer.from(await image.arrayBuffer())).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
-  return new Response(new Uint8Array(jpeg), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=0, s-maxage=1800, stale-while-revalidate=86400" } });
+  return new Response(new Uint8Array(jpeg), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400" } });
 }

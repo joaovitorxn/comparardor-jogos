@@ -29,10 +29,11 @@ import { SITE_URL } from "@/lib/site";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
-// o robô de coleta já descarta o cache de todas as páginas de jogo a cada atualização de preços (de hora em hora)
-export const revalidate = 1800;
+// cada regeneração conta como uma escrita de ISR (limite do plano gratuito da Vercel): o robô de coleta não descarta mais
+// o cache de todas as páginas de jogo, elas se renovam sozinhas a cada 6 horas
+export const revalidate = 21600;
 
-// Array vazio = nenhuma página gerada no build; cada jogo é gerado na primeira visita e revalidado a cada 5 min (ISR)
+// Array vazio = nenhuma página gerada no build; cada jogo é gerado na primeira visita e revalidado a cada 6 h (ISR)
 export async function generateStaticParams() {
   return [];
 }

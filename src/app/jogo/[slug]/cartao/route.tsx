@@ -8,7 +8,7 @@ import { formatCents } from "@/lib/format";
 import { getStore } from "@/lib/stores";
 
 // o cartão vertical (4:5) que a pessoa baixa ou compartilha pelo botão "Compartilhar"; a prévia do link (horizontal) é o opengraph-image
-export const revalidate = 1800;
+export const revalidate = 21600;
 
 const W = 1080;
 const H = 1350;
@@ -85,5 +85,5 @@ export async function GET(_request: Request, ctx: RouteContext<"/jogo/[slug]/car
   );
   // PNG com foto passa de 1 MB; em JPEG fica na casa dos 100 KB
   const jpeg = await sharp(Buffer.from(await image.arrayBuffer())).jpeg({ quality: 86, mozjpeg: true }).toBuffer();
-  return new Response(new Uint8Array(jpeg), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=0, s-maxage=1800, stale-while-revalidate=86400" } });
+  return new Response(new Uint8Array(jpeg), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=0, s-maxage=21600, stale-while-revalidate=86400" } });
 }

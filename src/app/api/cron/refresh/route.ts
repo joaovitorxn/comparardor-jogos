@@ -35,11 +35,11 @@ async function run() {
   const deck = budget(235) ? await syncDeckStatus({ limit: 40, deadline: startedAt + 255_000 }).catch(() => -1) : null;
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
-  // preços novos: descarta o cache da home e de todas as páginas de jogo
+  // preços novos: descarta o cache da home. As páginas de jogo não: cada regeneração é uma escrita de ISR
+  // (200 mil/mês no plano gratuito da Vercel) e elas já se renovam sozinhas (revalidate da página)
   revalidatePath("/");
   // a lista de promoções (home e ofertas) é refeita no próximo acesso; até lá serve a anterior
   revalidateTag(DEAL_POOL_TAG, "max");
-  revalidatePath("/jogo/[slug]", "page");
 
   return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, deck, alerts };
 }
