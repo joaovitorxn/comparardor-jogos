@@ -15,9 +15,9 @@ const storeButton =
   "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[4px] border border-line-strong bg-surface-2 px-2 py-1.5 text-xs font-medium text-text transition hover:border-accent hover:text-accent";
 
 /** Botão de uma loja, com a logo dela em uma cor só (a do texto). */
-function StoreButton({ store, href }: { store: "mercadolivre" | "amazon"; href: string }) {
+function StoreButton({ store, href, product }: { store: "mercadolivre" | "amazon"; href: string; product: string }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer sponsored" className={storeButton}>
+    <a href={href} data-track="setup" data-store={store} data-target={product} target="_blank" rel="noopener noreferrer sponsored" className={storeButton}>
       {store === "amazon" ? <AmazonIcon className="size-4 shrink-0" /> : <MercadoLivreIcon className="size-[18px] shrink-0" />}
       {store === "amazon" ? "Amazon" : "Mercado Livre"}
       <span aria-hidden>↗</span>
@@ -61,8 +61,8 @@ function ProductCard({ product, fallback }: { product: SetupProduct; fallback: I
         <h3 className="font-medium leading-snug">{product.name}</h3>
         <p className="flex-1 text-sm leading-relaxed text-text-2">{product.why}</p>
         <div className="mt-1 grid grid-cols-2 gap-2">
-          {product.mercadoLivre && <StoreButton store="mercadolivre" href={product.mercadoLivre} />}
-          {product.amazon && <StoreButton store="amazon" href={product.amazon} />}
+          {product.mercadoLivre && <StoreButton store="mercadolivre" href={product.mercadoLivre} product={product.name} />}
+          {product.amazon && <StoreButton store="amazon" href={product.amazon} product={product.name} />}
         </div>
       </div>
     </li>

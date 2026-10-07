@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
 import { BetaNotice } from "@/components/beta-notice";
+import { ClickTracker } from "@/components/click-tracker";
 import { FeedbackButton } from "@/components/feedback-button";
 import { KofiButton } from "@/components/kofi-button";
 import { LiveVisitors } from "@/components/live-visitors";
@@ -109,6 +110,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </footer>
         <FeedbackButton />
         <KofiButton />
+        <ClickTracker />
         <BetaNotice />
         <Analytics />
       </body>

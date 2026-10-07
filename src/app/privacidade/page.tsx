@@ -40,6 +40,7 @@ const sections: LegalSection[] = [
             ["Identificador aleatório de visita", "Contar quantas pessoas estão no site agora. Não identifica você", "Navegador e meu banco de dados; registros com mais de 24 horas são apagados"],
             ["Alertas de preço", "Avisar por notificação quando o jogo baixar. Guardo o endereço da sua inscrição de notificações, o jogo, a plataforma e o preço-alvo", "Meu banco de dados, até você remover o alerta ou a inscrição expirar"],
             ["Feedback", "Ler e responder o que você mandou: mensagem, tipo, página em que estava, navegador e o contato, se você escreveu", "Meu banco de dados e um canal privado meu no Discord"],
+            ["Cliques em links de lojas", "Saber quais lojas, Gift Cards e produtos do Setup as pessoas mais abrem. Guardo só o que foi clicado, a página e a data, sem IP nem identificador seu", "Meu banco de dados"],
             ["Estatísticas de acesso", "Saber quais páginas são mais vistas e de onde vêm os acessos, sem identificar pessoas", "Vercel Web Analytics, sem cookies"],
             ["Dados técnicos da hospedagem (como o endereço IP)", "Segurança, desempenho e correção de erros", "Registros da Vercel, por tempo limitado"],
           ]}

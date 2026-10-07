@@ -15,6 +15,9 @@ export function GiftCardButton({ family, shortOnMobile = false }: { family: stri
   return (
     <a
       data-family={family}
+      data-track="giftcard"
+      data-store="mercadolivre"
+      data-target={family}
       href={LINKS[family]}
       target="_blank"
       rel="noopener noreferrer sponsored"

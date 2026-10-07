@@ -298,6 +298,28 @@ export const feedback = sqliteTable("feedback", {
 });
 
 /**
+ * Cliques nos links que levam a uma loja (comprar, gift card, produto do Setup). Só o que foi clicado e a página,
+ * sem IP nem identificador de quem clicou: serve para saber quanto cada tipo de link rende.
+ */
+export const clicks = sqliteTable(
+  "clicks",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    kind: text("kind", { enum: ["buy", "giftcard", "setup"] }).notNull(),
+    /** Loja do link (steam, nuuvem…, mercadolivre, amazon). */
+    store: text("store"),
+    /** Jogo da página (links de compra) ou produto/console clicado (Gift Card e Setup). */
+    gameId: integer("game_id"),
+    target: text("target"),
+    page: text("page"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("clicks_created_idx").on(t.createdAt), index("clicks_kind_idx").on(t.kind)],
+);
+
+/**
  * Exclusivos de console que já tentamos importar e não tinham preço nas nossas lojas (ou não são
  * jogos vendáveis hoje): evita repetir a tentativa a cada atualização.
  */

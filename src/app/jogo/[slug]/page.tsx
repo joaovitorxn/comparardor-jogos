@@ -119,6 +119,9 @@ function PlatformBests({ offers }: { offers: GamePageData["offers"] }) {
           <li key={family.id}>
             <a
               href={offer.listing.url}
+              data-track="buy"
+              data-store={offer.listing.store}
+              data-game={offer.listing.gameId}
               target="_blank"
               rel="noopener noreferrer sponsored"
               className="group flex items-center gap-2.5 text-sm"
@@ -162,7 +165,15 @@ function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData[
           {best.listing.voucher && <p className="mt-2 text-xs text-coupon">Use o código {best.listing.voucher} no checkout</p>}
         </div>
         <div className="space-y-2">
-          <a href={best.listing.url} target="_blank" rel="noopener noreferrer sponsored" className={`${buttonStyles.primary} w-full`}>
+          <a
+            href={best.listing.url}
+            data-track="buy"
+            data-store={best.listing.store}
+            data-game={best.listing.gameId}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className={`${buttonStyles.primary} w-full`}
+          >
             Comprar na {storeName} <span aria-hidden>↗</span>
           </a>
           <AlertButton gameId={data.game.id} gameTitle={data.game.title} {...alertPrices(data)} />
