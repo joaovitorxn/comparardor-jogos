@@ -79,6 +79,34 @@ export function HomeSkeleton() {
   );
 }
 
+/** Wishlist: filtros e uma linha por jogo (capa, preço e botões). */
+export function WishlistSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <Busy>
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-1.5">
+          {["w-24", "w-36", "w-32"].map((w, i) => (
+            <Bar key={i} className={`h-9 ${w}`} />
+          ))}
+        </div>
+        <ul aria-hidden className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
+          {Array.from({ length: Math.max(count, 2) }, (_, i) => (
+            <li key={i} className="flex items-center gap-4 p-3 sm:p-4">
+              <div className="aspect-[2/3] w-16 shrink-0 skeleton rounded-[3px]" />
+              <div className="flex-1 space-y-2.5">
+                <Bar className="h-4 w-2/5" />
+                <Bar className="h-5 w-1/3" />
+                <Bar className="h-3 w-3/5" />
+              </div>
+              <Bar className="hidden h-8 w-28 sm:block" />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Busy>
+  );
+}
+
 /** Página do jogo: imagem, painel de melhor oferta e a tabela de lojas. */
 export function GamePageSkeleton() {
   return (

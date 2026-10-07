@@ -10,8 +10,10 @@ const MIN_SPAN = 90 * DAY;
 const NEAR_LOW = 1.1;
 /** "Esperar vale": o preço de hoje está pelo menos 25% acima do menor do ano. */
 const WAIT_ABOVE = 1.25;
-/** Diferença mínima (R$ 5,00) para valer esperar: em jogo barato, esperar não compensa. */
-const MIN_SAVING = 500;
+/** Diferença mínima (R$ 10,00) para valer esperar: em jogo barato, esperar não compensa. */
+const MIN_SAVING = 1000;
+/** Preço de hoje até 75% da média do ano já é um bom preço, mesmo que já tenha ficado ainda mais baixo. */
+const GOOD_VS_AVG = 0.75;
 /** Uma ocasião conta como "chegou perto" quando ficou até 15% acima do menor do ano. */
 const EPISODE_BAND = 1.15;
 
@@ -27,6 +29,8 @@ export interface Verdict {
   /** Há quantos dias o preço de hoje está valendo; null quando a loja mais barata mudou há pouco. */
   daysAtCurrent: number | null;
   atHistoricLow: boolean;
+  /** Bom preço por estar bem abaixo da média do ano (mesmo sem ser o menor). */
+  belowAverage: boolean;
   /** Próxima grande promoção (só para quem pode esperar). */
   sale: { name: string; days: number; approx: boolean } | null;
 }
@@ -81,12 +85,19 @@ export function computeVerdict(input: {
   const daysAtCurrent = last[1] === currentCents ? Math.floor((now - last[0]) / DAY) : null;
   const atHistoricLow = historicLowCents != null && currentCents <= historicLowCents;
   const ratio = currentCents / low;
+  const avgCents = Math.round(weighted / total);
 
   let kind: Verdict["kind"];
   let title: string;
+  let belowAverage = false;
   if (ratio <= NEAR_LOW) {
     kind = "buy";
     title = atHistoricLow ? "Menor preço já registrado" : ratio <= 1 ? "Menor preço dos últimos 12 meses" : "Perto do menor preço do ano";
+  } else if (currentCents <= avgCents * GOOD_VS_AVG) {
+    // já está bem abaixo do que o jogo costuma custar: esperar uma queda maior não faz diferença relevante
+    kind = "buy";
+    title = "Bom preço, abaixo da média do ano";
+    belowAverage = true;
   } else if (ratio >= WAIT_ABOVE && nearLowRuns >= 2 && currentCents - low >= MIN_SAVING) {
     kind = "wait";
     title = "Costuma ficar mais barato";
@@ -100,10 +111,11 @@ export function computeVerdict(input: {
     title,
     currentCents,
     lowCents: low,
-    avgCents: Math.round(weighted / total),
+    avgCents,
     nearLowCount: nearLowRuns,
     daysAtCurrent,
     atHistoricLow,
+    belowAverage,
     sale: kind === "wait" ? nextSale(now, input.hasSteam) : null,
   };
 }

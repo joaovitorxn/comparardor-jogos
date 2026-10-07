@@ -25,6 +25,13 @@ describe("computeVerdict", () => {
     expect(v?.nearLowCount).toBe(3);
   });
 
+  it("calls a price well below the yearly average a good price, even if it was lower before", () => {
+    // ~R$ 15 hoje; já custou R$ 9 duas vezes, mas a média do ano é bem mais alta
+    const v = run(series([400, 6000], [300, 900], [280, 6000], [200, 900], [150, 6000], [20, 1500]), 1500, 900);
+    expect(v?.kind).toBe("buy");
+    expect(v?.belowAverage).toBe(true);
+  });
+
   it("does not tell people to wait over a few reais", () => {
     const v = run(series([400, 800], [300, 400], [280, 800], [200, 400], [180, 800]), 800, 400);
     expect(v?.kind).toBe("neutral");

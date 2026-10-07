@@ -200,7 +200,10 @@ function DetailsPanel({ data }: { data: GamePageData }) {
   ].filter(([, v]) => v) as [string, string][];
   return (
     <div className="rounded-card border border-line bg-surface">
-      <h2 className="border-b border-line px-5 py-3 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">Detalhes</h2>
+      <h2 className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
+        <Icon name="list" className="size-4 text-accent" />
+        Detalhes
+      </h2>
       <dl className="divide-y divide-line text-sm">
         {rows.map(([label, value]) => (
           <div key={label} className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3 px-5 py-2.5">
@@ -340,7 +343,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           <BackToTop />
 
           <section>
-            <SectionHeader title="Onde comprar" icon="cart" aside="Preços em R$, ordenados pelo valor final" />
+            <SectionHeader title="Onde comprar" icon="cart" aside="Preços em R$, do menor para o maior" />
             {offers.length ? (
               <PlatformFilter counts={familyCounts(offers)} total={offers.length}>
                 <PriceTable offers={offers} />

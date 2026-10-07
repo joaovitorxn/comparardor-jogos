@@ -5,7 +5,7 @@ import { CopyCoupon } from "./copy-coupon";
 import { StoreName } from "./store-logo";
 import { buttonStyles, DiscountBadge, PriceText, Tag } from "./ui";
 
-const COLS = "md:grid-cols-[minmax(0,1.9fr)_56px_minmax(0,1.4fr)_112px_116px]";
+const COLS = "md:grid-cols-[minmax(0,1.9fr)_56px_minmax(0,1.5fr)_116px]";
 
 export function PriceTable({ offers }: { offers: OfferRow[] }) {
   const best = offers[0]?.finalCents;
@@ -15,8 +15,7 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
       <div className={`hidden gap-4 border-b border-line bg-surface-2 px-4 py-2 font-display text-xs font-semibold uppercase tracking-wider text-muted md:grid ${COLS}`}>
         <span>Loja</span>
         <span>Plat.</span>
-        <span>Preço</span>
-        <span className="text-right">Final</span>
+        <span className="text-right">Preço</span>
         <span />
       </div>
 
@@ -54,29 +53,17 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
 
             <span className="hidden text-text-2 md:block">{PLATFORM_LABELS[listing.platform]}</span>
 
-            <div className="hidden md:block">
-              {snapshot ? (
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {snapshot.discountPercent > 0 && <DiscountBadge percent={snapshot.discountPercent} size="sm" />}
-                  <PriceText cents={snapshot.priceCents} className="text-text-2" />
-                  {snapshot.discountPercent > 0 && (
-                    <span className="tabular text-xs text-muted line-through">{formatCents(snapshot.regularPriceCents)}</span>
-                  )}
-                </span>
+            {/* preço de venda: desconto, preço antigo riscado (só em tela larga) e o valor final em destaque */}
+            <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right">
+              {snapshot && snapshot.discountPercent > 0 && <DiscountBadge percent={snapshot.discountPercent} size="sm" />}
+              {snapshot && snapshot.discountPercent > 0 && (
+                <span className="tabular hidden text-xs text-muted line-through md:inline">{formatCents(snapshot.regularPriceCents)}</span>
+              )}
+              {finalCents != null ? (
+                <PriceText cents={finalCents} className={`font-display text-xl font-bold ${isBest ? "text-accent" : "text-text"}`} />
               ) : (
                 <span className="text-muted">Indisponível</span>
               )}
-            </div>
-
-            <div className="text-right">
-              {snapshot && snapshot.discountPercent > 0 && (
-                <span className="mr-2 md:hidden">
-                  <DiscountBadge percent={snapshot.discountPercent} size="sm" />
-                </span>
-              )}
-              <span className={`font-display text-xl font-bold ${isBest ? "text-accent" : "text-text"}`}>
-                {finalCents != null ? <PriceText cents={finalCents} /> : "—"}
-              </span>
             </div>
 
             <a

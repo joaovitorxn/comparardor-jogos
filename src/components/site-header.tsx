@@ -4,6 +4,7 @@ import { Icon, type IconName } from "./icon";
 import { MobileSearch } from "./mobile-search";
 import { PlatformSelector } from "./platform-selector";
 import { SearchForm } from "./search-form";
+import { WhatsNew } from "./whats-new";
 
 export function LogoMark({ className = "size-7" }: { className?: string }) {
   return (
@@ -55,6 +56,7 @@ export function SiteHeader() {
         <SearchForm className="ml-auto hidden w-full max-w-sm sm:block" />
         <MobileSearch />
         <PlatformSelector />
+        <WhatsNew />
         <Link
           href="/minha-lista"
           aria-label="Wishlist"

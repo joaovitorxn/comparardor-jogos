@@ -73,7 +73,9 @@ export function BuyVerdict({ verdict, historicLow }: { verdict: Verdict | null; 
         text: verdict.daysAtCurrent < 1 ? "Esse preço começou hoje." : `Esse preço está valendo há ${plural(verdict.daysAtCurrent, "dia", "dias")}.`,
       });
     }
-    if (verdict.nearLowCount > 1) {
+    if (verdict.belowAverage) {
+      notes.push({ icon: "chart", text: `Abaixo da média dos últimos 12 meses (${formatCents(verdict.avgCents)}).` });
+    } else if (verdict.nearLowCount > 1) {
       notes.push({ icon: "chart", text: `Já chegou perto dele ${plural(verdict.nearLowCount, "vez", "vezes")} nos últimos 12 meses.` });
     }
   }
