@@ -43,4 +43,5 @@ next-env.d.ts
 
 # banco local
 /data
-media-kit/*.zip
+# material de divulgação (posts, artes, assinatura): fica só no computador e no Google Drive
+/media-kit/
