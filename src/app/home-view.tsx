@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
 import { JsonLd } from "@/components/json-ld";
+import { GiftCardStrip } from "@/components/gift-card-hint";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { StoreLogo } from "@/components/store-logo";
 import { SectionHeader } from "@/components/ui";
@@ -59,7 +60,11 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
         }}
       />
       {showcase.length ? (
-        <FeaturedShowcase items={showcase} />
+        // a faixa de Gift Cards fica colada embaixo dos drops em destaque (por isso o espaço menor que o das outras seções)
+        <div className="space-y-4">
+          <FeaturedShowcase items={showcase} />
+          <GiftCardStrip families={platforms} />
+        </div>
       ) : (
         <section className="rounded-card border border-line bg-surface p-10 text-center">
           <h1 className="font-display text-3xl font-bold uppercase">{BRAND.tagline}</h1>
