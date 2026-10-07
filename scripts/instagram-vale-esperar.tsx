@@ -236,15 +236,15 @@ const buildSlides = (wait: Example, buy: Example): ReactNode[] => [
     <div style={{ display: "flex", marginTop: 64 }}>
       <Big size={130} lines={[["Descubra agora"], ["se vale esperar", true]]} />
     </div>
-    <Sub size={56}>Acessa agora e confere a novidade</Sub>
-    <div style={{ display: "flex", marginTop: 44, marginLeft: 60 }}>
-      <svg width={64} height={86} viewBox="0 0 64 86" fill="none" stroke={C.accent} strokeWidth={9} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M32 6V76" />
-        <path d="M10 54L32 78L54 54" />
-      </svg>
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 14 }}>
-      <div style={{ display: "flex", fontSize: 70, background: C.accent, color: C.ink, borderRadius: 14, padding: "10px 34px", letterSpacing: 1 }}>{BRAND.domain}</div>
+    <Sub size={52}>Abre um jogo e vê o veredito na hora.</Sub>
+    <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 70 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 22, fontSize: 70, background: C.accent, color: C.ink, borderRadius: 14, padding: "10px 34px", letterSpacing: 1 }}>
+        {BRAND.domain}
+        <svg width={52} height={52} viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 17L17 7" />
+          <path d="M8 7h9v9" />
+        </svg>
+      </div>
       <div style={{ display: "flex", fontSize: 32, letterSpacing: 3, textTransform: "uppercase", border: `2px solid ${C.accent}`, color: C.accent, borderRadius: 10, padding: "4px 16px" }}>beta</div>
     </div>
   </Frame>,
