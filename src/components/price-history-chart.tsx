@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PriceSeries } from "@/db/queries";
 import { formatCents } from "@/lib/format";
+import { clip, indexAt, lowerEnvelope, type Point, valueAt } from "@/lib/price-series";
 import { getStore } from "@/lib/stores";
 
 const RANGES = [
@@ -29,57 +30,6 @@ function SeriesKey({ store, muted = false }: { store: string; muted?: boolean })
 }
 const storeName = (store: string) => getStore(store)?.name ?? store;
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-
-type Point = [number, number];
-
-/** Índice do último ponto em ou antes de `t` (o preço vigente — linhas em degrau). */
-function indexAt(points: Point[], t: number): number {
-  let lo = 0;
-  let hi = points.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (points[mid][0] <= t) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
-function valueAt(points: Point[], t: number): number | null {
-  const i = indexAt(points, t);
-  return i >= 0 ? points[i][1] : null;
-}
-
-/**
- * Menor preço entre as lojas em cada instante — a pergunta principal do gráfico.
- * Guarda também qual loja tinha esse preço, para o tooltip.
- */
-function lowerEnvelope(series: PriceSeries[]): { points: Point[]; stores: string[] } {
-  const times = [...new Set(series.flatMap((s) => s.points.map((p) => p[0])))].sort((a, b) => a - b);
-  const points: Point[] = [];
-  const stores: string[] = [];
-  for (const t of times) {
-    let best: { cents: number; store: string } | null = null;
-    for (const s of series) {
-      const v = valueAt(s.points, t);
-      if (v != null && (!best || v < best.cents)) best = { cents: v, store: s.store };
-    }
-    if (best && points.at(-1)?.[1] !== best.cents) {
-      points.push([t, best.cents]);
-      stores.push(best.store);
-    }
-  }
-  return { points, stores };
-}
-
-/** Recorta ao período, começando pelo preço vigente no início. */
-function clip(points: Point[], start: number, now: number): Point[] {
-  const startValue = valueAt(points, start);
-  const inside = points.filter(([t]) => t > start && t <= now);
-  return startValue != null ? [[start, startValue], ...inside] : inside;
-}
 
 /** Passo "redondo" para o eixo Y: 1, 2, 2,5 ou 5 × 10ⁿ. */
 function niceStep(maxCents: number, ticks = 4) {

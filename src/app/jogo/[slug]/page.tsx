@@ -8,6 +8,7 @@ import { Icon } from "@/components/icon";
 import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
 import { JsonLd } from "@/components/json-ld";
 import { BackToTop } from "@/components/back-to-top";
+import { BuyVerdictSwitch } from "@/components/buy-verdict-switch";
 import { GiftCardHint } from "@/components/gift-card-hint";
 import { EnrichmentWatcher } from "@/components/enrichment-watcher";
 import { MediaGallery } from "@/components/media-gallery";
@@ -16,7 +17,7 @@ import { PriceTable } from "@/components/price-table";
 import { Requirements } from "@/components/requirements";
 import { SimilarGames } from "@/components/similar-games";
 import { PlatformFilter } from "@/components/platform-filter";
-import { StoreLogo, StoreName } from "@/components/store-logo";
+import { StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
 import { ShareButton } from "@/components/share-button";
 import { WishlistButton } from "@/components/wishlist-button";
@@ -26,8 +27,9 @@ import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { lightImage } from "@/lib/images";
 import { allPlatformCombinations, serializePlatforms } from "@/lib/platform-selection";
 import { SITE_URL } from "@/lib/site";
+import { buildVerdictViews } from "@/lib/verdict-variants";
 import { formatCents, formatRelative } from "@/lib/format";
-import { getStore, offerFamilies, PLATFORM_FAMILIES, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
+import { getStore, offerFamilies, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
 
 // cada regeneração conta como uma escrita de ISR (limite do plano gratuito da Vercel): o robô de coleta não descarta mais
 // o cache de todas as páginas de jogo, elas se renovam sozinhas a cada 6 horas
@@ -63,7 +65,6 @@ function shareText(data: GamePageData): string {
   return `${data.game.title} ${price}${off} na ${store}. Dropou:`;
 }
 
-const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
 /** Lojas do histórico por família (o histórico da ITAD não diz a plataforma, só a loja). */
 const STORE_FAMILY: Record<string, PlatformFamilyId> = { psstore: "playstation", nintendo: "nintendo", xbox: "xbox" };
@@ -106,40 +107,6 @@ const IGDB_PLATFORM_IDS: Record<string, string[]> = {
   Switch: ["switch"],
   "Switch 2": ["switch2"],
 };
-
-function PlatformBests({ offers }: { offers: GamePageData["offers"] }) {
-  const bests = PLATFORM_FAMILIES.flatMap((family) => {
-    const cheapest = offers.find((o) => o.finalCents != null && offerFamilies(o.listing).includes(family.id));
-    return cheapest ? [{ family, offer: cheapest }] : [];
-  });
-  if (bests.length < 2) return null;
-  return (
-    <div className="border-t border-line px-5 py-3">
-      <p className="mb-2 font-display text-xs font-semibold uppercase tracking-[0.15em] text-muted">Melhor por plataforma</p>
-      <ul className="space-y-1.5">
-        {bests.map(({ family, offer }) => (
-          <li key={family.id}>
-            <a
-              href={offer.listing.url}
-              data-track="buy"
-              data-store={offer.listing.store}
-              data-game={offer.listing.gameId}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className="group flex items-center gap-2.5 text-sm"
-              title={`${family.label}: ${getStore(offer.listing.store)?.name ?? offer.listing.store}`}
-            >
-              <StoreLogo store={offer.listing.store} size={22} />
-              <span className="flex-1 text-text-2 group-hover:text-text">{family.label}</span>
-              {offer.snapshot && offer.snapshot.discountPercent > 0 && <DiscountBadge percent={offer.snapshot.discountPercent} size="sm" />}
-              <PriceText cents={offer.finalCents!} className="font-semibold group-hover:text-accent" />
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 /** Cartão do "Melhor drop" de uma oferta: loja, preço, botão de compra e alerta. */
 function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData["offers"][number] }) {
@@ -185,7 +152,6 @@ function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData[
 }
 
 function BestOfferPanel({ data }: { data: GamePageData }) {
-  const low = data.historicLow;
   const overall = data.offers.find((o) => o.snapshot && o.finalCents != null);
   if (!overall) {
     return (
@@ -208,32 +174,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
   return (
     <div className="overflow-hidden rounded-card border border-line bg-surface">
       <BestOfferSwitch choices={choices} options={options} />
-      <PlatformBests offers={data.offers} />
       <dl className="divide-y divide-line border-t border-line text-sm">
-        {low && (
-          <div className="flex items-baseline justify-between gap-3 px-5 py-2.5">
-            <dt className="flex items-center gap-1.5 text-muted">
-              <Icon name="floor" className="size-4" />
-              Preço histórico
-            </dt>
-            <dd className="text-right">
-              <PriceText cents={low.cents} className="font-semibold" />
-              {low.date && (
-                <span className="block text-xs text-muted">
-                  {dateFmt.format(low.date)}
-                  {low.store && ` · ${getStore(low.store)?.name ?? low.store}`}
-                </span>
-              )}
-            </dd>
-          </div>
-        )}
-        <div className="flex justify-between gap-3 px-5 py-2.5">
-          <dt className="flex items-center gap-1.5 text-muted">
-            <Icon name="store" className="size-4" />
-            Lojas comparadas
-          </dt>
-          <dd className="tabular">{data.offers.length}</dd>
-        </div>
         {data.lastChecked && (
           <div className="flex justify-between gap-3 px-5 py-2.5">
             <dt className="text-muted">Atualizado</dt>
@@ -349,6 +290,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
   );
   const steamUrl = offers.find((o) => o.listing.store === "steam")?.listing.url ?? null;
   // recém-importado pela busca: as outras lojas ainda estão sendo consultadas em segundo plano
+  const verdicts = buildVerdictViews(data);
   const enriching = game.enrichedAt == null && data.generatedAt - game.createdAt.getTime() < 10 * 60_000;
 
   return (
@@ -385,6 +327,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
       <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
         <aside className="space-y-4 lg:col-start-2 lg:row-start-1 lg:self-start">
           <BestOfferPanel data={data} />
+          <BuyVerdictSwitch {...verdicts} />
           {/* no celular, preço vem primeiro: tempo e detalhes descem para depois do conteúdo principal */}
           <div className="hidden space-y-4 lg:block">
             {game.timeToBeat && <TimeToBeatCard ttb={game.timeToBeat} bestPriceCents={offers[0]?.finalCents ?? null} />}
