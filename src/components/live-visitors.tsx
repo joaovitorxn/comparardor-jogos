@@ -1,15 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const PING_MS = 300_000;
 const KEY = "dropou:visitante";
 
-// frases que se alternam por visita; {n} e o plural saem pelo mesmo formato
-const PHRASES: ((n: number) => string)[] = [
-  (n) => `${n} ${n === 1 ? "pessoa procurando" : "pessoas procurando"} promos`,
-  (n) => `${n} ${n === 1 ? "gamer caçando" : "gamers caçando"} drops`,
-  (n) => `${n} ${n === 1 ? "pessoa de olho" : "pessoas de olho"} no preço`,
+/** O número em destaque (branco, mais forte) e o resto da frase no cinza do site. */
+const Count = ({ n }: { n: number }) => <span className="tabular font-bold text-text">{n}</span>;
+
+// frases que se alternam por visita; o plural sai junto com o número
+const PHRASES: ((n: number) => ReactNode)[] = [
+  (n) => (
+    <>
+      <Count n={n} /> {n === 1 ? "pessoa procurando" : "pessoas procurando"} promos
+    </>
+  ),
+  (n) => (
+    <>
+      <Count n={n} /> {n === 1 ? "gamer caçando" : "gamers caçando"} drops
+    </>
+  ),
+  (n) => (
+    <>
+      <Count n={n} /> {n === 1 ? "pessoa de olho" : "pessoas de olho"} no preço
+    </>
+  ),
 ];
 
 function visitorId(): string {
@@ -61,12 +76,16 @@ export function LiveVisitors() {
 
   if (!state) return null;
   return (
-    <p className="flex items-center gap-2 text-xs text-text-2" aria-live="polite">
-      <span aria-hidden className="relative flex size-2">
+    // mesmo molde das etiquetas e botões do site: borda fina, cantos de 4px, fonte de título em caixa alta
+    <p
+      className="flex items-center gap-2 rounded-[4px] border border-line bg-surface px-2.5 py-1 font-display text-xs font-semibold uppercase tracking-wider text-text-2"
+      aria-live="polite"
+    >
+      <span aria-hidden className="relative flex size-2 shrink-0">
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
         <span className="relative inline-flex size-2 rounded-full bg-accent" />
       </span>
-      {PHRASES[state.phrase](state.online)}
+      <span>{PHRASES[state.phrase](state.online)}</span>
     </p>
   );
 }

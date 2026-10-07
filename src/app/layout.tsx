@@ -53,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col font-sans">
         <SiteHeader />
-        <div className="mx-auto flex h-8 w-full max-w-7xl items-center justify-end px-4 lg:px-6">
+        <div className="mx-auto flex h-10 w-full max-w-7xl items-center justify-end px-4 lg:px-6">
           <LiveVisitors />
         </div>
         <main className="flex-1">{children}</main>
