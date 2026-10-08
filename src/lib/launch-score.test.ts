@@ -24,3 +24,20 @@ describe("launchScore", () => {
     expect(launchScore(manyPlatforms)).toBeGreaterThan(launchScore(manyStores));
   });
 });
+
+describe("launchScore: freshness and review pace", () => {
+  const base = { maxRegularCents: 29_900, families: 2, stores: 3, quality: 60 };
+
+  it("lets a big release from yesterday beat the same game from three weeks ago", () => {
+    expect(launchScore({ ...base, daysSinceRelease: 1 })).toBeGreaterThan(launchScore({ ...base, daysSinceRelease: 21 }));
+  });
+
+  it("gives no extra points after 30 days and counts days 0 to 3 the same", () => {
+    expect(launchScore({ ...base, daysSinceRelease: 0 })).toBe(launchScore({ ...base, daysSinceRelease: 3 }));
+    expect(launchScore({ ...base, daysSinceRelease: 45 })).toBe(launchScore({ ...base, daysSinceRelease: 30 }));
+  });
+
+  it("rewards reviews per day, so a fast-selling new release outranks a slow one with the same total", () => {
+    expect(launchScore({ ...base, reviews: 6000, daysSinceRelease: 6 })).toBeGreaterThan(launchScore({ ...base, reviews: 6000, daysSinceRelease: 28 }));
+  });
+});

@@ -81,7 +81,7 @@ export function FeedbackButton() {
         ref={dialogRef}
         aria-label="Enviar feedback"
         onClick={(e) => e.target === dialogRef.current && dialogRef.current?.close()}
-        className="m-auto w-[min(92vw,26rem)] rounded-card border border-line-strong bg-surface-2 p-0 text-text shadow-2xl shadow-black/70 backdrop:bg-black/70"
+        className="m-auto w-[min(92vw,26rem)] rounded-card border border-line-strong bg-surface-2 p-0 text-text shadow-2xl shadow-black/70 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
       >
         {status.type === "sent" ? (
           <div className="p-6 text-center">

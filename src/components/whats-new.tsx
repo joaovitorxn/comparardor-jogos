@@ -79,7 +79,7 @@ export function WhatsNew() {
         onClose={() => setOpen(false)}
         onClick={(e) => e.target === dialog.current && hide()}
         aria-label="Novidades do Dropou"
-        className="m-auto max-h-[85vh] w-[min(92vw,28rem)] overflow-y-auto rounded-card border border-line-strong bg-surface-2 p-0 text-text shadow-2xl shadow-black/70 backdrop:bg-black/70"
+        className="m-auto max-h-[85vh] w-[min(92vw,28rem)] overflow-y-auto rounded-card border border-line-strong bg-surface-2 p-0 text-text shadow-2xl shadow-black/70 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
       >
         {open && (
           <div className="p-4">

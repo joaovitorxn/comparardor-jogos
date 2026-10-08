@@ -369,6 +369,7 @@ export async function computeRecentReleases(platforms: PlatformFamilyId[], days:
       stores: stores.length,
       quality: qualityOf(game),
       reviews: game.userReviewCount ?? 0,
+      daysSinceRelease: Math.max(0, Math.floor((now - at) / DAY_MS)),
     });
     return [{ summary, score }];
   });
@@ -390,6 +391,18 @@ export async function getRecentReleases(platforms: PlatformFamilyId[] = [], { li
   const top = (await sharedRecent(platforms.join("-"), days)).slice(0, limit);
   return top.sort((x, y) => y.releasedAt - x.releasedAt || x.game.id - y.game.id);
 }
+
+/** Quantos jogos do catálogo há em cada gênero (o mesmo texto que o filtro de gênero da busca usa). */
+export const getGenreCounts = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const rows = await db.select({ genres: games.genres }).from(games);
+    const counts: Record<string, number> = {};
+    for (const r of rows) for (const g of r.genres ?? []) counts[g] = (counts[g] ?? 0) + 1;
+    return counts;
+  },
+  ["genre-counts"],
+  { revalidate: 6 * 3600 },
+);
 
 /** Pré-vendas com desconto, do maior desconto para o menor, as mais próximas do lançamento primeiro no empate. */
 export function pickPreorderDeals(pool: GameSummary[], limit: number): GameSummary[] {

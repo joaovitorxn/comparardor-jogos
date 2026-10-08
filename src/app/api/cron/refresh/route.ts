@@ -36,7 +36,7 @@ async function run() {
   // status do Steam Deck dos jogos (poucos por rodada, só se sobrar tempo)
   const deck = budget(235) ? await syncDeckStatus({ limit: 40, deadline: startedAt + 255_000 }).catch(() => -1) : null;
   // avaliações dos jogadores na Steam (poucas por rodada, só se sobrar tempo)
-  const reviews = budget(225) ? await syncUserReviews({ limit: 40, deadline: startedAt + 260_000 }).catch(() => -1) : null;
+  const reviews = budget(215) ? await syncUserReviews({ limit: 30, deadline: startedAt + 255_000 }).catch(() => null) : null;
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
   // preços novos: descarta o cache da home

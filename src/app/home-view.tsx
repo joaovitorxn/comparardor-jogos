@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { GameGrid } from "@/components/game-card";
+import { GenreTiles } from "@/components/genre-tiles";
 import { JsonLd } from "@/components/json-ld";
 import { GiftCardStrip } from "@/components/gift-card-hint";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { StoreLogo } from "@/components/store-logo";
 import { SectionHeader } from "@/components/ui";
-import { getDealPool, getRecentReleases, getShowcaseImages, pickCheapestDeals, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
+import { getDealPool, getGenreCounts, getRecentReleases, getShowcaseImages, pickCheapestDeals, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
 import { BRAND } from "@/lib/brand";
 import { SITE_URL } from "@/lib/site";
 import { STORES, type PlatformFamilyId } from "@/lib/stores";
@@ -26,7 +27,7 @@ function launchLabel(releasedAt: number): string {
 
 /** Página inicial; com `platforms`, só as ofertas dessas plataformas (a versão normal passa lista vazia). */
 export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyId[] }) {
-  const [pool, releases] = await Promise.all([getDealPool(platforms), getRecentReleases(platforms, { limit: 12 })]);
+  const [pool, releases, genreCounts] = await Promise.all([getDealPool(platforms), getRecentReleases(platforms, { limit: 12 }), getGenreCounts()]);
   const releasedAt = new Map(releases.map((r) => [r.game.id, r.releasedAt]));
   const dealCount = pool.length;
   const cheap = pickCheapestDeals(pool, 24);
@@ -111,6 +112,11 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
           <GameGrid games={preorders} releaseLabel={(c) => `Lança em ${preorderDates.get(c.game.id)}`} />
         </section>
       )}
+
+      <section>
+        <SectionHeader id="categorias" title="Categorias" icon="grid" aside="Explore o catálogo por gênero" />
+        <GenreTiles counts={genreCounts} />
+      </section>
 
       <section>
         <SectionHeader id="lojas" title="Lojas monitoradas" icon="store" aside={`${stores.filter((s) => s.status === "active").length} de ${stores.length} ativas`} />

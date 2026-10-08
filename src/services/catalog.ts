@@ -795,7 +795,7 @@ export async function refreshPrices({
  * Atualiza as avaliações dos jogadores (Steam): primeiro os nunca consultados; depois os lançamentos dos últimos 60 dias,
  * que mudam rápido, uma vez por dia; os demais a cada 14 dias. Poucos por rodada e devagar.
  */
-export async function syncUserReviews({ limit = 50, deadline }: { limit?: number; deadline?: number } = {}) {
+export async function syncUserReviews({ limit = 50, deadline, pauseMs = 1500 }: { limit?: number; deadline?: number; pauseMs?: number } = {}) {
   const now = Date.now();
   const DAY = 86_400_000;
   const rows = await db
@@ -809,10 +809,11 @@ export async function syncUserReviews({ limit = 50, deadline }: { limit?: number
       const recent = released != null && released <= now && now - released < 60 * DAY;
       return now - r.checkedAt.getTime() > (recent ? 1 : 14) * DAY;
     })
-    .sort((a, b) => (a.checkedAt?.getTime() ?? 0) - (b.checkedAt?.getTime() ?? 0))
-    .slice(0, limit);
+    .sort((a, b) => (a.checkedAt?.getTime() ?? 0) - (b.checkedAt?.getTime() ?? 0));
+  const batch = due.slice(0, limit);
   let checked = 0;
-  for (const g of due) {
+  let blocked = false;
+  for (const g of batch) {
     if (deadline != null && Date.now() > deadline) break;
     try {
       const reviews = await fetchUserReviews(g.steamAppId!);
@@ -821,12 +822,15 @@ export async function syncUserReviews({ limit = 50, deadline }: { limit?: number
         checked++;
       }
     } catch (err) {
-      // bloqueio da loja: para a rodada e tenta de novo na próxima
-      if (err instanceof HttpError && (err.status === 403 || err.status === 429)) break;
+      // bloqueio da loja (a consulta de avaliações aceita ~200 por 5 minutos): para a rodada e tenta de novo na próxima
+      if (err instanceof HttpError && (err.status === 403 || err.status === 429)) {
+        blocked = true;
+        break;
+      }
     }
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, pauseMs));
   }
-  return checked;
+  return { checked, blocked, remaining: due.length - checked };
 }
 
 /**
