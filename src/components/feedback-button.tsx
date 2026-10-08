@@ -3,13 +3,15 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { OPEN_FEEDBACK_EVENT } from "./beta-notice";
+import { Icon, type IconName } from "./icon";
+import { buttonStyles } from "./ui";
 
-const KINDS = [
-  { id: "bug", label: "Bug" },
-  { id: "sugestao", label: "Sugestão" },
-  { id: "elogio", label: "Elogio" },
-  { id: "outro", label: "Outro" },
-] as const;
+const KINDS: { id: string; label: string; icon: IconName }[] = [
+  { id: "bug", label: "Bug", icon: "bug" },
+  { id: "sugestao", label: "Sugestão", icon: "bulb" },
+  { id: "elogio", label: "Elogio", icon: "heart" },
+  { id: "outro", label: "Outro", icon: "chat" },
+];
 
 type Status = { type: "idle" } | { type: "sending" } | { type: "sent" } | { type: "error"; message: string };
 
@@ -57,7 +59,7 @@ export function FeedbackButton() {
     }
   }
 
-  const field = "w-full rounded-[4px] border border-line bg-surface-2 px-3 py-2 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none";
+  const field = "w-full rounded-[4px] border border-line bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none";
 
   return (
     <>
@@ -66,9 +68,9 @@ export function FeedbackButton() {
         onClick={open}
         aria-label="Dê seu feedback"
         title="Dê seu feedback"
-        className="fixed bottom-4 right-4 z-40 flex size-14 items-center justify-center rounded-full border border-accent-line bg-surface text-accent shadow-lg shadow-black/40 transition hover:scale-105 hover:bg-accent hover:text-accent-ink"
+        className="fixed bottom-4 right-4 z-40 flex size-12 items-center justify-center rounded-full border border-accent-line bg-surface text-accent shadow-[var(--float-shadow)] transition md:size-14 hover:scale-105 hover:bg-accent hover:text-accent-ink"
       >
-        <svg viewBox="0 0 24 24" aria-hidden className="size-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" aria-hidden className="size-6 md:size-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 9v-1a3 3 0 0 1 6 0v1" />
           <path d="M8 9h8a6 6 0 0 1 1 3v3a5 5 0 0 1-10 0v-3a6 6 0 0 1 1-3" />
           <path d="M3 13h4M17 13h4M12 20v-6M4 19l3.35-2M20 19l-3.35-2M4 7l3.75 2.4M20 7l-3.75 2.4" />
@@ -77,71 +79,85 @@ export function FeedbackButton() {
 
       <dialog
         ref={dialogRef}
+        aria-label="Enviar feedback"
         onClick={(e) => e.target === dialogRef.current && dialogRef.current?.close()}
-        className="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-card border border-line-strong bg-surface p-0 text-text backdrop:bg-black/60"
+        className="m-auto w-[min(92vw,26rem)] rounded-card border border-line-strong bg-surface-2 p-0 text-text shadow-2xl shadow-black/70 backdrop:bg-black/70"
       >
         {status.type === "sent" ? (
-          <div className="space-y-4 p-6 text-center">
-            <p className="font-display text-2xl font-bold uppercase text-accent">Valeu!</p>
-            <p className="text-sm text-text-2">Recebi seu feedback e vou ler com carinho.</p>
-            <button type="button" onClick={() => dialogRef.current?.close()} className="h-9 rounded-[4px] border border-line px-4 text-sm font-medium hover:border-accent hover:text-accent">
+          <div className="p-6 text-center">
+            <span aria-hidden className="mx-auto flex size-14 items-center justify-center rounded-full border border-accent-line bg-accent-soft text-accent">
+              <Icon name="check" className="size-7" />
+            </span>
+            <p className="mt-4 font-display text-2xl font-bold uppercase">Valeu!</p>
+            <p className="mt-1 text-sm text-text-2">Recebi seu feedback e vou ler com carinho.</p>
+            <button type="button" onClick={() => dialogRef.current?.close()} className={`${buttonStyles.secondary} mt-5 px-4 py-2 max-md:min-h-11`}>
               Fechar
             </button>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-4 p-5">
-            <div className="flex items-start justify-between gap-3">
+          <form onSubmit={submit} className="p-4">
+            <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl font-bold uppercase">Feedback</h2>
-                <p className="text-xs text-text-2">Achou um bug ou tem uma ideia? Conta pra mim.</p>
+                <h2 className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide">
+                  <Icon name="chat" className="size-5 text-accent" />
+                  Feedback
+                </h2>
+                <p className="mt-1 text-xs text-muted">Achou um bug ou tem uma ideia? Conta pra mim.</p>
               </div>
-              <button type="button" onClick={() => dialogRef.current?.close()} aria-label="Fechar" className="text-xl leading-none text-muted hover:text-text">
+              <button type="button" onClick={() => dialogRef.current?.close()} aria-label="Fechar" className="-mr-1 p-1 text-2xl leading-none text-muted hover:text-text">
                 ×
               </button>
             </div>
 
-            <div role="group" aria-label="Tipo" className="flex flex-wrap gap-2">
-              {KINDS.map((k) => (
-                <button
-                  key={k.id}
-                  type="button"
-                  onClick={() => setKind(k.id)}
-                  aria-pressed={kind === k.id}
-                  className={`h-8 rounded-[4px] border px-3 text-sm font-medium transition ${
-                    kind === k.id ? "border-accent bg-accent text-accent-ink" : "border-line text-text-2 hover:border-accent hover:text-accent"
-                  }`}
-                >
-                  {k.label}
-                </button>
-              ))}
+            <div className="space-y-4">
+              <div role="group" aria-label="Tipo" className="flex flex-wrap gap-1.5">
+                {KINDS.map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    onClick={() => setKind(k.id)}
+                    aria-pressed={kind === k.id}
+                    className={`inline-flex items-center gap-1.5 rounded-[4px] border px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-wide transition max-md:min-h-11 ${
+                      kind === k.id ? "border-accent bg-accent text-accent-ink" : "border-line text-text-2 hover:border-accent hover:text-accent"
+                    }`}
+                  >
+                    <Icon name={k.icon} className="size-4" />
+                    {k.label}
+                  </button>
+                ))}
+              </div>
+
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-text-2">Mensagem</span>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
+                  minLength={5}
+                  maxLength={1500}
+                  rows={5}
+                  placeholder={kind === "bug" ? "O que aconteceu? Em que jogo ou página?" : "Escreve aqui…"}
+                  className={`${field} resize-y`}
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-text-2">
+                  Contato <span className="font-normal text-muted">(opcional, para eu poder te responder)</span>
+                </span>
+                <input value={contact} onChange={(e) => setContact(e.target.value)} maxLength={120} placeholder="E-mail ou @" className={field} />
+              </label>
+              <input value={website} onChange={(e) => setWebsite(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-0 opacity-0" />
+
+              {status.type === "error" && (
+                <p role="alert" className="flex items-start gap-2 rounded-[4px] border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+                  <Icon name="alert" className="mt-0.5 size-4 shrink-0" />
+                  {status.message}
+                </p>
+              )}
+              <button type="submit" disabled={status.type === "sending"} className={`${buttonStyles.primary} w-full disabled:opacity-60`}>
+                {status.type === "sending" ? "Enviando…" : "Enviar feedback"}
+              </button>
             </div>
-
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              required
-              minLength={5}
-              maxLength={1500}
-              rows={5}
-              placeholder={kind === "bug" ? "O que aconteceu? Em que jogo ou página?" : "Escreve aqui…"}
-              className={`${field} resize-y`}
-              aria-label="Mensagem"
-            />
-            <input value={contact} onChange={(e) => setContact(e.target.value)} maxLength={120} placeholder="E-mail ou @ para resposta (opcional)" className={field} aria-label="Contato (opcional)" />
-            <input value={website} onChange={(e) => setWebsite(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-0 opacity-0" />
-
-            {status.type === "error" && (
-              <p className="text-sm text-danger" role="alert">
-                {status.message}
-              </p>
-            )}
-            <button
-              type="submit"
-              disabled={status.type === "sending"}
-              className="h-10 w-full rounded-[4px] bg-accent font-display text-sm font-bold uppercase tracking-wider text-accent-ink transition hover:brightness-110 disabled:opacity-60"
-            >
-              {status.type === "sending" ? "Enviando…" : "Enviar"}
-            </button>
           </form>
         )}
       </dialog>

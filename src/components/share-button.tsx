@@ -98,7 +98,7 @@ export function ShareButton({ url, text, imageUrl, filename }: Props) {
         type="button"
         onClick={show}
         aria-haspopup="dialog"
-        className="inline-flex items-center gap-2 rounded-[4px] border border-line-strong bg-bg/60 px-3 py-1.5 text-sm font-medium text-text transition hover:border-accent hover:text-accent"
+        className="inline-flex items-center gap-2 rounded-[4px] border border-line-strong bg-bg/60 px-3 py-1.5 max-md:min-h-11 text-sm font-medium text-text transition hover:border-accent hover:text-accent"
       >
         <Icon name="share" className="size-4" />
         Compartilhar

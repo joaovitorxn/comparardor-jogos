@@ -67,7 +67,7 @@ export function WhatsNew() {
         onClick={show}
         aria-haspopup="dialog"
         aria-label={hasNew ? "Novidades (tem novidade que você ainda não viu)" : "Novidades"}
-        className="relative flex shrink-0 items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
+        className="relative after:absolute after:-inset-2 after:content-[''] flex shrink-0 items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
       >
         <Icon name="sparkles" className="size-5" />
         <span className="hidden lg:inline">Novidades</span>

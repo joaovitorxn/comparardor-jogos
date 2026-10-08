@@ -17,7 +17,8 @@
 
   --text: #e8eaef;
   --text-2: #a5acba;
-  --muted: #727b8c;
+  --muted: #8a93a3;
+  --float-shadow: 0 6px 12px rgb(0 0 0 / 0.5);
 
   --accent: #b6f03c;
   --accent-ink: #0b0d12;
@@ -145,4 +146,10 @@ body {
   .skeleton::after {
     animation: none;
   }
+}
+
+/* botão "Me apoie" do Ko-fi: vive num iframe (e tem uma versão própria para celular, "-mobi"), então a sombra vai no contêiner, igual à dos outros botões flutuantes */
+.floatingchat-container-wrap,
+.floatingchat-container-wrap-mobi {
+  filter: drop-shadow(0 6px 6px rgb(0 0 0 / 0.5));
 }

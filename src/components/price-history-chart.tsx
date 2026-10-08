@@ -133,6 +133,19 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
     setHoverT(start + ratio * (now - start));
   }
 
+  // teclado: setas percorrem o período, Home/End vão às pontas e Esc fecha o tooltip
+  function onKey(e: React.KeyboardEvent<SVGSVGElement>) {
+    const stepMs = (now - start) / 40;
+    const at = hoverT ?? now;
+    if (e.key === "ArrowLeft") setHoverT(Math.max(start, at - stepMs));
+    else if (e.key === "ArrowRight") setHoverT(Math.min(now, at + stepMs));
+    else if (e.key === "Home") setHoverT(start);
+    else if (e.key === "End") setHoverT(now);
+    else if (e.key === "Escape") setHoverT(null);
+    else return;
+    e.preventDefault();
+  }
+
   function toggle(store: string) {
     setShown((prev) => {
       const next = new Set(prev);
@@ -172,7 +185,7 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggle(s.store)}
-                className={`flex items-center gap-2 rounded-[3px] border px-2 py-1 text-xs transition ${
+                className={`flex items-center gap-2 rounded-[3px] border px-2 py-1 text-xs max-md:min-h-10 transition ${
                   on ? "border-line-strong bg-surface-2 text-text" : "border-line text-muted hover:border-line-strong hover:text-text-2"
                 }`}
               >
@@ -189,7 +202,7 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
               type="button"
               aria-pressed={range === r.id}
               onClick={() => setRange(r.id)}
-              className={`rounded-[3px] px-2.5 py-1 font-display text-sm font-semibold uppercase tracking-wide transition ${
+              className={`rounded-[3px] px-2.5 py-1 max-md:min-h-10 font-display text-sm font-semibold uppercase tracking-wide transition ${
                 range === r.id ? "bg-surface-3 text-text" : "text-muted hover:text-text"
               }`}
             >
@@ -201,7 +214,15 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
 
       <div ref={wrapRef} className="relative" style={{ height: HEIGHT }}>
         {width > 0 && (
-          <svg width={width} height={HEIGHT} role="img" aria-label="Histórico do menor preço entre as lojas">
+          <svg
+            width={width}
+            height={HEIGHT}
+            role="img"
+            tabIndex={0}
+            onKeyDown={onKey}
+            onBlur={() => setHoverT(null)}
+            aria-label={`Histórico do menor preço entre as lojas, de ${dateFmt.format(start)} até hoje.${low ? ` Menor: ${formatCents(low.cents)}.` : ""}${best.length ? ` Atual: ${formatCents(best[best.length - 1][1])}.` : ""} Use as setas do teclado para percorrer o período.`}
+          >
             {yTicks.map((v) => (
               <g key={v}>
                 <line x1={M.left} x2={width - M.right} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeWidth={1} />
@@ -315,7 +336,7 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
       )}
 
       <details className="mt-3 border-t border-line pt-3 text-sm">
-        <summary className="cursor-pointer text-xs text-muted hover:text-text">Ver resumo por loja</summary>
+        <summary className="cursor-pointer text-xs text-muted hover:text-text max-md:py-3.5">Ver resumo por loja</summary>
         <div className="overflow-x-auto">
           <table className="mt-3 w-full min-w-[28rem] text-left text-xs">
             <thead className="text-muted">

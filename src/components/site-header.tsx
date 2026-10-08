@@ -60,7 +60,7 @@ export function SiteHeader() {
         <Link
           href="/minha-lista"
           aria-label="Wishlist"
-          className="flex shrink-0 items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
+          className="relative after:absolute after:-inset-2 after:content-[''] flex shrink-0 items-center gap-2 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
         >
           <svg viewBox="0 0 24 24" aria-hidden className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
             <path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9Z" />
@@ -74,7 +74,7 @@ export function SiteHeader() {
         <Link
           key={item.href}
           href={item.href}
-          className={`flex items-center justify-center gap-1.5 rounded-[4px] border py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition ${
+          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-[4px] border py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition ${
             item.highlight ? "border-accent-line bg-accent-soft text-accent" : "border-transparent text-text-2 hover:text-text"
           }`}
         >

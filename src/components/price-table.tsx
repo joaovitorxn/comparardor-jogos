@@ -73,7 +73,7 @@ export function PriceTable({ offers }: { offers: OfferRow[] }) {
               data-game={listing.gameId}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className={`col-span-2 md:col-span-1 ${isBest ? buttonStyles.primarySm : buttonStyles.secondary}`}
+              className={`col-span-2 max-md:min-h-11 md:col-span-1 ${isBest ? buttonStyles.primarySm : buttonStyles.secondary}`}
             >
               {isBest ? "Comprar" : "Ver na loja"} <span aria-hidden>↗</span>
             </a>

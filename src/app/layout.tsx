@@ -52,11 +52,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${barlow.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        {/* só aparece quando recebe o foco do teclado: pula o cabeçalho e vai direto ao conteúdo */}
+        <a
+          href="#conteudo"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-[4px] focus:bg-accent focus:px-3 focus:py-2 focus:font-display focus:text-sm focus:font-bold focus:uppercase focus:tracking-wide focus:text-accent-ink"
+        >
+          Pular para o conteúdo
+        </a>
         <SiteHeader />
         <div className="mx-auto flex h-10 w-full max-w-7xl items-center justify-end px-4 lg:px-6">
           <LiveVisitors />
         </div>
-        <main className="flex-1">{children}</main>
+        <main id="conteudo" tabIndex={-1} className="flex-1 focus:outline-none">
+          {children}
+        </main>
         <footer className="mt-16 border-t border-line bg-surface">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-xs text-muted sm:flex-row sm:items-start sm:justify-between lg:px-6">
             <Link href="/" className="flex items-center gap-2 text-text-2">

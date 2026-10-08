@@ -18,6 +18,8 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const stripRef = useRef<HTMLDivElement>(null);
+  // quem abriu o lightbox: o foco volta para lá ao fechar (alguns navegadores não devolvem sozinhos)
+  const openerRef = useRef<HTMLElement | null>(null);
 
   const current = items[active];
   // a miniatura da Steam é pequena demais para o palco; a primeira screenshot vira a capa do trailer
@@ -40,7 +42,6 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
   useEffect(() => {
     if (lightbox == null) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(null);
       if (e.key === "ArrowRight") stepLightbox(1);
       if (e.key === "ArrowLeft") stepLightbox(-1);
     };
@@ -60,7 +61,10 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
         ) : (
           <button
             type="button"
-            onClick={() => setLightbox(screenshotIndex)}
+            onClick={(e) => {
+              openerRef.current = e.currentTarget;
+              setLightbox(screenshotIndex);
+            }}
             aria-label="Ampliar imagem"
             className="group absolute inset-0 cursor-zoom-in"
           >
@@ -91,13 +95,12 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
       </div>
 
       {/* faixa de miniaturas */}
-      <div ref={stripRef} className="flex gap-2 overflow-x-auto p-2 [scrollbar-width:thin]" role="listbox" aria-label="Imagens e vídeos">
+      <div ref={stripRef} className="flex gap-2 overflow-x-auto p-2 [scrollbar-width:thin]" role="group" aria-label="Imagens e vídeos">
         {items.map((item, i) => (
           <button
             key={item.id}
             type="button"
-            role="option"
-            aria-selected={i === active}
+            aria-current={i === active ? "true" : undefined}
             aria-label={item.type === "video" ? `Trailer: ${item.title ?? ""}` : `Screenshot ${i - videos.length + 1}`}
             onClick={() => select(i)}
             className={`relative aspect-video w-32 shrink-0 overflow-hidden rounded-[3px] border-2 transition sm:w-36 ${
@@ -119,26 +122,41 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
       </div>
 
       {lightbox != null && (
-        <div
-          role="dialog"
-          aria-modal
+        // <dialog> nativo: o foco vai para dentro ao abrir, fica preso nele, Esc fecha e o foco volta ao botão que abriu
+        <dialog
+          ref={(el) => {
+            if (el && !el.open) el.showModal();
+          }}
+          onClose={() => {
+            setLightbox(null);
+            openerRef.current?.focus();
+          }}
+          onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
           aria-label={`Screenshot ${lightbox + 1} de ${screenshots.length}`}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
-          onClick={() => setLightbox(null)}
+          className="fixed inset-0 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center bg-black/95 p-4 text-white backdrop:bg-black"
         >
-          <div className="relative aspect-video w-full max-w-6xl" onClick={(e) => e.stopPropagation()}>
+          <div className="relative aspect-video w-full max-w-6xl">
             <Image src={screenshots[lightbox].url} alt="" fill sizes="100vw" className="object-contain" priority />
           </div>
-          <button type="button" aria-label="Anterior" onClick={(e) => (e.stopPropagation(), stepLightbox(-1))} className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-4 py-3 text-2xl text-white hover:bg-white/20">
+          <button
+            type="button"
+            autoFocus
+            aria-label="Fechar"
+            onClick={(e) => e.currentTarget.closest("dialog")?.close()}
+            className="absolute right-4 top-4 flex size-11 items-center justify-center rounded-full bg-white/10 text-2xl leading-none text-white hover:bg-white/20"
+          >
+            ×
+          </button>
+          <button type="button" aria-label="Anterior" onClick={() => stepLightbox(-1)} className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-4 py-3 text-2xl text-white hover:bg-white/20">
             ‹
           </button>
-          <button type="button" aria-label="Próxima" onClick={(e) => (e.stopPropagation(), stepLightbox(1))} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-4 py-3 text-2xl text-white hover:bg-white/20">
+          <button type="button" aria-label="Próxima" onClick={() => stepLightbox(1)} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-4 py-3 text-2xl text-white hover:bg-white/20">
             ›
           </button>
           <span className="absolute bottom-4 text-sm text-white/70">
             {lightbox + 1} / {screenshots.length} · Esc para fechar
           </span>
-        </div>
+        </dialog>
       )}
     </div>
   );

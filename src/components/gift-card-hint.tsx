@@ -22,7 +22,7 @@ export function GiftCardButton({ family, shortOnMobile = false }: { family: stri
       target="_blank"
       rel="noopener noreferrer sponsored"
       style={{ color: BRAND_COLORS[family], "--brand": BRAND_COLORS[family] } as React.CSSProperties}
-      className="inline-flex items-center justify-center gap-2 rounded-[4px] border border-line-strong bg-surface-2 px-3 py-1.5 text-xs font-semibold transition hover:border-[color:var(--brand)] hover:brightness-110"
+      className="inline-flex items-center justify-center gap-2 rounded-[4px] border border-line-strong bg-surface-2 px-3 py-1.5 text-xs font-semibold max-md:min-h-11 transition hover:border-[color:var(--brand)] hover:brightness-110"
     >
       <PlatformIcon family={family} className="size-4 shrink-0" />
       <span>

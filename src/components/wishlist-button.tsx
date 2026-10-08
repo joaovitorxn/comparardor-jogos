@@ -10,7 +10,7 @@ export function WishlistButton({ gameId }: { gameId: number }) {
       type="button"
       aria-pressed={saved}
       onClick={() => (saved ? remove(gameId) : add(gameId))}
-      className={`inline-flex items-center gap-2 rounded-[4px] border px-3 py-1.5 text-sm font-medium transition ${
+      className={`inline-flex items-center gap-2 rounded-[4px] border px-3 py-1.5 max-md:min-h-11 text-sm font-medium transition ${
         saved ? "border-accent-line bg-accent-soft text-accent" : "border-line-strong bg-bg/60 text-text hover:border-accent hover:text-accent"
       }`}
     >

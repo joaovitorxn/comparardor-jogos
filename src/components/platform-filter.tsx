@@ -44,7 +44,7 @@ export function PlatformFilter({
               type="button"
               aria-pressed={active === o.id}
               onClick={() => setPref(o.id)}
-              className={`rounded-[4px] border px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-wide transition ${
+              className={`rounded-[4px] border px-3 py-1.5 max-md:min-h-11 font-display text-sm font-semibold uppercase tracking-wide transition ${
                 active === o.id ? "border-accent bg-accent text-accent-ink" : "border-line text-text-2 hover:border-accent hover:text-accent"
               }`}
             >
