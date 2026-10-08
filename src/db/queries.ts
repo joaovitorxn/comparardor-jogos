@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { isLightHero } from "@/lib/hero-light";
 import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
@@ -243,7 +244,20 @@ function isUnreleased(game: DealGame, now: Date): boolean {
 export async function getShowcaseImages(ids: number[]): Promise<Map<number, { headerUrl: string | null; backgroundUrl: string | null }>> {
   if (!ids.length) return new Map();
   const rows = await db.select({ id: games.id, headerUrl: games.headerUrl, backgroundUrl: games.backgroundUrl }).from(games).where(inArray(games.id, ids));
-  return new Map(rows.map((r) => [r.id, r]));
+
+  // arte com o lado direito quase branco fica estranha no banner: nesses jogos usa a primeira captura de tela no lugar
+  const light = await Promise.all(rows.map((r) => (r.backgroundUrl ? isLightHero(r.backgroundUrl).catch(() => false) : false)));
+  const lightIds = rows.filter((_, i) => light[i]).map((r) => r.id);
+  const shots = new Map<number, string>();
+  if (lightIds.length) {
+    const media = await db
+      .select({ gameId: gameMedia.gameId, url: gameMedia.url })
+      .from(gameMedia)
+      .where(and(inArray(gameMedia.gameId, lightIds), eq(gameMedia.type, "screenshot")))
+      .orderBy(asc(gameMedia.position));
+    for (const m of media) if (!shots.has(m.gameId)) shots.set(m.gameId, m.url);
+  }
+  return new Map(rows.map((r, i) => [r.id, { headerUrl: r.headerUrl, backgroundUrl: light[i] ? (shots.get(r.id) ?? r.backgroundUrl) : r.backgroundUrl }]));
 }
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */
