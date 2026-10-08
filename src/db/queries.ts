@@ -240,24 +240,15 @@ function isUnreleased(game: DealGame, now: Date): boolean {
   return date != null && date > now;
 }
 
-/** Imagens grandes (cabeçalho e fundo) dos jogos do banner da home, que não vêm na lista de promoções. */
-export async function getShowcaseImages(ids: number[]): Promise<Map<number, { headerUrl: string | null; backgroundUrl: string | null }>> {
+/**
+ * Imagens grandes (cabeçalho e fundo) dos jogos do banner da home, que não vêm na lista de promoções. `lightHero`: a arte
+ * de fundo tem o lado direito claro e liso (um degradê branco), que o banner precisa esconder para não destoar do tema escuro.
+ */
+export async function getShowcaseImages(ids: number[]): Promise<Map<number, { headerUrl: string | null; backgroundUrl: string | null; lightHero: boolean }>> {
   if (!ids.length) return new Map();
   const rows = await db.select({ id: games.id, headerUrl: games.headerUrl, backgroundUrl: games.backgroundUrl }).from(games).where(inArray(games.id, ids));
-
-  // arte com o lado direito quase branco fica estranha no banner: nesses jogos usa a primeira captura de tela no lugar
   const light = await Promise.all(rows.map((r) => (r.backgroundUrl ? isLightHero(r.backgroundUrl).catch(() => false) : false)));
-  const lightIds = rows.filter((_, i) => light[i]).map((r) => r.id);
-  const shots = new Map<number, string>();
-  if (lightIds.length) {
-    const media = await db
-      .select({ gameId: gameMedia.gameId, url: gameMedia.url })
-      .from(gameMedia)
-      .where(and(inArray(gameMedia.gameId, lightIds), eq(gameMedia.type, "screenshot")))
-      .orderBy(asc(gameMedia.position));
-    for (const m of media) if (!shots.has(m.gameId)) shots.set(m.gameId, m.url);
-  }
-  return new Map(rows.map((r, i) => [r.id, { headerUrl: r.headerUrl, backgroundUrl: light[i] ? (shots.get(r.id) ?? r.backgroundUrl) : r.backgroundUrl }]));
+  return new Map(rows.map((r, i) => [r.id, { ...r, lightHero: light[i] }]));
 }
 
 /** Todos os jogos em promoção, para a home escolher destaques e pré-vendas sem repetir consultas. */

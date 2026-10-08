@@ -33,6 +33,7 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
     title: d.game.title,
     headerUrl: images.get(d.game.id)?.headerUrl ?? null,
     backgroundUrl: images.get(d.game.id)?.backgroundUrl ?? null,
+    lightHero: images.get(d.game.id)?.lightHero ?? false,
     bestPriceCents: d.bestPriceCents,
     regularPriceCents: d.regularPriceCents,
     maxDiscount: d.maxDiscount,

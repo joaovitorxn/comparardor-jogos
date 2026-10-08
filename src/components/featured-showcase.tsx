@@ -16,6 +16,8 @@ export interface ShowcaseItem {
   title: string;
   headerUrl: string | null;
   backgroundUrl: string | null;
+  /** Arte de fundo com o lado direito claro e liso: fica alinhada à esquerda e some em degradê para o fundo escuro. */
+  lightHero: boolean;
   bestPriceCents: number | null;
   regularPriceCents: number | null;
   maxDiscount: number;
@@ -23,6 +25,9 @@ export interface ShowcaseItem {
 }
 
 const ROTATE_MS = 6500;
+// arte com o desenho de um lado e um degradê branco do outro (library hero da Steam): alinha o desenho à esquerda e apaga a
+// parte clara em degradê, sem trocar a imagem
+const FADE_RIGHT = "object-left [mask-image:linear-gradient(to_right,#000_52%,transparent_92%)] [-webkit-mask-image:linear-gradient(to_right,#000_52%,transparent_92%)]";
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 function subscribeReducedMotion(onChange: () => void) {
@@ -70,7 +75,7 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
                 alt=""
                 fill
                 sizes="(min-width: 1024px) 66vw, 0px"
-                className="hidden object-cover transition duration-700 group-hover:scale-[1.02] lg:block"
+                className={`hidden object-cover transition duration-700 group-hover:scale-[1.02] lg:block ${deal.lightHero ? FADE_RIGHT : ""}`}
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-transparent" />
