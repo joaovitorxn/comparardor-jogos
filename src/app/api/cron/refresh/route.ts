@@ -26,7 +26,9 @@ async function run() {
   // a função serverless morre aos 300s e, se isso acontecer, nada depois dela roda (nem a limpeza de cache):
   // por isso as etapas só começam enquanto houver folga, e os alertas e a limpeza de cache ficam sempre garantidos
   const budget = (seconds: number) => Date.now() < startedAt + seconds * 1000;
-  const summary = await refreshPrices({ maxPerStore: 800, maxHistory: 150, maxIgdb: 300, deadline: startedAt + 200_000 });
+  // olderThanMinutes 45: o robô roda de hora em hora e uma rodada dura ~3 min; com o corte padrão de 60 min, o que foi
+  // verificado no fim da rodada anterior ainda não contava como "velho" e só era visto duas horas depois
+  const summary = await refreshPrices({ olderThanMinutes: 45, maxPerStore: 800, maxHistory: 150, maxIgdb: 300, deadline: startedAt + 200_000 });
   // pré-vendas com desconto entram no catálogo; uma falha aqui não derruba a atualização
   const preorders = budget(215) ? await syncPreorders().catch(() => -1) : null;
   // exclusivos de PlayStation e Nintendo entram aos poucos (poucos por execução)

@@ -1,3 +1,4 @@
+import { pickForRefresh } from "@/lib/refresh-order";
 import { and, asc, eq, gt, inArray, isNotNull, isNull, like, lt, or, sql } from "drizzle-orm";
 import { collectors, getCollector } from "@/collectors";
 import { getGogOfferById } from "@/collectors/gog";
@@ -646,7 +647,9 @@ export async function syncItadHistory({ gameIds, maxAgeHours = 24, limit, deadli
 /** Atualiza preços das listagens não verificadas há mais de `olderThanMinutes`. */
 /** A PS Store não tem API: lemos páginas, então com bem menos frequência e em lotes pequenos. */
 const STORE_MIN_AGE_MINUTES: Record<string, number> = { psstore: 12 * 60 };
-const STORE_MAX_PER_RUN: Record<string, number> = { psstore: 40 };
+// limite próprio de cada loja (vale no lugar do geral). A Steam aceita 50 jogos por chamada: o catálogo inteiro (~3,3 mil) leva
+// ~65 chamadas e cerca de 30 s, então ela é verificada por inteiro a cada rodada. A PS Store espera 1,5 s por jogo, daí o limite baixo
+const STORE_MAX_PER_RUN: Record<string, number> = { psstore: 40, steam: 4000 };
 
 export interface RefreshLimits {
   /** Máximo de listagens por loja nesta execução (as mais desatualizadas primeiro). */
@@ -675,7 +678,7 @@ export async function refreshPrices({
   const over = () => deadline != null && Date.now() > deadline;
   const cutoff = new Date(Date.now() - olderThanMinutes * 60_000);
   const stale = await db
-    .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId, lastCheckedAt: listings.lastCheckedAt })
+    .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId, lastCheckedAt: listings.lastCheckedAt, discount: listings.priceDiscountPercent })
     .from(listings)
     .where(
       and(
@@ -691,8 +694,8 @@ export async function refreshPrices({
     [...Map.groupBy(stale, (l) => l.store)].map(([s, rows]) => {
       const minAge = (STORE_MIN_AGE_MINUTES[s] ?? 0) * 60_000;
       const due = rows.filter((r) => !r.storeProductId.startsWith("itad:") && (!minAge || !r.lastCheckedAt || now - r.lastCheckedAt.getTime() > minAge));
-      const cap = Math.min(maxPerStore ?? Infinity, STORE_MAX_PER_RUN[s] ?? Infinity);
-      return [s, due.slice(0, cap)];
+      const cap = STORE_MAX_PER_RUN[s] ?? maxPerStore ?? Infinity;
+      return [s, pickForRefresh(due, cap)];
     }),
   );
   /** `ms`: quanto a etapa demorou. */
