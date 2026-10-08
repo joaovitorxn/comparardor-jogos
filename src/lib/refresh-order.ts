@@ -15,3 +15,11 @@ export function pickForRefresh<T extends { discount: number | null }>(rows: T[],
   }
   return rows.filter((r) => picked.has(r));
 }
+
+/** O preço lido na loja é igual ao que já está gravado na oferta? (então basta marcar a oferta como verificada) */
+export function isSamePrice(
+  current: { priceCents: number | null; priceRegularCents: number | null; priceCurrency: string | null },
+  price: { priceCents: number; regularPriceCents: number; currency: string },
+): boolean {
+  return current.priceCents === price.priceCents && current.priceRegularCents === price.regularPriceCents && current.priceCurrency === price.currency;
+}

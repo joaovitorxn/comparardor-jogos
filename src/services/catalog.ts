@@ -1,4 +1,4 @@
-import { pickForRefresh } from "@/lib/refresh-order";
+import { isSamePrice, pickForRefresh } from "@/lib/refresh-order";
 import { and, asc, eq, gt, inArray, isNotNull, isNull, like, lt, or, sql } from "drizzle-orm";
 import { collectors, getCollector } from "@/collectors";
 import { getGogOfferById } from "@/collectors/gog";
@@ -677,6 +677,14 @@ export interface RefreshLimits {
  * Os limites deixam cada execução curta (cabe numa função serverless); com execuções
  * frequentes, o catálogo inteiro é coberto em rodízio.
  */
+/** Marca várias ofertas como verificadas agora, em lotes (um UPDATE por lote em vez de um por oferta). */
+async function markChecked(ids: number[]) {
+  const now = new Date();
+  for (let i = 0; i < ids.length; i += 400) {
+    await db.update(listings).set({ lastCheckedAt: now, updatedAt: now }).where(inArray(listings.id, ids.slice(i, i + 400)));
+  }
+}
+
 export async function refreshPrices({
   olderThanMinutes = 60,
   store,
@@ -688,7 +696,7 @@ export async function refreshPrices({
   const over = () => deadline != null && Date.now() > deadline;
   const cutoff = new Date(Date.now() - olderThanMinutes * 60_000);
   const stale = await db
-    .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId, lastCheckedAt: listings.lastCheckedAt, discount: listings.priceDiscountPercent })
+    .select({ id: listings.id, store: listings.store, storeProductId: listings.storeProductId, lastCheckedAt: listings.lastCheckedAt, discount: listings.priceDiscountPercent, priceCents: listings.priceCents, priceRegularCents: listings.priceRegularCents, priceCurrency: listings.priceCurrency })
     .from(listings)
     .where(
       and(
@@ -737,11 +745,20 @@ export async function refreshPrices({
     const started = Date.now();
     try {
       const prices = await collector.fetchPrices(rows.map((r) => r.storeProductId));
-      // o que já foi lido é gravado mesmo que o tempo tenha acabado no meio
-      for (const row of rows) {
-        if (!prices.has(row.storeProductId)) continue;
-        summary[storeId].checked++;
-        if (await recordPrice(row.id, prices.get(row.storeProductId) ?? null)) summary[storeId].changed++;
+      // o que já foi lido é gravado mesmo que o tempo tenha acabado no meio. Quase tudo continua com o mesmo preço: essas
+      // ofertas só são marcadas como verificadas, em lotes (um UPDATE por oferta levava ~90 s só para a Steam); só as que
+      // mudaram passam por recordPrice
+      const unchanged: number[] = [];
+      try {
+        for (const row of rows) {
+          if (!prices.has(row.storeProductId)) continue;
+          summary[storeId].checked++;
+          const price = prices.get(row.storeProductId) ?? null;
+          if (price == null || isSamePrice(row, price)) unchanged.push(row.id);
+          else if (await recordPrice(row.id, price)) summary[storeId].changed++;
+        }
+      } finally {
+        await markChecked(unchanged);
       }
     } catch (err) {
       summary[storeId].error = String(err);
