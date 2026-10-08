@@ -5,7 +5,7 @@ import { GiftCardStrip } from "@/components/gift-card-hint";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { StoreLogo } from "@/components/store-logo";
 import { SectionHeader } from "@/components/ui";
-import { getDealPool, getShowcaseImages, pickCheapestDeals, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
+import { getDealPool, getRecentReleases, getShowcaseImages, pickCheapestDeals, pickFeaturedDeals, pickPreorderDeals } from "@/db/queries";
 import { BRAND } from "@/lib/brand";
 import { SITE_URL } from "@/lib/site";
 import { STORES, type PlatformFamilyId } from "@/lib/stores";
@@ -18,9 +18,16 @@ function SeeAll({ href, label }: { href: string; label: string }) {
   );
 }
 
+/** "Lançou hoje", "Lançou ontem" ou "Lançou há N dias" (o dia do lançamento vem em ms). */
+function launchLabel(releasedAt: number): string {
+  const days = Math.max(0, Math.floor((Date.now() - releasedAt) / 86_400_000));
+  return days === 0 ? "Lançou hoje" : days === 1 ? "Lançou ontem" : `Lançou há ${days} dias`;
+}
+
 /** Página inicial; com `platforms`, só as ofertas dessas plataformas (a versão normal passa lista vazia). */
 export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyId[] }) {
-  const pool = await getDealPool(platforms);
+  const [pool, releases] = await Promise.all([getDealPool(platforms), getRecentReleases(platforms, { limit: 12 })]);
+  const releasedAt = new Map(releases.map((r) => [r.game.id, r.releasedAt]));
   const dealCount = pool.length;
   const cheap = pickCheapestDeals(pool, 24);
   const featuredDeals = pickFeaturedDeals(pool, 18);
@@ -81,6 +88,13 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
         <section>
           <SectionHeader id="ofertas" title="Promos imperdíveis" icon="flame" aside={<SeeAll href="/ofertas" label={`Ver todas as ${dealCount} ofertas`} />} />
           <GameGrid games={deals} />
+        </section>
+      )}
+
+      {releases.length >= 4 && (
+        <section>
+          <SectionHeader id="acabou-de-sair" title="Acabou de sair" icon="sparkles" aside="Principais lançamentos dos últimos 30 dias" />
+          <GameGrid games={releases} releaseLabel={(c) => (releasedAt.has(c.game.id) ? launchLabel(releasedAt.get(c.game.id)!) : undefined)} />
         </section>
       )}
 

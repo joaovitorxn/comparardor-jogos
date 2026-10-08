@@ -7,7 +7,7 @@ import { fetchPsConcept, psOffer } from "@/collectors/psstore";
 import { fetchXboxProducts } from "@/collectors/xbox";
 import { fetchConsoleExclusives, fetchIgdbDetails, igdbImageUrl, isIgdbConfigured, lookupIgdbIds, type IgdbExclusive } from "@/collectors/igdb";
 import { fetchItadHistory, fetchItadPrices, isItadConfigured, ITAD_STORES, lookupItadIds } from "@/collectors/itad";
-import { fetchDeckStatus, fetchPreorderDealAppIds, getSteamGameDetails } from "@/collectors/steam";
+import { fetchDeckStatus, fetchPreorderDealAppIds, fetchUserReviews, getSteamGameDetails } from "@/collectors/steam";
 import type { OfferPrice, StoreOffer } from "@/collectors/types";
 import { db } from "@/db";
 import { gameMedia, games, listings, priceHistory, priceSnapshots, skippedGames, type Game } from "@/db/schema";
@@ -789,6 +789,44 @@ export async function refreshPrices({
   }
 
   return summary;
+}
+
+/**
+ * Atualiza as avaliações dos jogadores (Steam): primeiro os nunca consultados; depois os lançamentos dos últimos 60 dias,
+ * que mudam rápido, uma vez por dia; os demais a cada 14 dias. Poucos por rodada e devagar.
+ */
+export async function syncUserReviews({ limit = 50, deadline }: { limit?: number; deadline?: number } = {}) {
+  const now = Date.now();
+  const DAY = 86_400_000;
+  const rows = await db
+    .select({ id: games.id, steamAppId: games.steamAppId, releaseDate: games.releaseDate, checkedAt: games.userReviewsCheckedAt })
+    .from(games)
+    .where(isNotNull(games.steamAppId));
+  const due = rows
+    .filter((r) => {
+      if (!r.checkedAt) return true;
+      const released = parseReleaseDate(r.releaseDate)?.getTime();
+      const recent = released != null && released <= now && now - released < 60 * DAY;
+      return now - r.checkedAt.getTime() > (recent ? 1 : 14) * DAY;
+    })
+    .sort((a, b) => (a.checkedAt?.getTime() ?? 0) - (b.checkedAt?.getTime() ?? 0))
+    .slice(0, limit);
+  let checked = 0;
+  for (const g of due) {
+    if (deadline != null && Date.now() > deadline) break;
+    try {
+      const reviews = await fetchUserReviews(g.steamAppId!);
+      if (reviews) {
+        await db.update(games).set({ userScore: reviews.percent, userReviewCount: reviews.total, userReviewsCheckedAt: new Date() }).where(eq(games.id, g.id));
+        checked++;
+      }
+    } catch (err) {
+      // bloqueio da loja: para a rodada e tenta de novo na próxima
+      if (err instanceof HttpError && (err.status === 403 || err.status === 429)) break;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return checked;
 }
 
 /**

@@ -303,6 +303,17 @@ export const steamCollector: StoreCollector = {
   },
 };
 
+/** Avaliações dos jogadores na Steam: % de positivas e total (percent é null sem avaliações). Devolve null se a consulta falhar. */
+export async function fetchUserReviews(appId: number): Promise<{ percent: number | null; total: number } | null> {
+  const res = await fetchJson<{ success?: number; query_summary?: { total_positive?: number; total_reviews?: number } }>(
+    `https://store.steampowered.com/appreviews/${appId}?json=1&language=all&purchase_type=all&num_per_page=0`,
+  );
+  const total = res.query_summary?.total_reviews;
+  const positive = res.query_summary?.total_positive;
+  if (res.success !== 1 || typeof total !== "number" || typeof positive !== "number") return null;
+  return { percent: total > 0 ? Math.round((positive / total) * 100) : null, total };
+}
+
 /**
  * Compatibilidade com o Steam Deck, segundo a Valve (a mesma consulta que a loja usa): 3 = Verificado,
  * 2 = Jogável, 1 = Não suportado, 0 = ainda sem análise. Devolve null se a consulta falhar.

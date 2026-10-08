@@ -81,6 +81,10 @@ export const games = sqliteTable(
     /** Steam Deck, segundo a Valve: 3 = Verificado, 2 = Jogável, 1 = Não suportado, 0 = ainda sem análise. Null = não consultado. */
     deckStatus: integer("deck_status"),
     deckCheckedAt: integer("deck_checked_at", { mode: "timestamp" }),
+    /** Avaliações dos jogadores na Steam: % de positivas (0–100) e quantas avaliações. Null = ainda não consultado ou sem avaliações. */
+    userScore: integer("user_score"),
+    userReviewCount: integer("user_review_count"),
+    userReviewsCheckedAt: integer("user_reviews_checked_at", { mode: "timestamp" }),
     platforms: text("platforms", { mode: "json" }).$type<string[]>().notNull().default([]),
     gameModes: text("game_modes", { mode: "json" }).$type<string[]>().notNull().default([]),
     themes: text("themes", { mode: "json" }).$type<string[]>().notNull().default([]),

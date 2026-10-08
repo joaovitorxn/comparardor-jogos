@@ -5,6 +5,8 @@ import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { onePerFranchise } from "@/lib/franchise";
+import { launchScore } from "@/lib/launch-score";
+import { blendedQuality } from "@/lib/quality";
 import { parseReleaseDate } from "@/lib/release-date";
 import { compareOffers, offerFamilies, PLATFORM_FAMILIES, type PlatformFamilyId } from "@/lib/stores";
 import { normalizeTitle } from "@/lib/text";
@@ -59,6 +61,8 @@ const dealGameColumns = {
   criticRating: games.criticRating,
   criticRatingCount: games.criticRatingCount,
   metacritic: games.metacritic,
+  userScore: games.userScore,
+  userReviewCount: games.userReviewCount,
   historyLowCents: games.historyLowCents,
   developers: games.developers,
   publishers: games.publishers,
@@ -204,11 +208,9 @@ function releaseYear(text: string | null): number | null {
   return m ? Number(m[0]) : null;
 }
 
-/** Qualidade do jogo (0-100): nota da crítica; com pouca crítica a nota é puxada para 60, e sem nota fica em 55. */
+/** Qualidade do jogo (0-100): crítica e jogadores juntos (ver blendedQuality); sem nota nenhuma fica em 55. */
 function qualityOf(game: DealGame): number {
-  const rating = game.criticRating ?? game.metacritic;
-  const trust = Math.min(1, (game.criticRatingCount ?? (game.metacritic ? 5 : 0)) / 5);
-  return rating != null ? 60 + (rating - 60) * trust : 55;
+  return blendedQuality(game);
 }
 
 /** Nota mínima para um jogo contar como "bom" nos destaques. */
@@ -316,6 +318,77 @@ async function getPlatformDeals(platforms: PlatformFamilyId[]): Promise<GameSumm
       },
     ];
   });
+}
+
+const DAY_MS = 86_400_000;
+
+export interface ReleaseSummary extends GameSummary {
+  /** Dia do lançamento (timestamp em ms). */
+  releasedAt: number;
+}
+
+/**
+ * Jogos lançados nos últimos `days` dias que estão à venda, do mais relevante para o menos (ver launchScore). Com
+ * `platforms`, só contam as ofertas dessas plataformas. Exportada separada do cache para poder ser testada e medida.
+ */
+export async function computeRecentReleases(platforms: PlatformFamilyId[], days: number): Promise<ReleaseSummary[]> {
+  const now = Date.now();
+  const all = await db.select(dealGameColumns).from(games).where(isNotNull(games.releaseDate));
+  const recent = all.flatMap((g) => {
+    const at = parseReleaseDate(g.releaseDate)?.getTime();
+    return at != null && at <= now && now - at <= days * DAY_MS ? [{ game: g, at }] : [];
+  });
+  if (!recent.length) return [];
+
+  const offers: Awaited<ReturnType<typeof latestPrices>> = [];
+  for (let i = 0; i < recent.length; i += 500) offers.push(...(await latestPrices(recent.slice(i, i + 500).map((r) => r.game.id))));
+  const mine = platforms.length ? offers.filter((p) => offerFamilies(p.listing).some((f) => platforms.includes(f))) : offers;
+  const byGame = Map.groupBy(mine, (p) => p.listing.gameId);
+
+  const ranked = recent.flatMap(({ game, at }) => {
+    const list = byGame.get(game.id);
+    if (!list?.length) return [];
+    const best = list.reduce((acc, o) => (compareOffers({ cents: o.snapshot.priceCents, store: o.listing.store }, { cents: acc.snapshot.priceCents, store: acc.listing.store }) < 0 ? o : acc));
+    const stores = [...new Set(list.map((o) => o.listing.store))];
+    const families = familiesOf(list);
+    const summary: ReleaseSummary = {
+      game,
+      releasedAt: at,
+      bestPriceCents: best.snapshot.priceCents,
+      regularPriceCents: best.snapshot.regularPriceCents,
+      maxDiscount: Math.max(0, ...list.map((o) => o.snapshot.discountPercent)),
+      storeCount: list.length,
+      bestStore: best.listing.store,
+      bestPlatform: best.listing.platform,
+      families,
+      stores,
+    };
+    const score = launchScore({
+      maxRegularCents: Math.max(0, ...list.map((o) => o.snapshot.regularPriceCents)),
+      families: families.length,
+      stores: stores.length,
+      quality: qualityOf(game),
+      reviews: game.userReviewCount ?? 0,
+    });
+    return [{ summary, score }];
+  });
+  return ranked.sort((a, b) => b.score - a.score || b.summary.releasedAt - a.summary.releasedAt).map((r) => r.summary);
+}
+
+/** Cache compartilhado (como o das promoções): a lista só muda com o robô de preços, que expira a mesma etiqueta. */
+const sharedRecent = unstable_cache(
+  async (key: string, days: number) => computeRecentReleases((key ? key.split("-") : []) as PlatformFamilyId[], days),
+  ["recent-releases"],
+  { revalidate: 3600, tags: ["deal-pool"] },
+);
+
+/**
+ * Os `limit` lançamentos mais relevantes dos últimos `days` dias (a pontuação escolhe quais entram), mostrados do mais
+ * recente para o mais antigo.
+ */
+export async function getRecentReleases(platforms: PlatformFamilyId[] = [], { limit = 12, days = 30 }: { limit?: number; days?: number } = {}): Promise<ReleaseSummary[]> {
+  const top = (await sharedRecent(platforms.join("-"), days)).slice(0, limit);
+  return top.sort((x, y) => y.releasedAt - x.releasedAt || x.game.id - y.game.id);
 }
 
 /** Pré-vendas com desconto, do maior desconto para o menor, as mais próximas do lançamento primeiro no empate. */

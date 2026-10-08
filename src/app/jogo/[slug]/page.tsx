@@ -21,6 +21,7 @@ import { StoreName } from "@/components/store-logo";
 import { TimeToBeatCard } from "@/components/time-to-beat";
 import { ShareButton } from "@/components/share-button";
 import { WishlistButton } from "@/components/wishlist-button";
+import { UserScoreInline } from "@/components/user-score";
 import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
@@ -318,7 +319,10 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
               ))}
             </div>
             <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">{game.title}</h1>
-            <p className="mt-3 text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p className="text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
+              {game.userScore != null && (game.userReviewCount ?? 0) >= 10 && <UserScoreInline percent={game.userScore} count={game.userReviewCount!} />}
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <WishlistButton gameId={game.id} />
               <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/cartao`} filename={`dropou-${game.slug}.jpg`} />
