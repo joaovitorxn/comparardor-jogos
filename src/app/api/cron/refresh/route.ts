@@ -3,7 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { after, type NextRequest } from "next/server";
 import { DEAL_POOL_TAG } from "@/db/queries";
 import { checkPriceAlerts } from "@/services/alerts";
-import { refreshPrices, syncDeckStatus, syncExclusives, syncPreorders } from "@/services/catalog";
+import { refreshPrices, slugsWithNewPrices, syncDeckStatus, syncExclusives, syncPreorders } from "@/services/catalog";
 
 // atualizar o catálogo inteiro pode levar alguns minutos
 export const maxDuration = 300;
@@ -37,13 +37,16 @@ async function run() {
   const deck = budget(235) ? await syncDeckStatus({ limit: 40, deadline: startedAt + 255_000 }).catch(() => -1) : null;
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
-  // preços novos: descarta o cache da home. As páginas de jogo não: cada regeneração é uma escrita de ISR
-  // (200 mil/mês no plano gratuito da Vercel) e elas já se renovam sozinhas (revalidate da página)
+  // preços novos: descarta o cache da home
   revalidatePath("/");
   // a lista de promoções (home e ofertas) é refeita no próximo acesso; até lá serve a anterior
   revalidateTag(DEAL_POOL_TAG, "max");
+  // páginas de jogo: só as que tiveram preço gravado nesta rodada (renovar todas, de hora em hora, gastou o limite de escritas
+  // de ISR da Vercel). As demais já se renovam sozinhas a cada 6 horas (revalidate da página)
+  const changed = await slugsWithNewPrices(new Date(startedAt)).catch(() => [] as string[]);
+  for (const slug of changed.slice(0, 2000)) revalidatePath(`/jogo/${slug}`);
 
-  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), summary, preorders, exclusives, deck, alerts };
+  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), pagesRevalidated: changed.length, summary, preorders, exclusives, deck, alerts };
 }
 
 /**
@@ -54,6 +57,13 @@ async function run() {
 export async function GET(request: NextRequest) {
   if (!authorized(request.headers.get("authorization"), process.env.CRON_SECRET)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+  // ?all=1: descarta o cache de todas as páginas de jogo de uma vez (uso manual, depois de uma correção de dados em massa)
+  if (request.nextUrl.searchParams.get("all") === "1") {
+    revalidatePath("/jogo/[slug]", "page");
+    revalidatePath("/");
+    revalidateTag(DEAL_POOL_TAG, "max");
+    return Response.json({ ok: true, revalidated: "all" });
   }
   if (request.nextUrl.searchParams.get("wait") === "1") return Response.json(await run());
 

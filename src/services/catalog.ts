@@ -14,6 +14,16 @@ import { gameMedia, games, listings, priceHistory, priceSnapshots, skippedGames,
 import { isDifferentGame, parseReleaseDate } from "@/lib/release-date";
 import { normalizeTitle, slugify } from "@/lib/text";
 
+/** Slugs dos jogos que tiveram algum preço gravado desde `since`: são as páginas de jogo que precisam ser renovadas. */
+export async function slugsWithNewPrices(since: Date): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ slug: games.slug })
+    .from(listings)
+    .innerJoin(games, eq(games.id, listings.gameId))
+    .where(gt(listings.priceCapturedAt, since));
+  return rows.map((r) => r.slug);
+}
+
 /** Grava um snapshot só se o preço mudou desde o último — mantém o histórico enxuto. */
 export async function recordPrice(listingId: number, price: OfferPrice | null) {
   const now = new Date();
