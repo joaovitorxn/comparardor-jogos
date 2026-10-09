@@ -418,7 +418,9 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
         </div>
 
         {/* celular: capa pequena ao lado do título, para o preço aparecer cedo; a partir de sm, capa grande à esquerda */}
-        <div className="relative mx-auto grid max-w-7xl grid-cols-[6.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 px-4 pb-6 pt-10 sm:grid-cols-[auto_minmax(0,1fr)] sm:grid-rows-[1fr_auto] sm:gap-x-6 sm:gap-y-3 sm:pb-8 lg:px-6 lg:pt-28">
+        <div className="relative mx-auto max-w-7xl px-4 pb-6 pt-10 sm:pb-8 lg:grid lg:grid-cols-[minmax(0,32.5rem)_minmax(0,1fr)] lg:items-end lg:gap-6 lg:px-6 lg:pt-28">
+        {/* imagens e vídeos ficam à esquerda (computador) ou abaixo (celular) da capa e do título */}
+        <div className="grid min-w-0 grid-cols-[6.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:grid-rows-[1fr_auto] sm:gap-x-6 sm:gap-y-3">
           <div className="relative aspect-[2/3] w-full shrink-0 self-end overflow-hidden rounded-card border border-line-strong bg-surface shadow-2xl shadow-black/60 sm:row-span-2 sm:w-48 lg:w-56">
             <CoverImage src={game.coverUrl} title={game.title} sizes="224px" priority />
           </div>
@@ -429,7 +431,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
                 <Tag key={g}>{g}</Tag>
               ))}
             </div>
-            <h1 className="font-display text-3xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">{game.title}</h1>
+            <h1 className="font-display text-3xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl xl:text-6xl">{game.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               <p className="text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
               {game.userScore != null && (game.userReviewCount ?? 0) >= 10 && <UserScoreInline percent={game.userScore} count={game.userReviewCount!} />}
@@ -439,6 +441,12 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             <WishlistButton gameId={game.id} />
             <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/cartao`} filename={`dropou-${game.slug}.jpg`} />
           </div>
+        </div>
+        {(screenshots.length > 0 || videos.length > 0) && (
+          <div className="mt-6 min-w-0 shadow-2xl shadow-black/50 lg:order-first lg:mt-0">
+            <MediaGallery screenshots={screenshots} videos={videos} title={game.title} storeUrl={steamUrl} />
+          </div>
+        )}
         </div>
       </header>
 
@@ -484,19 +492,18 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </div>
           )}
 
-          {(screenshots.length > 0 || videos.length > 0) && (
-            <section>
-              <SectionHeader title="Imagens e vídeos" icon="photo" aside={[videos.length && `${videos.length} ${videos.length === 1 ? "trailer" : "trailers"}`, `${screenshots.length} imagens`].filter(Boolean).join(" · ")} />
-              <MediaGallery screenshots={screenshots} videos={videos} title={game.title} storeUrl={steamUrl} />
-            </section>
-          )}
-
           {game.shortDescription && (
             <section>
               <SectionHeader title="Sobre o jogo" icon="book" />
-              <p className="max-w-3xl text-base leading-relaxed text-text-2">{game.shortDescription}</p>
+              <p className="max-w-[62ch] text-pretty text-[17px] leading-8 text-text-2">{game.shortDescription}</p>
             </section>
           )}
+
+          {/* celular: a ficha do jogo vem logo depois do "Sobre o jogo" (no computador ela fica na coluna ao lado) */}
+          <div className="space-y-4 lg:hidden">
+            <DetailsPanel data={data} />
+            {game.languages?.length ? <LanguagesPanel languages={game.languages} /> : null}
+          </div>
 
           {game.requirements && (
             <section>
@@ -528,10 +535,6 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </section>
           )}
 
-          <div className="space-y-4 lg:hidden">
-            <DetailsPanel data={data} />
-            {game.languages?.length ? <LanguagesPanel languages={game.languages} /> : null}
-          </div>
         </div>
       </div>
     </article>

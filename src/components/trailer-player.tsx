@@ -12,13 +12,15 @@ interface Props {
   poster: string | null;
   title: string;
   fallbackUrl: string | null;
+  /** Começa sozinho e sem som (só o primeiro trailer da galeria). Ignorado com "reduzir movimento" ou economia de dados. */
+  autoplayMuted?: boolean;
 }
 
 /**
  * Trailers da Steam são HLS. Safari/iOS tocam nativamente; nos outros navegadores
  * usamos o hls.js, carregado só quando a pessoa aperta play (não pesa no carregamento da página).
  */
-export function TrailerPlayer({ src, poster, title, fallbackUrl }: Props) {
+export function TrailerPlayer({ src, poster, title, fallbackUrl, autoplayMuted = false }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "playing" | "error">("idle");
@@ -31,9 +33,10 @@ export function TrailerPlayer({ src, poster, title, fallbackUrl }: Props) {
     };
   }, [src]);
 
-  async function play() {
+  async function play(muted = false) {
     const video = videoRef.current;
     if (!video) return;
+    video.muted = muted;
     // trailers da Steam vêm masterizados alto — sempre começam em 30%
     video.volume = INITIAL_VOLUME;
     setState("loading");
@@ -61,9 +64,28 @@ export function TrailerPlayer({ src, poster, title, fallbackUrl }: Props) {
     } catch (err) {
       // play() rejeitado por interrupção (ex.: trocou de mídia) não é erro de reprodução
       if (err instanceof DOMException && err.name === "AbortError") return;
+      // autoplay barrado pelo navegador: volta ao botão de play, sem mensagem de erro
+      if (muted && err instanceof DOMException && err.name === "NotAllowedError") {
+        hlsRef.current?.destroy();
+        hlsRef.current = null;
+        setState("idle");
+        return;
+      }
       setState("error");
     }
   }
+
+  // autoplay mudo ao abrir a página; a pessoa liga o som nos controles do vídeo
+  useEffect(() => {
+    if (!autoplayMuted) return;
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+    if (saveData || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // no próximo quadro (e cancelável): o React em desenvolvimento monta o efeito duas vezes
+    const id = requestAnimationFrame(() => void play(true));
+    return () => cancelAnimationFrame(id);
+    // roda só na montagem
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="relative size-full bg-black">
@@ -78,7 +100,7 @@ export function TrailerPlayer({ src, poster, title, fallbackUrl }: Props) {
 
       {state !== "playing" && (
         <div className="absolute inset-0">
-          {poster && <Image src={poster} alt="" fill sizes="(min-width: 1024px) 860px, 100vw" className="object-cover" />}
+          {poster && <Image src={poster} alt="" fill sizes="(min-width: 1024px) 520px, 100vw" className="object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
 
           {state === "error" ? (
@@ -93,7 +115,7 @@ export function TrailerPlayer({ src, poster, title, fallbackUrl }: Props) {
           ) : (
             <button
               type="button"
-              onClick={play}
+              onClick={() => play()}
               disabled={state === "loading"}
               aria-label={`Reproduzir trailer: ${title}`}
               className="group absolute inset-0 flex items-center justify-center"

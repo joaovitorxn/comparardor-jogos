@@ -45,8 +45,8 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <p className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-text group-hover:text-accent">{game.title}</p>
-        <div className="mt-auto flex items-end justify-between gap-2">
-          <div className="min-w-0">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5">
+          <div>
             {bestPriceCents == null ? (
               <span className="text-sm text-muted">Sem preço</span>
             ) : (

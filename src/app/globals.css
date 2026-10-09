@@ -152,6 +152,26 @@ body {
   animation: skeleton-shimmer 1.5s linear infinite;
   will-change: transform;
 }
+/* barra de rolagem fina e arredondada, na cor do site (faixa de miniaturas da galeria) */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  height: 6px;
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+  margin-inline: 8px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+.scroll-slim::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
 /* janelinhas que abrem ao lado de um botão (ex.: selo do Steam Deck): surgem de leve, vindo do botão */
 @keyframes popover-in {
   from {

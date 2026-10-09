@@ -16,6 +16,8 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
   // trailers primeiro, como na Steam; o palco abre no primeiro item
   const items = [...videos, ...screenshots];
   const [active, setActive] = useState(0);
+  // só o trailer que abre com a página toca sozinho; os que a pessoa escolhe esperam o play
+  const [interacted, setInteracted] = useState(false);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   // quem abriu o lightbox: o foco volta para lá ao fechar (alguns navegadores não devolvem sozinhos)
@@ -29,6 +31,7 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
     (index: number) => {
       const next = (index + items.length) % items.length;
       setActive(next);
+      setInteracted(true);
       stripRef.current?.children[next]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     },
     [items.length],
@@ -57,7 +60,7 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
       {/* palco */}
       <div className="relative aspect-video bg-black">
         {current.type === "video" ? (
-          <TrailerPlayer key={current.id} src={current.url} poster={poster} title={current.title ?? "Trailer"} fallbackUrl={storeUrl} />
+          <TrailerPlayer key={current.id} src={current.url} poster={poster} title={current.title ?? "Trailer"} fallbackUrl={storeUrl} autoplayMuted={!interacted && active === 0} />
         ) : (
           <button
             type="button"
@@ -68,7 +71,7 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
             aria-label="Ampliar imagem"
             className="group absolute inset-0 cursor-zoom-in"
           >
-            <Image src={current.url} alt={`Screenshot ${screenshotIndex + 1} de ${title}`} fill sizes="(min-width: 1024px) 860px, 100vw" className="object-cover" />
+            <Image src={current.url} alt={`Screenshot ${screenshotIndex + 1} de ${title}`} fill sizes="(min-width: 1024px) 520px, 100vw" className="object-cover" />
           </button>
         )}
 
@@ -95,7 +98,7 @@ export function MediaGallery({ screenshots, videos, title, storeUrl }: Props) {
       </div>
 
       {/* faixa de miniaturas */}
-      <div ref={stripRef} className="flex gap-2 overflow-x-auto p-2 [scrollbar-width:thin]" role="group" aria-label="Imagens e vídeos">
+      <div ref={stripRef} className="scroll-slim flex gap-2 overflow-x-auto p-2" role="group" aria-label="Imagens e vídeos">
         {items.map((item, i) => (
           <button
             key={item.id}
