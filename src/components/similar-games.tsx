@@ -27,8 +27,8 @@ export function SimilarGames({ games }: { games: SimilarGameView[] }) {
                   <span className="absolute inset-0 flex items-end p-2 text-xs font-semibold text-muted">{g.name}</span>
                 )}
                 {g.discountPercent > 0 && (
-                  <span className="absolute left-0 top-2">
-                    <DiscountBadge percent={g.discountPercent} className="rounded-l-none pl-1.5 shadow-md shadow-black/60" />
+                  <span className="absolute left-0 top-2 [filter:drop-shadow(0_3px_4px_rgb(0_0_0/0.6))]">
+                    <DiscountBadge percent={g.discountPercent} className="rounded-l-none pl-1.5" />
                   </span>
                 )}
               </span>

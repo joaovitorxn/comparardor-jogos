@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { GameGrid } from "@/components/game-card";
+import { GameCard, GameGrid } from "@/components/game-card";
+import { PriceList } from "@/components/price-list";
+import { ScrollRow } from "@/components/scroll-row";
 import { GenreTiles } from "@/components/genre-tiles";
 import { JsonLd } from "@/components/json-ld";
 import { GiftCardStrip } from "@/components/gift-card-hint";
@@ -95,14 +97,22 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
       {releases.length >= 4 && (
         <section>
           <SectionHeader id="acabou-de-sair" title="Acabou de sair" icon="sparkles" aside="Principais lançamentos dos últimos 30 dias" />
-          <GameGrid games={releases} releaseLabel={(c) => (releasedAt.has(c.game.id) ? launchLabel(releasedAt.get(c.game.id)!) : undefined)} />
+          <ScrollRow label="Lançamentos dos últimos 30 dias">
+            {releases.map((c) => (
+              <li key={c.game.id} className="flex w-40 shrink-0 snap-start sm:w-44">
+                <div className="flex w-full flex-col [&>a]:flex-1">
+                  <GameCard summary={c} releaseLabel={releasedAt.has(c.game.id) ? launchLabel(releasedAt.get(c.game.id)!) : undefined} />
+                </div>
+              </li>
+            ))}
+          </ScrollRow>
         </section>
       )}
 
       {cheapest.length > 0 && (
         <section>
           <SectionHeader id="menores-precos" title="Quase de graça" icon="coin" aside={<SeeAll href="/ofertas?ordem=preco" label="Ver todas as ofertas" />} />
-          <GameGrid games={cheapest} />
+          <PriceList games={cheapest} />
         </section>
       )}
 
@@ -120,16 +130,12 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
 
       <section>
         <SectionHeader id="lojas" title="Lojas monitoradas" icon="store" aside={`${stores.filter((s) => s.status === "active").length} de ${stores.length} ativas`} />
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <ul className="flex flex-wrap items-center gap-x-8 gap-y-4">
           {stores.map((s) => (
-            <li key={s.id} className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
+            <li key={s.id} className={`flex items-center gap-2.5 ${s.status === "active" ? "" : "opacity-50"}`}>
               <StoreLogo store={s.id} size={32} />
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">{s.name}</span>
-                <span className={`text-xs ${s.status === "active" ? "text-accent" : "text-muted"}`}>
-                  {s.status === "active" ? "Comparando" : "Em breve"}
-                </span>
-              </span>
+              <span className="text-sm font-medium">{s.name}</span>
+              {s.status !== "active" && <span className="text-xs text-muted">em breve</span>}
             </li>
           ))}
         </ul>

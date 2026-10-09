@@ -14,22 +14,24 @@ export function SectionHeader({ title, aside, id, icon }: { title: string; aside
   );
 }
 
-export function DiscountBadge({ percent, size = "md", className = "" }: { percent: number; size?: "sm" | "md" | "lg" | "xl"; className?: string }) {
-  const sizes = { sm: "px-1 text-xs", md: "px-1.5 py-0.5 text-sm", lg: "px-2 py-0.5 text-lg", xl: "px-2.5 py-1 text-2xl" };
+export function DiscountBadge({ percent, size = "md", className = "" }: { percent: number; size?: "sm" | "md" | "lg" | "xl" | "hero"; className?: string }) {
+  const sizes = { sm: "px-1 text-xs", md: "px-1.5 py-0.5 text-sm", lg: "px-2 py-0.5 text-lg", xl: "px-2.5 py-1 text-2xl", hero: "px-3 pb-1 pt-0.5 text-6xl lg:text-7xl" };
   return (
-    <span className={`tabular inline-block rounded-[3px] bg-accent font-display font-bold leading-tight text-accent-ink ${sizes[size]} ${className}`}>
+    <span className={`drop-tag tabular inline-block rounded-l-[3px] bg-accent font-display font-bold leading-tight text-accent-ink ${sizes[size]} ${className}`}>
       -{percent}%
     </span>
   );
 }
 
-export function Tag({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "accent" }) {
+export function Tag({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "accent" | "warn" }) {
   const tones = {
-    neutral: "border-line text-text-2",
+    // três níveis: neutro (informação, sem borda), accent (destaque suave) e warn (aviso); o cheio em verde fica só para desconto e ação
+    neutral: "border-transparent bg-surface-3 text-text-2",
     accent: "border-accent-line bg-accent-soft text-accent",
+    warn: "border-warn-line bg-warn-soft text-warn",
   };
   return (
-    <span className={`inline-flex items-center rounded-[3px] border px-1.5 py-px text-[11px] font-medium leading-4 ${tones[tone]}`}>
+    <span className={`inline-flex items-center rounded-[3px] border px-1.5 py-px text-xs font-medium leading-4 ${tones[tone]}`}>
       {children}
     </span>
   );
@@ -59,3 +61,6 @@ export const buttonStyles = {
   secondary:
     "inline-flex items-center justify-center gap-2 rounded-[4px] border border-line-strong bg-surface-2 px-3 py-1.5 text-xs font-medium text-text transition hover:border-accent hover:text-accent",
 };
+
+/** Cabeçalho discreto dos cartões de apoio (ficha, tempo para zerar, idiomas): informação de consulta, sem chamar atenção. */
+export const quietHeader = "flex items-center gap-2 border-b border-line px-5 py-2.5 font-display text-xs font-semibold uppercase tracking-[0.15em] text-muted";

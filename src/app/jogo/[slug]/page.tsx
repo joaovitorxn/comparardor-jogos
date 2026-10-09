@@ -24,7 +24,9 @@ import { TimeToBeatCard } from "@/components/time-to-beat";
 import { ShareButton } from "@/components/share-button";
 import { WishlistButton } from "@/components/wishlist-button";
 import { UserScoreInline } from "@/components/user-score";
-import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader, Tag } from "@/components/ui";
+import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, quietHeader, SectionHeader, Tag } from "@/components/ui";
+import { CollapsibleSection } from "@/components/collapsible-section";
+import { MobileBuyBar } from "@/components/mobile-buy-bar";
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { lightImage } from "@/lib/images";
@@ -113,6 +115,35 @@ const IGDB_PLATFORM_IDS: Record<string, string[]> = {
   "Switch 2": ["switch2"],
 };
 
+/** Barra compacta da melhor oferta, para o rodapé do celular (ver MobileBuyBar). */
+function BestOfferBar({ best }: { best: GamePageData["offers"][number] }) {
+  const snapshot = best.snapshot!;
+  const storeName = getStore(best.listing.store)?.name ?? best.listing.store;
+  return (
+    <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          {snapshot.discountPercent > 0 && <DiscountBadge percent={snapshot.discountPercent} size="sm" />}
+          <span className="truncate text-xs text-text-2">na {storeName}</span>
+        </div>
+        <PriceText cents={best.finalCents!} className="font-display text-3xl font-bold leading-none text-accent" />
+      </div>
+      <a
+        href={best.listing.url}
+        data-track="buy"
+        data-store={best.listing.store}
+        data-game={best.listing.gameId}
+        target="_blank"
+        rel="noopener noreferrer sponsored"
+        aria-label={`Comprar na ${storeName}`}
+        className={`${buttonStyles.primary} min-h-12 shrink-0 px-6`}
+      >
+        Comprar <span aria-hidden>↗</span>
+      </a>
+    </div>
+  );
+}
+
 /** Cartão do "Melhor drop" de uma oferta: loja, preço, botão de compra e alerta. */
 function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData["offers"][number] }) {
   const snapshot = best.snapshot!;
@@ -130,12 +161,17 @@ function BestOfferCard({ data, best }: { data: GamePageData; best: GamePageData[
         </div>
         <div>
           {snapshot.discountPercent > 0 && (
-            <div className="mb-1 flex items-center gap-2">
-              <DiscountBadge percent={snapshot.discountPercent} />
+            <div className="mb-2 flex items-center gap-3">
+              <DiscountBadge percent={snapshot.discountPercent} size="xl" />
               <span className="tabular text-sm text-muted line-through">{formatCents(snapshot.regularPriceCents)}</span>
             </div>
           )}
           <PriceText cents={best.finalCents!} className="font-display text-5xl font-bold leading-none text-accent" />
+          {best.finalCents! < snapshot.regularPriceCents && (
+            <p className="mt-2 text-sm text-text-2">
+              Você economiza <span className="tabular font-semibold text-accent">{formatCents(snapshot.regularPriceCents - best.finalCents!)}</span>
+            </p>
+          )}
           {best.listing.voucher && <p className="mt-2 text-xs text-coupon">Use o código {best.listing.voucher} no checkout</p>}
         </div>
         <div className="space-y-2">
@@ -175,9 +211,10 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
     used.set(chosen.listing.id, chosen);
   }
   const options = Object.fromEntries([...used].map(([id, offer]) => [id, <BestOfferCard key={id} data={data} best={offer} />]));
+  const bars = Object.fromEntries([...used].map(([id, offer]) => [id, <BestOfferBar key={id} best={offer} />]));
 
   return (
-    <div className="overflow-hidden rounded-card border border-line bg-surface">
+    <div id="melhor-drop" className="overflow-hidden rounded-card border border-line bg-surface">
       <BestOfferSwitch choices={choices} options={options} />
       <dl className="divide-y divide-line border-t border-line text-sm">
         {data.lastChecked && (
@@ -187,6 +224,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
           </div>
         )}
       </dl>
+      <MobileBuyBar choices={choices} options={bars} />
     </div>
   );
 }
@@ -196,8 +234,8 @@ function LanguagesPanel({ languages }: { languages: GameLanguage[] }) {
   const th = "px-2 py-2 text-center font-normal";
   return (
     <div className="rounded-card border border-line bg-surface">
-      <h2 className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
-        <Icon name="globe" className="size-4 text-accent" />
+      <h2 className={quietHeader}>
+        <Icon name="globe" className="size-4" />
         Idiomas
       </h2>
       <table className="w-full text-sm">
@@ -270,8 +308,8 @@ function DetailsPanel({ data }: { data: GamePageData }) {
   ].filter(([, v]) => v) as [string, string][];
   return (
     <div className="rounded-card border border-line bg-surface">
-      <h2 className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
-        <Icon name="list" className="size-4 text-accent" />
+      <h2 className={quietHeader}>
+        <Icon name="list" className="size-4" />
         Detalhes
       </h2>
       <dl className="divide-y divide-line text-sm">
@@ -379,31 +417,32 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           <div className="absolute inset-0 bg-gradient-to-r from-bg/80 via-bg/20 to-transparent" />
         </div>
 
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 pb-8 pt-16 sm:flex-row sm:items-end lg:px-6 lg:pt-28">
-          <div className="relative aspect-[2/3] w-36 shrink-0 overflow-hidden rounded-card border border-line-strong bg-surface shadow-2xl shadow-black/60 sm:w-48 lg:w-56">
+        {/* celular: capa pequena ao lado do título, para o preço aparecer cedo; a partir de sm, capa grande à esquerda */}
+        <div className="relative mx-auto grid max-w-7xl grid-cols-[6.5rem_minmax(0,1fr)] gap-x-4 gap-y-4 px-4 pb-6 pt-10 sm:grid-cols-[auto_minmax(0,1fr)] sm:grid-rows-[1fr_auto] sm:gap-x-6 sm:gap-y-3 sm:pb-8 lg:px-6 lg:pt-28">
+          <div className="relative aspect-[2/3] w-full shrink-0 self-end overflow-hidden rounded-card border border-line-strong bg-surface shadow-2xl shadow-black/60 sm:row-span-2 sm:w-48 lg:w-56">
             <CoverImage src={game.coverUrl} title={game.title} sizes="224px" priority />
           </div>
-          <div className="min-w-0 pb-1">
+          <div className="min-w-0 self-end">
             <div className="mb-3 flex flex-wrap gap-1.5">
               <DeckBadge status={game.deckStatus} />
               {game.genres.slice(0, 4).map((g) => (
                 <Tag key={g}>{g}</Tag>
               ))}
             </div>
-            <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">{game.title}</h1>
+            <h1 className="font-display text-3xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">{game.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               <p className="text-sm text-text-2">{[game.developers[0], game.releaseDate].filter(Boolean).join(" · ")}</p>
               {game.userScore != null && (game.userReviewCount ?? 0) >= 10 && <UserScoreInline percent={game.userScore} count={game.userReviewCount!} />}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <WishlistButton gameId={game.id} />
-              <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/cartao`} filename={`dropou-${game.slug}.jpg`} />
-            </div>
+          </div>
+          <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-1 sm:col-start-2">
+            <WishlistButton gameId={game.id} />
+            <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/cartao`} filename={`dropou-${game.slug}.jpg`} />
           </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-8 px-4 pb-24 pt-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-6 lg:pb-8">
         <aside className="space-y-4 lg:col-start-2 lg:row-start-1 lg:self-start">
           <BestOfferPanel data={data} />
           <BuyVerdictSwitch {...verdicts} />
@@ -461,8 +500,9 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
 
           {game.requirements && (
             <section>
-              <SectionHeader title="Requisitos para PC" icon="cpu" aside="Informados pela Steam" />
-              <Requirements requirements={game.requirements} />
+              <CollapsibleSection title="Requisitos para PC" icon="cpu" aside="Informados pela Steam">
+                <Requirements requirements={game.requirements} />
+              </CollapsibleSection>
             </section>
           )}
 

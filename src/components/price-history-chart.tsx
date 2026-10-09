@@ -255,10 +255,14 @@ export function PriceHistoryChart({ series, now }: { series: PriceSeries[]; now:
 
             {low && hoverT == null && (
               <g>
+                {/* a "queda": um fio do topo até o menor preço, terminando numa seta para baixo, a mesma ideia da logo */}
+                <line x1={x(low.t)} x2={x(low.t)} y1={M.top} y2={y(low.cents) - 9} stroke="var(--accent)" strokeOpacity={0.4} strokeWidth={1} strokeDasharray="3 3" />
+                <path d={`M${x(low.t) - 4.5} ${y(low.cents) - 13}h9l-4.5 6.5z`} fill="var(--accent)" />
                 <circle cx={x(low.t)} cy={y(low.cents)} r={4} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />
                 <text
                   x={Math.min(Math.max(x(low.t), M.left + 56), width - M.right - 56)}
-                  y={Math.max(y(low.cents) - 12, 12)}
+                  // o rótulo vai embaixo da bolinha para a seta ficar livre; se o ponto está colado no eixo, sobe e fica acima da seta
+                  y={y(low.cents) + 22 <= HEIGHT - M.bottom + 6 ? y(low.cents) + 22 : Math.max(y(low.cents) - 24, 12)}
                   textAnchor="middle"
                   // contorno na cor da superfície separa o rótulo da linha que ele cruza
                   paintOrder="stroke"

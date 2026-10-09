@@ -32,8 +32,8 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
           className="transition duration-500 group-hover:scale-[1.03]"
         />
         {maxDiscount > 0 && (
-          <span className="absolute left-0 top-3">
-            <DiscountBadge percent={maxDiscount} size="xl" className="rounded-l-none pl-2 shadow-lg shadow-black/60" />
+          <span className="absolute left-0 top-3 [filter:drop-shadow(0_4px_6px_rgb(0_0_0/0.6))]">
+            <DiscountBadge percent={maxDiscount} size="xl" className="rounded-l-none pl-2" />
           </span>
         )}
         {releaseLabel && (

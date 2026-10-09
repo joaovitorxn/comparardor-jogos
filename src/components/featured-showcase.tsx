@@ -84,8 +84,8 @@ export function FeaturedShowcase({ items }: { items: ShowcaseItem[] }) {
           <div key={`${deal.slug}-info`} className="relative -mt-8 flex min-h-[15rem] max-w-lg animate-[showcase-in_500ms_ease-out] flex-col justify-end gap-4 p-5 pt-0 sm:p-6 sm:pt-0 lg:mt-auto lg:min-h-0 lg:p-10">
             <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight lg:text-5xl">{deal.title}</h1>
             {deal.bestPriceCents != null && (
-              <div className="flex flex-wrap items-center gap-3">
-                {deal.maxDiscount > 0 && <DiscountBadge percent={deal.maxDiscount} size="lg" />}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {deal.maxDiscount > 0 && <DiscountBadge percent={deal.maxDiscount} size="hero" />}
                 <PriceText cents={deal.bestPriceCents} className="font-display text-4xl font-bold" />
                 {deal.regularPriceCents != null && deal.regularPriceCents > deal.bestPriceCents && (
                   <span className="tabular text-sm text-muted line-through">{formatCents(deal.regularPriceCents)}</span>

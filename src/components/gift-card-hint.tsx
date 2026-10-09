@@ -45,7 +45,7 @@ export function GiftCardStrip({ families }: { families: string[] }) {
         <Icon name="gift" className="size-5 shrink-0 text-accent" />
         <div className="min-w-0">
           <p className="font-display text-base font-bold uppercase leading-tight tracking-wide text-text">Aproveite os drops com Gift Cards</p>
-          <p className="text-[11px] text-muted">Comprando aqui você apoia o Dropou.</p>
+          <p className="text-xs text-muted">Comprando aqui você apoia o Dropou.</p>
         </div>
       </div>
       <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto">
@@ -79,7 +79,7 @@ export function GiftCardHint({ families }: { families: string[] }) {
           ))}
         </div>
       </div>
-      <p className="border-t border-line px-4 py-2 text-[11px] text-muted">Comprando aqui você apoia o Dropou.</p>
+      <p className="border-t border-line px-4 py-2 text-xs text-muted">Comprando aqui você apoia o Dropou.</p>
     </div>
   );
 }

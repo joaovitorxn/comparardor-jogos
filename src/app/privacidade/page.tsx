@@ -108,8 +108,8 @@ const sections: LegalSection[] = [
             <strong className="font-semibold text-text">Discord</strong>: recebe os feedbacks em um canal privado meu.
           </li>
           <li>
-            <strong className="font-semibold text-text">Ko-fi</strong>: o botão &ldquo;Me apoie&rdquo; carrega um script do Ko-fi (o Ko-fi recebe o endereço IP do seu navegador, como qualquer site
-            que você abre). Se você clicar nele, abre a janela de apoio do Ko-fi, que trata seus dados e o pagamento pela política dele. Não recebo nem guardo dados de pagamento.
+            <strong className="font-semibold text-text">Ko-fi</strong>: o botão &ldquo;Apoie o projeto&rdquo; do rodapé é um link comum para a página do Ko-fi: o site não carrega nenhum script dele. Se você clicar, o Ko-fi trata seus
+            dados e o pagamento pela política dele. Não recebo nem guardo dados de pagamento.
           </li>
           <li>
             <strong className="font-semibold text-text">Serviços de notificação</strong> do seu navegador, descritos acima.

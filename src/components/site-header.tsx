@@ -43,13 +43,13 @@ export function SiteHeader() {
               href={item.href}
               className={
                 item.highlight
-                  ? "flex items-center gap-1.5 rounded-[4px] border border-accent-line bg-accent-soft px-2.5 py-1 font-display text-sm font-semibold uppercase tracking-wider text-accent transition hover:bg-accent hover:text-accent-ink"
+                  ? "group flex items-center gap-1.5 rounded-[4px] border border-accent-line bg-accent-soft px-2.5 py-1 font-display text-sm font-semibold uppercase tracking-wider text-accent transition hover:bg-accent hover:text-accent-ink"
                   : "flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-text"
               }
             >
               <Icon name={item.icon} className="size-4" />
               {item.label}
-              {item.highlight && <span className="rounded-[3px] bg-accent px-1 text-[10px] font-bold leading-4 tracking-wider text-accent-ink">NOVO</span>}
+              {item.highlight && <span className="rounded-[3px] border border-accent-line px-1 text-[10px] font-bold leading-4 tracking-wider text-accent group-hover:border-accent-ink/40 group-hover:text-accent-ink">NOVO</span>}
             </Link>
           ))}
         </nav>
@@ -74,13 +74,13 @@ export function SiteHeader() {
         <Link
           key={item.href}
           href={item.href}
-          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-[4px] border py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition ${
+          className={`group flex min-h-10 items-center justify-center gap-1.5 rounded-[4px] border py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition ${
             item.highlight ? "border-accent-line bg-accent-soft text-accent" : "border-transparent text-text-2 hover:text-text"
           }`}
         >
           <Icon name={item.icon} className="size-4" />
           {item.label}
-          {item.highlight && <span className="rounded-[3px] bg-accent px-1 text-[10px] font-bold leading-4 tracking-wider text-accent-ink">NOVO</span>}
+          {item.highlight && <span className="rounded-[3px] border border-accent-line px-1 text-[10px] font-bold leading-4 tracking-wider text-accent group-hover:border-accent-ink/40 group-hover:text-accent-ink">NOVO</span>}
         </Link>
       ))}
       </nav>

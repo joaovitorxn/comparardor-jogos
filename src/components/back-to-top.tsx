@@ -26,7 +26,7 @@ export function BackToTop() {
 
   return (
     // faixa fixa no rodapé só para centralizar; o clique passa direto, exceto no botão
-    <div className="pointer-events-none fixed bottom-[4.75rem] right-4 z-40 md:inset-x-0 md:bottom-4 md:right-0 md:flex md:justify-center">
+    <div className="fab-top pointer-events-none fixed bottom-[4.75rem] right-4 z-40 md:inset-x-0 md:bottom-4 md:right-0 md:flex md:justify-center">
       <button
         type="button"
         onClick={toTop}

@@ -68,7 +68,7 @@ export function FeedbackButton() {
         onClick={open}
         aria-label="Dê seu feedback"
         title="Dê seu feedback"
-        className="fixed bottom-4 right-4 z-40 flex size-12 items-center justify-center rounded-full border border-accent-line bg-surface text-accent shadow-[var(--float-shadow)] transition md:size-14 hover:scale-105 hover:bg-accent hover:text-accent-ink"
+        className="fab-feedback fixed bottom-4 right-4 z-40 flex size-12 items-center justify-center rounded-full border border-accent-line bg-surface text-accent shadow-[var(--float-shadow)] transition md:size-14 hover:scale-105 hover:bg-accent hover:text-accent-ink"
       >
         <svg viewBox="0 0 24 24" aria-hidden className="size-6 md:size-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 9v-1a3 3 0 0 1 6 0v1" />

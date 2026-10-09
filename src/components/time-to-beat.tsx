@@ -1,6 +1,7 @@
 import type { TimeToBeat } from "@/db/schema";
 import { formatCents, formatDuration } from "@/lib/format";
 import { Icon } from "./icon";
+import { quietHeader } from "./ui";
 
 const ROWS = [
   { key: "hastily", label: "Só a história", hint: "jogando direto" },
@@ -17,8 +18,8 @@ export function TimeToBeatCard({ ttb, bestPriceCents }: { ttb: TimeToBeat; bestP
 
   return (
     <div className="rounded-card border border-line bg-surface">
-      <h2 className="border-b border-line px-5 py-3 flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
-        <Icon name="clock" className="size-4 text-accent" />
+      <h2 className={quietHeader}>
+        <Icon name="clock" className="size-4" />
         Tempo para zerar
       </h2>
       <dl className="space-y-3 px-5 py-4">
@@ -53,7 +54,7 @@ export function TimeToBeatCard({ ttb, bestPriceCents }: { ttb: TimeToBeat; bestP
           <span className="text-muted">Tempo informado por jogadores</span>
         )}
       </div>
-      <p className="border-t border-line px-5 py-2 text-[11px] text-muted">
+      <p className="border-t border-line px-5 py-2 text-xs text-muted">
         Média de {ttb.count} {ttb.count === 1 ? "jogador" : "jogadores"} no IGDB
       </p>
     </div>

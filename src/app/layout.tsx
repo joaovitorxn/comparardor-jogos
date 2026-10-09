@@ -6,7 +6,6 @@ import Link from "next/link";
 import { BetaNotice } from "@/components/beta-notice";
 import { ClickTracker } from "@/components/click-tracker";
 import { FeedbackButton } from "@/components/feedback-button";
-import { KofiButton } from "@/components/kofi-button";
 import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
 import { BRAND } from "@/lib/brand";
@@ -60,21 +59,33 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Pular para o conteúdo
         </a>
+        <BetaNotice />
         <SiteHeader />
-        <div className="mx-auto flex h-10 w-full max-w-7xl items-center justify-end px-4 lg:px-6">
-          <LiveVisitors />
-        </div>
         <main id="conteudo" tabIndex={-1} className="flex-1 focus:outline-none">
           {children}
         </main>
         <footer className="mt-16 border-t border-line bg-surface">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-xs text-muted sm:flex-row sm:items-start sm:justify-between lg:px-6">
-            <Link href="/" className="flex items-center gap-2 text-text-2">
-              <LogoMark className="size-5" />
-              <span className="font-display text-base font-bold uppercase tracking-wide">
-                {BRAND.name}
-              </span>
-            </Link>
+            <div className="flex flex-col gap-3">
+              <Link href="/" className="flex items-center gap-2 text-text-2">
+                <LogoMark className="size-5" />
+                <span className="font-display text-base font-bold uppercase tracking-wide">
+                  {BRAND.name}
+                </span>
+              </Link>
+              <LiveVisitors />
+              <a
+                href="https://ko-fi.com/dropou"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-fit items-center gap-2 rounded-[4px] bg-accent px-3 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-accent-ink transition hover:brightness-110"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden className="size-4" fill="currentColor">
+                  <path d="M12 21s-7.5-4.6-9.6-9.3A5.6 5.6 0 0 1 12 5.9a5.6 5.6 0 0 1 9.6 5.8C19.5 16.4 12 21 12 21Z" />
+                </svg>
+                Apoie o projeto
+              </a>
+            </div>
             <p className="max-w-xl leading-relaxed sm:text-right">
               Preços coletados das lojas e podem mudar sem aviso. Confira sempre
               na loja antes de comprar. Parte dos preços e do histórico vem da{" "}
@@ -136,9 +147,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </footer>
         <FeedbackButton />
-        <KofiButton />
         <ClickTracker />
-        <BetaNotice />
         <Analytics />
         <SpeedInsights />
       </body>

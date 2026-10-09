@@ -54,7 +54,7 @@ export function DeckBadge({ status }: { status: number | null }) {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex cursor-help items-center gap-1.5 rounded-[3px] border px-1.5 py-px text-[11px] font-semibold leading-4 ${
+        className={`inline-flex cursor-help items-center gap-1.5 rounded-[3px] border px-1.5 py-px text-xs font-semibold leading-4 ${
           verified ? "border-accent-line bg-accent-soft text-accent" : "border-warn-line bg-warn-soft text-warn"
         }`}
       >

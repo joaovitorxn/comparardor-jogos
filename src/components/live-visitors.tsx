@@ -76,11 +76,8 @@ export function LiveVisitors() {
 
   if (!state) return null;
   return (
-    // mesmo molde das etiquetas e botões do site: borda fina, cantos de 4px, fonte de título em caixa alta
-    <p
-      className="flex items-center gap-2 rounded-[4px] border border-line bg-surface px-2.5 py-1 font-display text-xs font-semibold uppercase tracking-wider text-text-2"
-      aria-live="polite"
-    >
+    // no rodapé: só o ponto pulsando e a frase, sem caixa
+    <p className="flex items-center gap-2 text-xs text-muted" aria-live="polite">
       <span aria-hidden className="relative flex size-2 shrink-0">
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
         <span className="relative inline-flex size-2 rounded-full bg-accent" />
