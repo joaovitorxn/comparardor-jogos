@@ -45,3 +45,6 @@ next-env.d.ts
 /data
 # material de divulgação (posts, artes, assinatura): fica só no computador e no Google Drive
 /media-kit/
+
+# skills do Claude Code (ficam só no computador)
+/.claude/skills/
