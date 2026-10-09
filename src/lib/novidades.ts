@@ -17,6 +17,21 @@ export interface Novidade {
  */
 export const NOVIDADES: Novidade[] = [
   {
+    id: "hypar",
+    date: "2026-10-09",
+    title: "Hypar",
+    text: "Achou uma promoção que está valendo muito? Passe o mouse no card do jogo (no celular, abra a página dele) e clique no foguete. Quanto mais gente hypa, mais o jogo sobe na lista de ofertas. Mudou de ideia? É só clicar de novo.",
+    icon: "rocket",
+    link: { label: "Ver as ofertas", href: "/ofertas" },
+  },
+  {
+    id: "tema-oled",
+    date: "2026-10-09",
+    title: "Tema OLED",
+    text: "Um tema de fundo preto puro, que fica ótimo em telas OLED e ajuda a poupar bateria. Escolha entre Escuro e OLED no rodapé do site.",
+    icon: "monitor",
+  },
+  {
     id: "vale-esperar",
     date: "2026-10-07",
     title: "Vale esperar?",
@@ -38,20 +53,5 @@ export const NOVIDADES: Novidade[] = [
     title: "Aprovado no Steam Deck",
     text: "Os jogos de PC mostram o selo da Valve quando são verificados ou jogáveis no Steam Deck.",
     icon: "handheld",
-  },
-  {
-    id: "setup",
-    date: "2026-10-06",
-    title: "Setup",
-    text: "Controles, mouses, teclados, monitores e áudio que eu recomendo, com link para comprar na Amazon ou no Mercado Livre.",
-    icon: "mouse",
-    link: { label: "Ver o setup", href: "/setup" },
-  },
-  {
-    id: "gift-cards",
-    date: "2026-10-06",
-    title: "Gift Cards",
-    text: "Vai comprar na loja do console? Use Gift Cards de PlayStation, Xbox e Nintendo e tenha mais flexibilidade, direto da página do jogo e da home.",
-    icon: "gift",
   },
 ];
