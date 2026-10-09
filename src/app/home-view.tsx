@@ -2,6 +2,7 @@ import Link from "next/link";
 import { GameCard, GameGrid } from "@/components/game-card";
 import { PriceList } from "@/components/price-list";
 import { ScrollRow } from "@/components/scroll-row";
+import { Faq } from "@/components/faq";
 import { GenreTiles } from "@/components/genre-tiles";
 import { JsonLd } from "@/components/json-ld";
 import { GiftCardStrip } from "@/components/gift-card-hint";
@@ -139,6 +140,11 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
             </li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <SectionHeader id="faq" title="Perguntas frequentes" icon="chat" />
+        <Faq />
       </section>
     </div>
   );

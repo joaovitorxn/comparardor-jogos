@@ -109,9 +109,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/termos" className="hover:text-accent">
                 Termos de uso
               </Link>
-              <Link href="/hypar" className="hover:text-accent">
-                O que é Hypar
-              </Link>
               {BRAND.contactEmail && (
                 <a href={`mailto:${BRAND.contactEmail}`} className="flex items-center gap-1.5 hover:text-accent">
                   <svg viewBox="0 0 24 24" aria-hidden className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
