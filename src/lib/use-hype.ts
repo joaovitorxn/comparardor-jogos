@@ -24,7 +24,12 @@ function voterId(): string {
   return id;
 }
 
-/** Estado do hype de um jogo neste navegador. O voto vale uma vez só por jogo enquanto os cookies existirem. */
+function send(method: "POST" | "DELETE", gameId: number, voter: string) {
+  // em segundo plano: se falhar, o voto só não conta (ou não é desfeito) no ranking
+  void fetch("/api/hype", { method, body: JSON.stringify({ gameId, voter }), headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+}
+
+/** Estado do hype de um jogo neste navegador. O voto vale uma vez só por jogo, e dá para desfazê-lo. */
 export function useHype(gameId: number) {
   const raw = useSyncExternalStore(subscribe, () => readCookie(HYPE_COOKIE), () => "");
   const hyped = parseHyped(raw).includes(gameId);
@@ -35,9 +40,16 @@ export function useHype(gameId: number) {
     const voter = voterId();
     setCookie(HYPE_COOKIE, serializeHyped([...done, gameId]), YEAR);
     window.dispatchEvent(new Event(EVENT));
-    // em segundo plano: se falhar, o voto só não conta no ranking
-    void fetch("/api/hype", { method: "POST", body: JSON.stringify({ gameId, voter }), headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+    send("POST", gameId, voter);
   }, [gameId]);
 
-  return { hyped, hype };
+  const unhype = useCallback(() => {
+    const done = parseHyped(readCookie(HYPE_COOKIE));
+    if (!done.includes(gameId)) return;
+    setCookie(HYPE_COOKIE, serializeHyped(done.filter((id) => id !== gameId)), YEAR);
+    window.dispatchEvent(new Event(EVENT));
+    send("DELETE", gameId, voterId());
+  }, [gameId]);
+
+  return { hyped, hype, unhype };
 }

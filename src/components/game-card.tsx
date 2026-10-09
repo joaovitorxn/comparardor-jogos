@@ -26,6 +26,7 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
     <div className="group/card relative">
       <Link
         href={`/jogo/${game.slug}`}
+      data-hype-glow
         className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface transition duration-200 hover:-translate-y-0.5 hover:border-accent-line"
       >
         <div className="relative aspect-[2/3] overflow-hidden bg-surface-2">
