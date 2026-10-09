@@ -8,6 +8,8 @@ import { ClickTracker } from "@/components/click-tracker";
 import { FeedbackButton } from "@/components/feedback-button";
 import { LiveVisitors } from "@/components/live-visitors";
 import { LogoMark, SiteHeader } from "@/components/site-header";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { WelcomeDialog } from "@/components/welcome-dialog";
 import { BRAND } from "@/lib/brand";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -42,15 +44,21 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0b0d12",
-  colorScheme: "dark",
 };
+
+// roda antes da primeira pintura: aplica o tema salvo e evita o flash do tema errado
+const THEME_SCRIPT = `try{var t=localStorage.getItem("dropou-theme"),c={dark:"#0b0d12",oled:"#000000"};if(c[t]){document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",c[t])}}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
       className={`${inter.variable} ${barlow.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         {/* só aparece quando recebe o foco do teclado: pula o cabeçalho e vai direto ao conteúdo */}
         <a
@@ -74,6 +82,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </span>
               </Link>
               <LiveVisitors />
+              <ThemeToggle />
               <a
                 href="https://ko-fi.com/dropou"
                 target="_blank"
@@ -146,6 +155,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </p>
           </div>
         </footer>
+        <WelcomeDialog />
         <FeedbackButton />
         <ClickTracker />
         <Analytics />

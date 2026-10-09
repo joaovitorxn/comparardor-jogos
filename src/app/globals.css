@@ -47,6 +47,20 @@
   --series-nintendo: #e66767;
 }
 
+/*
+ * Temas. O padrão (:root) é o escuro; html[data-theme="oled"] troca só os tokens.
+ * OLED: fundo preto puro (pixel apagado em tela OLED) e superfícies bem baixas.
+ */
+:root[data-theme="oled"] {
+  --bg: #000;
+  --surface: #0a0a0a;
+  --surface-2: #121212;
+  --surface-3: #1a1a1a;
+  --line: #1e1e1e;
+  --line-strong: #2e2e2e;
+  --accent-ink: #000;
+}
+
 @keyframes showcase-progress {
   from {
     transform: scaleX(0);
@@ -217,16 +231,74 @@ body {
   }
 }
 
+/*
+ * Movimento discreto: tudo curto (<= 220ms), só opacity/transform e desligado em prefers-reduced-motion.
+ * A página entra só com fade (um transform no wrapper viraria o bloco de contenção dos elementos fixos, como a barra de compra).
+ */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+.page-in {
+  animation: page-in 220ms ease-out;
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+dialog[open] {
+  animation: dialog-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+dialog[open]::backdrop {
+  animation: backdrop-in 180ms ease-out;
+}
+/* troca de tema: as cores deslizam em vez de pular (a classe é posta pelo ThemeToggle só durante a troca) */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, fill 200ms ease, stroke 200ms ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in,
+  dialog[open],
+  dialog[open]::backdrop {
+    animation: none;
+  }
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition: none !important;
+  }
+}
+
 /* no celular, com a barra de compra aberta, os botões flutuantes sobem para ficarem acima dela */
 .fab-feedback,
 .fab-top {
   transition: bottom 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* ao chegar no fim da página o botão sobe junto com o rodapé (--fab-lift vem do BackToTop); sem transição, para acompanhar a rolagem */
+.fab-top {
+  transform: translateY(calc(-1 * var(--fab-lift, 0px)));
+}
 @media (max-width: 1023px) {
+  /* reserva o espaço da barra fixa no fim da página, para ela não cobrir o rodapé (privacidade, termos…) */
+  body[data-buy-bar] {
+    padding-bottom: 7rem;
+  }
   body[data-buy-bar] .fab-feedback {
-    bottom: 5.75rem;
+    bottom: 7rem;
   }
   body[data-buy-bar] .fab-top {
-    bottom: 10.25rem;
+    bottom: 7rem;
   }
 }

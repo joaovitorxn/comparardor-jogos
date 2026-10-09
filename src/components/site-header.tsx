@@ -16,10 +16,10 @@ export function LogoMark({ className = "size-7" }: { className?: string }) {
   );
 }
 
-const NAV: { href: string; label: string; icon: IconName; highlight?: boolean }[] = [
+const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/ofertas", label: "Ofertas", icon: "tag" },
   { href: "/busca", label: "Explorar", icon: "compass" },
-  { href: "/setup", label: "Setup", icon: "mouse", highlight: true },
+  { href: "/setup", label: "Setup", icon: "mouse" },
 ];
 
 export function SiteHeader() {
@@ -41,15 +41,10 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className={
-                item.highlight
-                  ? "group flex items-center gap-1.5 rounded-[4px] border border-accent-line bg-accent-soft px-2.5 py-1 font-display text-sm font-semibold uppercase tracking-wider text-accent transition hover:bg-accent hover:text-accent-ink"
-                  : "flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-text"
-              }
+              className="flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
             >
               <Icon name={item.icon} className="size-4" />
               {item.label}
-              {item.highlight && <span className="rounded-[3px] border border-accent-line px-1 text-[10px] font-bold leading-4 tracking-wider text-accent group-hover:border-accent-ink/40 group-hover:text-accent-ink">NOVO</span>}
             </Link>
           ))}
         </nav>
@@ -74,13 +69,10 @@ export function SiteHeader() {
         <Link
           key={item.href}
           href={item.href}
-          className={`group flex min-h-10 items-center justify-center gap-1.5 rounded-[4px] border py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition ${
-            item.highlight ? "border-accent-line bg-accent-soft text-accent" : "border-transparent text-text-2 hover:text-text"
-          }`}
+          className="flex min-h-10 items-center justify-center gap-1.5 rounded-[4px] border border-transparent py-1.5 font-display text-xs font-semibold uppercase tracking-wider text-text-2 transition hover:text-accent"
         >
           <Icon name={item.icon} className="size-4" />
           {item.label}
-          {item.highlight && <span className="rounded-[3px] border border-accent-line px-1 text-[10px] font-bold leading-4 tracking-wider text-accent group-hover:border-accent-ink/40 group-hover:text-accent-ink">NOVO</span>}
         </Link>
       ))}
       </nav>

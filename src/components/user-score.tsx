@@ -46,7 +46,7 @@ export function UserScoreInline({ percent, count }: { percent: number; count: nu
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={value}
-        className="h-1 w-14 shrink-0 overflow-hidden rounded-full bg-white/20"
+        className="h-1 w-14 shrink-0 overflow-hidden rounded-full bg-text/20"
       >
         <span className={`block h-full rounded-full ${FILLS[tone]}`} style={{ width: `${value}%` }} />
       </span>

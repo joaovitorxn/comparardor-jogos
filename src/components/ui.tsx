@@ -55,9 +55,9 @@ export function MetacriticBadge({ score, label = "Nota no Metacritic" }: { score
 
 export const buttonStyles = {
   primary:
-    "inline-flex items-center justify-center gap-2 rounded-[4px] bg-accent px-4 py-2.5 font-display text-base font-bold uppercase tracking-wide text-accent-ink transition hover:brightness-110",
+    "inline-flex items-center justify-center gap-2 rounded-[4px] bg-accent px-4 py-2.5 font-display text-base font-bold uppercase tracking-wide text-accent-ink transition hover:brightness-110 active:scale-[0.97]",
   primarySm:
-    "inline-flex items-center justify-center gap-2 rounded-[4px] bg-accent px-3 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-accent-ink transition hover:brightness-110",
+    "inline-flex items-center justify-center gap-2 rounded-[4px] bg-accent px-3 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-accent-ink transition hover:brightness-110 active:scale-[0.97]",
   secondary:
     "inline-flex items-center justify-center gap-2 rounded-[4px] border border-line-strong bg-surface-2 px-3 py-1.5 text-xs font-medium text-text transition hover:border-accent hover:text-accent",
 };

@@ -117,12 +117,13 @@ const IGDB_PLATFORM_IDS: Record<string, string[]> = {
 };
 
 /** Barra compacta da melhor oferta, para o rodapé do celular (ver MobileBuyBar). */
-function BestOfferBar({ best }: { best: GamePageData["offers"][number] }) {
+function BestOfferBar({ title, best }: { title: string; best: GamePageData["offers"][number] }) {
   const snapshot = best.snapshot!;
   const storeName = getStore(best.listing.store)?.name ?? best.listing.store;
   return (
     <div className="flex items-center gap-3">
       <div className="min-w-0 flex-1">
+        <p className="mb-1 truncate text-sm font-semibold text-text">{title}</p>
         <div className="flex items-center gap-2">
           {snapshot.discountPercent > 0 && <DiscountBadge percent={snapshot.discountPercent} size="sm" />}
           <span className="truncate text-xs text-text-2">na {storeName}</span>
@@ -212,7 +213,7 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
     used.set(chosen.listing.id, chosen);
   }
   const options = Object.fromEntries([...used].map(([id, offer]) => [id, <BestOfferCard key={id} data={data} best={offer} />]));
-  const bars = Object.fromEntries([...used].map(([id, offer]) => [id, <BestOfferBar key={id} best={offer} />]));
+  const bars = Object.fromEntries([...used].map(([id, offer]) => [id, <BestOfferBar key={id} title={data.game.title} best={offer} />]));
 
   return (
     <div id="melhor-drop" className="overflow-hidden rounded-card border border-line bg-surface">
