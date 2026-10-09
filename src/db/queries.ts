@@ -1,10 +1,11 @@
-import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, like, or, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { isLightHero } from "@/lib/hero-light";
 import { cache } from "react";
 import { bestByFamily, type BestPrice, type FamilyKey, type PricedOffer } from "@/lib/best-by-family";
 import { ITAD_HISTORY_STORES } from "@/collectors/itad";
 import { onePerFranchise } from "@/lib/franchise";
+import { hypeBonus, HYPE_WINDOW_DAYS } from "@/lib/hype";
 import { launchScore } from "@/lib/launch-score";
 import { blendedQuality } from "@/lib/quality";
 import { parseReleaseDate } from "@/lib/release-date";
@@ -14,6 +15,7 @@ import { db } from ".";
 import {
   gameMedia,
   games,
+  hypes,
   listings,
   priceHistory,
   priceSnapshots,
@@ -82,6 +84,8 @@ export interface GameSummary {
   families: PlatformFamilyId[];
   /** Lojas com oferta do jogo (para o filtro de loja). */
   stores: string[];
+  /** Hypes dos últimos dias (só preenchido nas listas de promoções, que usam isso no ranking). */
+  hypes?: number;
 }
 
 /** Famílias de plataforma (PC, PlayStation…) das ofertas, na ordem de sempre. */
@@ -219,7 +223,8 @@ const MIN_QUALITY = 70;
 /**
  * Pontuação de destaque: jogo bom em ótimo preço. O que mais pesa é o preço estar perto do menor já
  * registrado (até 50 pontos); depois a qualidade (até ~35), o tamanho do desconto (até 15) e, de leve,
- * ser recente (até 10). Sem o menor preço histórico, vale só o desconto.
+ * ser recente (até 10). Sem o menor preço histórico, vale só o desconto. Os hypes dos visitantes somam um pouco
+ * (até 12 pontos, ver hypeBonus).
  */
 function featuredScore(s: GameSummary, year: number): number {
   const { game } = s;
@@ -233,7 +238,7 @@ function featuredScore(s: GameSummary, year: number): number {
   const released = releaseYear(game.releaseDate);
   const age = released == null ? 8 : Math.max(0, year - released);
   const recency = age <= 1 ? 10 : age <= 2 ? 7 : age <= 4 ? 4 : age <= 7 ? 1 : 0;
-  return quality + value + 15 * discount + recency;
+  return quality + value + 15 * discount + recency + hypeBonus(s.hypes ?? 0);
 }
 
 /** Ainda não lançado (o dia do lançamento já conta como lançado). */
@@ -275,6 +280,32 @@ export function getDealPool(platforms: PlatformFamilyId[] = []): Promise<GameSum
   return pool;
 }
 
+/** Hypes de cada jogo nos últimos dias. */
+export async function getHypeCounts(): Promise<Map<number, number>> {
+  const since = new Date(Date.now() - HYPE_WINDOW_DAYS * 24 * 3600_000);
+  const rows = await db
+    .select({ gameId: hypes.gameId, total: sql<number>`count(*)` })
+    .from(hypes)
+    .where(gt(hypes.createdAt, since))
+    .groupBy(hypes.gameId);
+  return new Map(rows.map((r) => [r.gameId, Number(r.total)]));
+}
+
+/** Hypes de um jogo nos últimos dias. */
+export async function getHypeCount(gameId: number): Promise<number> {
+  const since = new Date(Date.now() - HYPE_WINDOW_DAYS * 24 * 3600_000);
+  const [row] = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(hypes)
+    .where(and(eq(hypes.gameId, gameId), gt(hypes.createdAt, since)));
+  return Number(row?.total ?? 0);
+}
+
+async function withHypes(items: GameSummary[]): Promise<GameSummary[]> {
+  const counts = await getHypeCounts();
+  return items.map((s) => ({ ...s, hypes: counts.get(s.game.id) ?? 0 }));
+}
+
 export const DEAL_POOL_TAG = "deal-pool";
 
 /**
@@ -283,7 +314,8 @@ export const DEAL_POOL_TAG = "deal-pool";
  * só uma rede de segurança.
  */
 const sharedPool = unstable_cache(
-  async (key: string): Promise<GameSummary[]> => (key ? getPlatformDeals(key.split("-") as PlatformFamilyId[]) : getDeals({ limit: 100_000 }).then((r) => r.items)),
+  async (key: string): Promise<GameSummary[]> =>
+    withHypes(key ? await getPlatformDeals(key.split("-") as PlatformFamilyId[]) : (await getDeals({ limit: 100_000 })).items),
   ["deal-pool"],
   { revalidate: 3600, tags: [DEAL_POOL_TAG] },
 );
@@ -506,7 +538,7 @@ async function getGamePageUncached(slug: string) {
   const [game] = await db.select().from(games).where(eq(games.slug, slug));
   if (!game) return null;
 
-  const [media, gameListings, latest, ownSnapshots, history] = await Promise.all([
+  const [media, gameListings, latest, ownSnapshots, history, hypeCount] = await Promise.all([
     db.select().from(gameMedia).where(eq(gameMedia.gameId, game.id)).orderBy(asc(gameMedia.type), asc(gameMedia.position)),
     db.select().from(listings).where(and(eq(listings.gameId, game.id), eq(listings.available, true))),
     latestPrices([game.id]),
@@ -519,6 +551,7 @@ async function getGamePageUncached(slug: string) {
       .select({ store: priceHistory.store, priceCents: priceHistory.priceCents, at: priceHistory.recordedAt })
       .from(priceHistory)
       .where(eq(priceHistory.gameId, game.id)),
+    getHypeCount(game.id),
   ]);
 
   const stores = [...new Set(gameListings.map((l) => l.store))];
@@ -564,6 +597,7 @@ async function getGamePageUncached(slug: string) {
     moreFromPublisher: await getMoreFromPublisher(game),
     screenshots: media.filter((m) => m.type === "screenshot"),
     videos: media.filter((m) => m.type === "video"),
+    hypes: hypeCount,
     offers,
     historicLow,
     series,

@@ -330,6 +330,23 @@ export const clicks = sqliteTable(
 );
 
 /**
+ * Hypes: o visitante sinaliza que a promoção de um jogo está valendo muito. Um voto por jogo e por votante; o votante
+ * é o hash de um identificador aleatório guardado no cookie dele (sem IP, sem dado pessoal).
+ */
+export const hypes = sqliteTable(
+  "hypes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    gameId: integer("game_id").notNull(),
+    voterHash: text("voter_hash").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("hypes_game_voter_idx").on(t.gameId, t.voterHash), index("hypes_created_idx").on(t.createdAt)],
+);
+
+/**
  * Exclusivos de console que já tentamos importar e não tinham preço nas nossas lojas (ou não são
  * jogos vendáveis hoje): evita repetir a tentativa a cada atualização.
  */
