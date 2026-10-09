@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
 import { GameCard } from "@/components/game-card";
+import { HypeButton } from "@/components/hype-button";
 import { ScrollRow } from "@/components/scroll-row";
 import { DeckBadge } from "@/components/deck-badge";
 import { Icon } from "@/components/icon";
@@ -438,6 +439,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </div>
           </div>
           <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-1 sm:col-start-2">
+            <HypeButton gameId={game.id} count={data.hypes} variant="page" />
             <WishlistButton gameId={game.id} />
             <ShareButton url={`${SITE_URL}/jogo/${game.slug}`} text={shareText(data)} imageUrl={`/jogo/${game.slug}/cartao`} filename={`dropou-${game.slug}.jpg`} />
           </div>
