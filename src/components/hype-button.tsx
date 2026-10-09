@@ -17,20 +17,20 @@ export function HypeButton({ gameId, count, variant }: { gameId: number; count: 
   const label = hyped ? "Você hypou esta promoção" : "Hypar: esta promoção está valendo muito";
 
   if (variant === "card") {
+    // sem borda nem fundo para não competir com o desconto e o preço; o "Hypar" (com a contagem, se já houver) só aparece ao passar o mouse
     return (
       <button
         type="button"
         aria-pressed={hyped}
         aria-label={label}
         onClick={hype}
-        className={`group/hype absolute right-2 top-2 inline-flex h-8 items-center gap-1 rounded-full border px-2 text-xs backdrop-blur-sm transition ${
-          hyped ? "border-accent-line bg-accent-soft text-accent" : "border-line-strong bg-bg/70 text-text-2 hover:border-accent hover:text-accent"
+        className={`group/hype absolute bottom-3 right-3 grid size-7 place-items-center rounded-full transition ${
+          hyped ? "bg-accent-soft text-accent" : "text-muted hover:bg-accent-soft hover:text-accent"
         }`}
       >
-        <Icon name="rocket" className="size-4 shrink-0" />
-        {shown >= HYPE_MIN_SHOWN && <span className="tabular font-semibold">{number.format(shown)}</span>}
-        <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/hype:max-w-16 group-hover/hype:opacity-100 group-focus-visible/hype:max-w-16 group-focus-visible/hype:opacity-100">
-          Hypar
+        <Icon name="rocket" className="size-4" />
+        <span className="pointer-events-none absolute bottom-full right-0 mb-1 whitespace-nowrap rounded-[4px] border border-line bg-surface px-1.5 py-0.5 text-[11px] font-medium text-text-2 opacity-0 transition-opacity duration-150 group-hover/hype:opacity-100 group-focus-visible/hype:opacity-100">
+          Hypar{shown >= HYPE_MIN_SHOWN && <span className="tabular"> · {number.format(shown)}</span>}
         </span>
       </button>
     );
