@@ -7,7 +7,7 @@ import { fetchPsConcept, psOffer } from "@/collectors/psstore";
 import { fetchXboxProducts } from "@/collectors/xbox";
 import { fetchConsoleExclusives, fetchIgdbDetails, igdbImageUrl, isIgdbConfigured, lookupIgdbIds, type IgdbExclusive } from "@/collectors/igdb";
 import { fetchItadHistory, fetchItadPrices, isItadConfigured, ITAD_STORES, lookupItadIds } from "@/collectors/itad";
-import { fetchDeckStatus, fetchPreorderDealAppIds, fetchUserReviews, getSteamGameDetails } from "@/collectors/steam";
+import { fetchDeckStatus, fetchPreorderDealAppIds, fetchSupportedLanguages, fetchUserReviews, getSteamGameDetails } from "@/collectors/steam";
 import type { OfferPrice, StoreOffer } from "@/collectors/types";
 import { db } from "@/db";
 import { gameMedia, games, listings, priceHistory, priceSnapshots, skippedGames, type Game } from "@/db/schema";
@@ -173,6 +173,7 @@ async function doImportBasic(appId: number): Promise<Game> {
     metacritic: details.metacritic,
     website: details.website,
     requirements: details.requirements,
+    languages: details.languages,
     steamAppId: appId,
   };
 
@@ -859,6 +860,34 @@ export async function syncDeckStatus({ limit = 60, deadline }: { limit?: number;
       if (err instanceof HttpError && (err.status === 403 || err.status === 429)) break;
     }
     await new Promise((r) => setTimeout(r, 250));
+  }
+  return checked;
+}
+
+/**
+ * Preenche os idiomas dos jogos da Steam que ainda não têm (uma consulta por jogo, devagar). Idiomas quase não mudam,
+ * então cada jogo é consultado uma vez; os importados depois já nascem com eles.
+ */
+export async function syncLanguages({ limit = 40, deadline, pauseMs = 400 }: { limit?: number; deadline?: number; pauseMs?: number } = {}) {
+  const rows = await db
+    .select({ id: games.id, steamAppId: games.steamAppId })
+    .from(games)
+    .where(and(isNotNull(games.steamAppId), isNull(games.languages)))
+    .limit(limit);
+  let checked = 0;
+  for (const g of rows) {
+    if (deadline != null && Date.now() > deadline) break;
+    try {
+      const languages = await fetchSupportedLanguages(g.steamAppId!);
+      if (languages) {
+        await db.update(games).set({ languages }).where(eq(games.id, g.id));
+        checked++;
+      }
+    } catch (err) {
+      // bloqueio da loja: para a rodada e tenta de novo na próxima
+      if (err instanceof HttpError && (err.status === 403 || err.status === 429)) break;
+    }
+    await new Promise((r) => setTimeout(r, pauseMs));
   }
   return checked;
 }

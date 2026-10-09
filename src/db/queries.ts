@@ -561,6 +561,7 @@ async function getGamePageUncached(slug: string) {
   return {
     game,
     similar: await resolveSimilarGames(game),
+    moreFromPublisher: await getMoreFromPublisher(game),
     screenshots: media.filter((m) => m.type === "screenshot"),
     videos: media.filter((m) => m.type === "video"),
     offers,
@@ -573,6 +574,28 @@ async function getGamePageUncached(slug: string) {
 }
 
 export type GamePageData = NonNullable<Awaited<ReturnType<typeof getGamePage>>>;
+
+/** Outros jogos à venda no catálogo da mesma distribuidora (a primeira listada, como a Steam), os mais bem avaliados primeiro. */
+async function getMoreFromPublisher(game: Game, limit = 12): Promise<{ publisher: string; games: GameSummary[] } | null> {
+  const publisher = game.publishers[0];
+  if (!publisher) return null;
+  const rows = await db
+    .select(dealGameColumns)
+    .from(games)
+    .where(
+      and(
+        sql`${games.id} <> ${game.id}`,
+        sql`exists (select 1 from json_each(${games.publishers}) where value = ${publisher})`,
+        sql`exists (select 1 from listings l where l.game_id = ${games.id} and l.available = 1 and l.price_snapshot_id is not null)`,
+      ),
+    )
+    .orderBy(desc(sql`coalesce(${games.userReviewCount}, 0)`))
+    .limit(limit * 2);
+  // uma entrada por franquia, para a linha não virar só edições e sequências do mesmo jogo
+  const summaries = await summarize(rows);
+  const picked = onePerFranchise(summaries, limit, (s) => ({ title: s.game.title, developers: s.game.developers, publishers: s.game.publishers }));
+  return picked.length ? { publisher, games: picked } : null;
+}
 
 export interface SimilarGameView extends SimilarGame {
   /** Preenchidos quando o jogo já está no catálogo. */

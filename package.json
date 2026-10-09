@@ -20,7 +20,8 @@
     "sync:consoles": "tsx scripts/sync-consoles.mts",
     "feedback": "tsx scripts/feedback.mts",
     "media-kit": "tsx scripts/media-kit.mts",
-    "exclusives": "tsx scripts/exclusives.mts"
+    "exclusives": "tsx scripts/exclusives.mts",
+    "languages": "tsx scripts/languages.mts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

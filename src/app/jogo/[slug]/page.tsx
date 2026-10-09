@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
+import { GameCard } from "@/components/game-card";
 import { DeckBadge } from "@/components/deck-badge";
 import { Icon } from "@/components/icon";
 import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
@@ -26,8 +27,10 @@ import { buttonStyles, DiscountBadge, MetacriticBadge, PriceText, SectionHeader,
 import { getGamePage, type GamePageData } from "@/db/queries";
 import { bestByFamily, type FamilyKey } from "@/lib/best-by-family";
 import { lightImage } from "@/lib/images";
+import { brazilianPortuguese, flagFor } from "@/lib/languages";
 import { allPlatformCombinations, serializePlatforms } from "@/lib/platform-selection";
 import { SITE_URL } from "@/lib/site";
+import type { GameLanguage } from "@/lib/languages";
 import { buildVerdictViews } from "@/lib/verdict-variants";
 import { formatCents, formatRelative } from "@/lib/format";
 import { getStore, offerFamilies, PLATFORM_LABELS, STORES, type PlatformFamilyId } from "@/lib/stores";
@@ -187,6 +190,71 @@ function BestOfferPanel({ data }: { data: GamePageData }) {
   );
 }
 
+/** Tabela de idiomas no estilo da Steam: o texto (interface e legendas) está em todos; a dublagem só em alguns. */
+function LanguagesPanel({ languages }: { languages: GameLanguage[] }) {
+  const th = "px-2 py-2 text-center font-normal";
+  return (
+    <div className="rounded-card border border-line bg-surface">
+      <h2 className="flex items-center gap-2 border-b border-line px-5 py-3 font-display text-sm font-semibold uppercase tracking-[0.15em] text-text-2">
+        <Icon name="globe" className="size-4 text-accent" />
+        Idiomas
+      </h2>
+      <table className="w-full text-sm">
+        <caption className="sr-only">Idiomas suportados</caption>
+        <thead>
+          <tr className="text-xs text-muted">
+            <th scope="col" className="px-5 py-2 text-left font-normal">
+              Idioma
+            </th>
+            <th scope="col" className={th}>
+              Texto
+            </th>
+            <th scope="col" className={`${th} pr-5`}>
+              Dublagem
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line border-t border-line">
+          {languages.map((l) => {
+            const pt = brazilianPortuguese([l]) != null;
+            const flag = flagFor(l.name);
+            return (
+              <tr key={l.name} className={pt ? "bg-accent-soft font-medium text-accent" : undefined}>
+                <th scope="row" className="px-5 py-1.5 text-left font-normal">
+                  <span className="flex items-center gap-2.5">
+                    {flag ? (
+                      <Image src={`/flags/${flag}.svg`} alt="" width={20} height={15} unoptimized className="h-[15px] w-5 shrink-0 rounded-[2px] border border-line-strong object-cover" />
+                    ) : (
+                      <span className="w-5 shrink-0" aria-hidden />
+                    )}
+                    {l.name}
+                  </span>
+                </th>
+                <td className="px-2 py-1.5 text-center">
+                  <Icon name="check" className="mx-auto size-4 text-accent" />
+                  <span className="sr-only">Sim</span>
+                </td>
+                <td className="px-2 py-1.5 pr-5 text-center">
+                  {l.audio ? (
+                    <>
+                      <Icon name="check" className="mx-auto size-4 text-accent" />
+                      <span className="sr-only">Sim</span>
+                    </>
+                  ) : (
+                    <span className="text-muted" aria-label="Não">
+                      —
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function DetailsPanel({ data }: { data: GamePageData }) {
   const { game } = data;
   const rows = [
@@ -300,12 +368,15 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
   return (
     <article>
       <JsonLd data={productJsonLd(data)} />
-      <header className="relative overflow-hidden border-b border-line">
-        {game.backgroundUrl && (
-          <Image src={lightImage(game.backgroundUrl)} alt="" fill priority sizes="100vw" className="object-cover object-center opacity-80" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-bg/80 via-bg/20 to-transparent" />
+      <header className="relative border-b border-line">
+        {/* o recorte fica só no fundo: a janelinha do selo do Steam Deck precisa poder passar da borda do cabeçalho */}
+        <div className="absolute inset-0 overflow-hidden">
+          {game.backgroundUrl && (
+            <Image src={lightImage(game.backgroundUrl)} alt="" fill priority sizes="100vw" className="object-cover object-center opacity-80" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-bg/80 via-bg/20 to-transparent" />
+        </div>
 
         <div className="relative mx-auto flex max-w-7xl flex-col gap-6 px-4 pb-8 pt-16 sm:flex-row sm:items-end lg:px-6 lg:pt-28">
           <div className="relative aspect-[2/3] w-36 shrink-0 overflow-hidden rounded-card border border-line-strong bg-surface shadow-2xl shadow-black/60 sm:w-48 lg:w-56">
@@ -339,6 +410,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           <div className="hidden space-y-4 lg:block">
             {game.timeToBeat && <TimeToBeatCard ttb={game.timeToBeat} bestPriceCents={offers[0]?.finalCents ?? null} />}
             <DetailsPanel data={data} />
+            {game.languages?.length ? <LanguagesPanel languages={game.languages} /> : null}
           </div>
         </aside>
 
@@ -393,6 +465,21 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </section>
           )}
 
+          {data.moreFromPublisher && (
+            <section>
+              <SectionHeader title={`Mais de ${data.moreFromPublisher.publisher}`} icon="controller" />
+              <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:thin] sm:mx-0 sm:px-0">
+                {data.moreFromPublisher.games.map((s) => (
+                  <li key={s.game.id} className="flex w-36 shrink-0 sm:w-40">
+                    <div className="flex w-full flex-col [&>a]:flex-1">
+                      <GameCard summary={s} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {data.similar.length > 0 && (
             <section>
               <SectionHeader title="Quem joga isso também joga" icon="users" aside="Sugestões do IGDB" />
@@ -400,8 +487,9 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
             </section>
           )}
 
-          <div className="lg:hidden">
+          <div className="space-y-4 lg:hidden">
             <DetailsPanel data={data} />
+            {game.languages?.length ? <LanguagesPanel languages={game.languages} /> : null}
           </div>
         </div>
       </div>

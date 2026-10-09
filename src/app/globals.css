@@ -142,9 +142,36 @@ body {
   animation: skeleton-shimmer 1.5s linear infinite;
   will-change: transform;
 }
+/* janelinhas que abrem ao lado de um botão (ex.: selo do Steam Deck): surgem de leve, vindo do botão */
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+@keyframes popover-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+.popover-in {
+  transform-origin: top left;
+  animation: popover-in 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.popover-out {
+  transform-origin: top left;
+  animation: popover-out 120ms ease-in forwards;
+  pointer-events: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after {
     animation: none;
+  }
+  /* quase instantâneo, mas ainda dispara animationend para a janela sair do DOM */
+  .popover-in,
+  .popover-out {
+    animation-duration: 1ms;
   }
 }
 

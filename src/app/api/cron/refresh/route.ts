@@ -3,7 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { after, type NextRequest } from "next/server";
 import { DEAL_POOL_TAG } from "@/db/queries";
 import { checkPriceAlerts } from "@/services/alerts";
-import { refreshPrices, slugsWithNewPrices, syncDeckStatus, syncExclusives, syncPreorders, syncUserReviews } from "@/services/catalog";
+import { refreshPrices, slugsWithNewPrices, syncDeckStatus, syncExclusives, syncLanguages, syncPreorders, syncUserReviews } from "@/services/catalog";
 
 // atualizar o catálogo inteiro pode levar alguns minutos
 export const maxDuration = 300;
@@ -37,6 +37,8 @@ async function run() {
   const deck = budget(235) ? await syncDeckStatus({ limit: 40, deadline: startedAt + 255_000 }).catch(() => -1) : null;
   // avaliações dos jogadores na Steam (poucas por rodada, só se sobrar tempo)
   const reviews = budget(215) ? await syncUserReviews({ limit: 30, deadline: startedAt + 255_000 }).catch(() => null) : null;
+  // idiomas dos jogos da Steam que ainda não os têm (poucos por rodada, só se sobrar tempo)
+  const languages = budget(225) ? await syncLanguages({ limit: 30, deadline: startedAt + 255_000 }).catch(() => -1) : null;
   // com os preços novos, avisa quem tem alerta
   const alerts = await checkPriceAlerts();
   // preços novos: descarta o cache da home
@@ -48,7 +50,7 @@ async function run() {
   const changed = await slugsWithNewPrices(new Date(startedAt)).catch(() => [] as string[]);
   for (const slug of changed.slice(0, 2000)) revalidatePath(`/jogo/${slug}`);
 
-  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), pagesRevalidated: changed.length, summary, preorders, exclusives, deck, reviews, alerts };
+  return { ok: true, seconds: Math.round((Date.now() - startedAt) / 1000), pagesRevalidated: changed.length, summary, preorders, exclusives, deck, reviews, languages, alerts };
 }
 
 /**

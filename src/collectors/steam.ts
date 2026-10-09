@@ -1,4 +1,5 @@
 import type { PcRequirements } from "@/db/schema";
+import { parseSupportedLanguages, type GameLanguage } from "@/lib/languages";
 import { parsePcRequirements } from "@/lib/requirements";
 import { decodeHtmlEntities } from "@/lib/text";
 import { fetchJson, HttpError } from "./http";
@@ -36,6 +37,8 @@ interface SteamAppData {
   movies?: { id: number; name: string; thumbnail: string; hls_h264?: string }[];
   /** Objeto com HTML, ou [] quando o jogo não informa requisitos. */
   pc_requirements?: { minimum?: string; recommended?: string } | [];
+  /** HTML em português (pedimos l=brazilian); o que tem dublagem vem com asterisco. */
+  supported_languages?: string;
 }
 
 type AppDetailsResponse = Record<string, { success: boolean; data?: SteamAppData | [] }>;
@@ -63,6 +66,7 @@ export interface SteamGameDetails {
   screenshots: { url: string; thumbUrl: string }[];
   videos: { url: string; thumbUrl: string; title: string }[];
   requirements: PcRequirements | null;
+  languages: GameLanguage[];
   offer: StoreOffer;
 }
 
@@ -216,6 +220,14 @@ export async function fetchTopSellerAppIds(count: number): Promise<number[]> {
   return [...new Set(ids)].slice(0, count);
 }
 
+/** Só os idiomas de um app (consulta leve, para preencher os jogos que já estavam no catálogo). Null = a Steam não respondeu. */
+export async function fetchSupportedLanguages(appId: number): Promise<GameLanguage[] | null> {
+  const res = await fetchJson<AppDetailsResponse>(`${STORE_API}/appdetails?appids=${appId}&filters=basic&${PARAMS}`);
+  const entry = res[String(appId)];
+  if (!entry?.success || !entry.data || Array.isArray(entry.data)) return null;
+  return parseSupportedLanguages(entry.data.supported_languages);
+}
+
 /** Detalhes completos de um app — é a nossa fonte principal de metadados e mídia por enquanto. */
 export async function getSteamGameDetails(appId: number): Promise<SteamGameDetails | null> {
   const [res, item] = await Promise.all([
@@ -248,6 +260,7 @@ export async function getSteamGameDetails(appId: number): Promise<SteamGameDetai
       .filter((m) => m.hls_h264)
       .map((m) => ({ url: m.hls_h264!, thumbUrl: m.thumbnail, title: m.name })),
     requirements: parsePcRequirements(d.pc_requirements),
+    languages: parseSupportedLanguages(d.supported_languages),
     offer: {
       store: "steam",
       storeProductId: String(appId),

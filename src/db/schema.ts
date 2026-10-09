@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { GameLanguage } from "@/lib/languages";
 import {
   index,
   integer,
@@ -76,6 +77,8 @@ export const games = sqliteTable(
     historyLowCents: integer("history_low_cents"),
     historySyncedAt: integer("history_synced_at", { mode: "timestamp" }),
     requirements: text("requirements", { mode: "json" }).$type<PcRequirements | null>(),
+    /** Idiomas da Steam (com dublagem marcada). Null = ainda não consultado; lista vazia = o jogo não informa. */
+    languages: text("languages", { mode: "json" }).$type<GameLanguage[] | null>(),
     // --- IGDB ---
     igdbSyncedAt: integer("igdb_synced_at", { mode: "timestamp" }),
     /** Steam Deck, segundo a Valve: 3 = Verificado, 2 = Jogável, 1 = Não suportado, 0 = ainda sem análise. Null = não consultado. */
