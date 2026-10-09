@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { pickFeaturedDeals, type DealGame, type GameSummary } from "./queries";
+import { describe, expect, it, vi } from "vitest";
+import { db } from ".";
+import { getHypeCount, getHypeCounts, pickFeaturedDeals, type DealGame, type GameSummary } from "./queries";
 
 function deal(id: number, over: Partial<GameSummary> = {}): GameSummary {
   const game: DealGame = {
@@ -47,5 +48,19 @@ describe("hype no ranking de destaque", () => {
     const weak = deal(1, { maxDiscount: 25, hypes: 5000 });
     const strong = deal(2);
     expect(ids(pickFeaturedDeals([weak, strong], Infinity))).toEqual([2, 1]);
+  });
+});
+
+describe("hype é enfeite: falha no banco não derruba as páginas", () => {
+  it("contagens voltam vazias se a consulta falhar (ex.: tabela ainda não criada)", async () => {
+    const spy = vi.spyOn(db, "select").mockImplementation(() => {
+      throw new Error("no such table: hypes");
+    });
+    try {
+      expect(await getHypeCounts()).toEqual(new Map());
+      expect(await getHypeCount(1)).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

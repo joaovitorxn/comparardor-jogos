@@ -283,22 +283,31 @@ export function getDealPool(platforms: PlatformFamilyId[] = []): Promise<GameSum
 /** Hypes de cada jogo nos últimos dias. */
 export async function getHypeCounts(): Promise<Map<number, number>> {
   const since = new Date(Date.now() - HYPE_WINDOW_DAYS * 24 * 3600_000);
-  const rows = await db
-    .select({ gameId: hypes.gameId, total: sql<number>`count(*)` })
-    .from(hypes)
-    .where(gt(hypes.createdAt, since))
-    .groupBy(hypes.gameId);
-  return new Map(rows.map((r) => [r.gameId, Number(r.total)]));
+  try {
+    const rows = await db
+      .select({ gameId: hypes.gameId, total: sql<number>`count(*)` })
+      .from(hypes)
+      .where(gt(hypes.createdAt, since))
+      .groupBy(hypes.gameId);
+    return new Map(rows.map((r) => [r.gameId, Number(r.total)]));
+  } catch {
+    // hype é enfeite: se a tabela ainda não existe (código no ar antes do banco) as promoções continuam aparecendo
+    return new Map();
+  }
 }
 
 /** Hypes de um jogo nos últimos dias. */
 export async function getHypeCount(gameId: number): Promise<number> {
   const since = new Date(Date.now() - HYPE_WINDOW_DAYS * 24 * 3600_000);
-  const [row] = await db
-    .select({ total: sql<number>`count(*)` })
-    .from(hypes)
-    .where(and(eq(hypes.gameId, gameId), gt(hypes.createdAt, since)));
-  return Number(row?.total ?? 0);
+  try {
+    const [row] = await db
+      .select({ total: sql<number>`count(*)` })
+      .from(hypes)
+      .where(and(eq(hypes.gameId, gameId), gt(hypes.createdAt, since)));
+    return Number(row?.total ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 async function withHypes(items: GameSummary[]): Promise<GameSummary[]> {
