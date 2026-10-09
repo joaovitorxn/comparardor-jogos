@@ -58,26 +58,20 @@ export function HypeButton({ gameId, count, variant }: { gameId: number; count: 
 
   if (variant === "card") {
     const tip = flash ? "Hypado!" : hyped ? "Hypado" : "Hypar";
-    // sem borda nem fundo para não competir com o desconto e o preço; o rótulo (com a contagem, se já houver) aparece no hover e logo após votar
+    // só no computador e só com o mouse sobre o card (o celular não tem hover e a tela é pequena: lá o Hypar fica na página do jogo)
     return (
       <button
         type="button"
         aria-pressed={hyped}
         aria-label={label}
         onClick={onClick}
-        className={`group/hype absolute bottom-3 right-3 grid size-7 place-items-center rounded-full transition ${
-          hyped ? "bg-accent-soft text-accent" : "text-muted hover:bg-accent-soft hover:text-accent"
-        }`}
+        className={`group/hype absolute right-2 top-2 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium backdrop-blur-sm transition duration-150 [@media(hover:none)]:hidden focus-visible:opacity-100 group-hover/card:opacity-100 ${
+          flash ? "opacity-100" : "opacity-0"
+        } ${hyped ? "border-accent-line bg-accent-soft text-accent" : "border-line-strong bg-bg/75 text-text-2 hover:border-accent hover:text-accent"}`}
       >
         {icon}
-        <span
-          className={`pointer-events-none absolute bottom-full right-0 mb-1 whitespace-nowrap rounded-[4px] border px-1.5 py-0.5 text-[11px] font-medium transition-opacity duration-150 group-hover/hype:opacity-100 group-focus-visible/hype:opacity-100 ${
-            flash ? "border-accent-line bg-accent-soft text-accent opacity-100" : "border-line bg-surface text-text-2 opacity-0"
-          }`}
-        >
-          {tip}
-          {!flash && shown >= HYPE_MIN_SHOWN && <span className="tabular"> · {number.format(shown)}</span>}
-        </span>
+        <span>{tip}</span>
+        {!flash && shown >= HYPE_MIN_SHOWN && <span className="tabular text-text-2">{number.format(shown)}</span>}
       </button>
     );
   }

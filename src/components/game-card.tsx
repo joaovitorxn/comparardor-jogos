@@ -23,7 +23,7 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
   const discounted = regularPriceCents != null && bestPriceCents != null && regularPriceCents > bestPriceCents;
 
   return (
-    <div className="relative">
+    <div className="group/card relative">
       <Link
         href={`/jogo/${game.slug}`}
         className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface transition duration-200 hover:-translate-y-0.5 hover:border-accent-line"
@@ -49,7 +49,7 @@ export function GameCard({ summary, releaseLabel }: { summary: CardData; release
 
         <div className="flex flex-1 flex-col gap-2 p-3">
           <p className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-text group-hover:text-accent">{game.title}</p>
-          <div className="mt-auto flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5 pr-8">
+          <div className="mt-auto flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5">
             <div>
               {bestPriceCents == null ? (
                 <span className="text-sm text-muted">Sem preço</span>
