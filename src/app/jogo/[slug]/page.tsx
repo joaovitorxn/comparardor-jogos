@@ -521,7 +521,7 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
               <ScrollRow label={`Mais jogos de ${data.moreFromPublisher.publisher}`}>
                 {data.moreFromPublisher.games.map((s) => (
                   <li key={s.game.id} className="flex w-36 shrink-0 snap-start sm:w-40">
-                    <div className="flex w-full flex-col [&>a]:flex-1">
+                    <div className="flex w-full flex-col [&>div]:flex-1">
                       <GameCard summary={s} />
                     </div>
                   </li>

@@ -101,7 +101,7 @@ export async function HomeView({ platforms = [] }: { platforms?: PlatformFamilyI
           <ScrollRow label="Lançamentos dos últimos 30 dias">
             {releases.map((c) => (
               <li key={c.game.id} className="flex w-40 shrink-0 snap-start sm:w-44">
-                <div className="flex w-full flex-col [&>a]:flex-1">
+                <div className="flex w-full flex-col [&>div]:flex-1">
                   <GameCard summary={c} releaseLabel={releasedAt.has(c.game.id) ? launchLabel(releasedAt.get(c.game.id)!) : undefined} />
                 </div>
               </li>
