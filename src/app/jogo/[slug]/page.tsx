@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertButton } from "@/components/alert-button";
 import { CoverImage } from "@/components/cover-image";
 import { GameCard } from "@/components/game-card";
+import { ScrollRow } from "@/components/scroll-row";
 import { DeckBadge } from "@/components/deck-badge";
 import { Icon } from "@/components/icon";
 import { BestOfferSwitch, type BestOfferChoice } from "@/components/best-offer-switch";
@@ -468,15 +469,15 @@ export default async function GamePage(props: PageProps<"/jogo/[slug]">) {
           {data.moreFromPublisher && (
             <section>
               <SectionHeader title={`Mais de ${data.moreFromPublisher.publisher}`} icon="controller" />
-              <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:thin] sm:mx-0 sm:px-0">
+              <ScrollRow label={`Mais jogos de ${data.moreFromPublisher.publisher}`}>
                 {data.moreFromPublisher.games.map((s) => (
-                  <li key={s.game.id} className="flex w-36 shrink-0 sm:w-40">
+                  <li key={s.game.id} className="flex w-36 shrink-0 snap-start sm:w-40">
                     <div className="flex w-full flex-col [&>a]:flex-1">
                       <GameCard summary={s} />
                     </div>
                   </li>
                 ))}
-              </ul>
+              </ScrollRow>
             </section>
           )}
 
